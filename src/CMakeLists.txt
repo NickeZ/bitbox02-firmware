@@ -178,6 +178,12 @@ set(DRIVER-SOURCES
   ${CMAKE_SOURCE_DIR}/src/drivers/SAMD51_DFP/1.0.70/gcc/system_samd51.c
   ${CMAKE_SOURCE_DIR}/src/drivers/SAMD51_DFP/1.0.70/gcc/gcc/startup_samd51.c
 )
+if(NOT SEMIHOSTING)
+  list(APPEND
+    DRIVER-SOURCES
+    ${CMAKE_SOURCE_DIR}/src/drivers/hal/utils/src/utils_retarget.c
+  )
+endif()
 set(DRIVER-SOURCES ${DRIVER-SOURCES} PARENT_SCOPE)
 
 set(CRYPTOAUTHLIB-SOURCES
