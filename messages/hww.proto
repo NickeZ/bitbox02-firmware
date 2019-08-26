@@ -258,6 +258,17 @@ message ResetRequest {}
 
 message RestoreFromMnemonicRequest {}
 
+enum App {
+  BTC = 0;
+  U2F = 1;
+  LTC = 2;
+  ETH = 3;
+}
+
+message EnableAppRequest {
+  App app = 1;
+}
+
 message Request {
     oneof request {
         RandomNumberRequest random_number = 1;
