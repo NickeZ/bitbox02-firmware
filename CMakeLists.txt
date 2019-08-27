@@ -279,7 +279,7 @@ string(APPEND CMAKE_C_FLAGS " -Wundef -Wmissing-include-dirs")
 string(APPEND CMAKE_C_FLAGS " -Wno-cast-function-type")
 
 # Hardening
-string(APPEND CMAKE_C_FLAGS " -fstack-protector-all")
+string(APPEND CMAKE_C_FLAGS " -fstack-protector-all -D_FORTIFY_SOURCE=2")
 
 # For `struct timespec` and `strdup`
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_XOPEN_SOURCE=600")

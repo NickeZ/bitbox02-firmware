@@ -21,8 +21,7 @@
 #include <string.h>
 #include <usb/usb_processing.h>
 
-extern void __attribute__((noreturn)) __stack_chk_fail(void);
-void __attribute__((noreturn)) __stack_chk_fail(void)
+void __stack_chk_fail(void)
 {
     Abort("Stack smashing detected");
     while (1) {
