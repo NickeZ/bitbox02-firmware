@@ -74,9 +74,11 @@ target_include_directories(bitbox SYSTEM PUBLIC ${CMAKE_SOURCE_DIR}/external/lib
 target_include_directories(bitbox SYSTEM PUBLIC ${CMAKE_BINARY_DIR}/src)
 
 # Always enable semihosting for the test firmwares
-target_compile_definitions(bitbox PUBLIC SEMIHOSTING)
-target_link_libraries(bitbox PUBLIC --specs=nano.specs --specs=rdimon.specs)
-target_compile_options(bitbox PUBLIC --specs=nano.specs --specs=rdimon.specs)
+# target_compile_definitions(bitbox PUBLIC SEMIHOSTING)
+# target_link_libraries(bitbox PUBLIC --specs=nano.specs --specs=rdimon.specs)
+# target_compile_options(bitbox PUBLIC --specs=nano.specs --specs=rdimon.specs)
+target_link_libraries(bitbox PUBLIC --specs=nano.specs --specs=nosys.specs)
+target_compile_options(bitbox PUBLIC --specs=nano.specs --specs=nosys.specs)
 
 add_library(qtouchlib_a STATIC IMPORTED)
 set_property(TARGET qtouchlib_a PROPERTY IMPORTED_LOCATION
