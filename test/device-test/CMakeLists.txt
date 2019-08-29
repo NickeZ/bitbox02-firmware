@@ -116,6 +116,7 @@ set(TEST_LIST
   usb_u2f_ep_out
   usbdc_init
   write_sd
+  oled_sidechannel
 )
 
 add_custom_target(device-tests)
