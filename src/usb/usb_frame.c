@@ -45,8 +45,9 @@ static int32_t _cmd_init(const USB_FRAME* frame, State* state)
 {
     // It is allowed to resynchronize a channel so only abort if another application tries to send
     // an init command
-    traceln("Got init state:%lu frame:%lu", state->cid, frame->cid);
+    traceln("Got init frame state cid:%lu frame cid:%lu", state->cid, frame->cid);
     if (state->initialized && frame->cid != state->cid && state->cmd == U2FHID_INIT) {
+        traceln("%s", "channel busy");
         return FRAME_ERR_CHANNEL_BUSY;
     }
 
@@ -54,16 +55,19 @@ static int32_t _cmd_init(const USB_FRAME* frame, State* state)
     // requests can be aborted by new requsts from other apps.
     if (state->initialized && frame->cid != state->cid && frame->type != U2FHID_INIT &&
         state->cmd != U2FHID_INIT) {
+        traceln("%s", "channel busy");
         return FRAME_ERR_CHANNEL_BUSY;
     }
 
     // Don't expect an initial usb report if we already have received one. Except if it is a
     // app trying to resynchronize.
     if (state->initialized && frame->cid == state->cid && (frame->type != U2FHID_INIT)) {
+        traceln("%s", "invalid seq");
         return FRAME_ERR_INVALID_SEQ;
     }
 
     if ((unsigned)FRAME_MSG_LEN(*frame) > sizeof(state->data)) {
+        traceln("%s", "invalid len");
         return FRAME_ERR_INVALID_LEN;
     }
 

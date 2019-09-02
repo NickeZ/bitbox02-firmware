@@ -133,6 +133,7 @@ void usb_processing_process(struct usb_processing* ctx)
     // If there are any timeouts, send them first
     while (u2f_packet_timeout_get(&timeout_cid)) {
         // screen_sprintf_debug(250, "u2f %u timed out", timeout_cid);
+        traceln("U2F timeout, cid: %lu", timeout_cid);
         u2f_packet_timeout(timeout_cid);
         usb_processing_u2f()->send();
     }
