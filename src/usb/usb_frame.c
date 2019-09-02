@@ -45,6 +45,7 @@ static int32_t _cmd_init(const USB_FRAME* frame, State* state)
 {
     // It is allowed to resynchronize a channel so only abort if another application tries to send
     // an init command
+    traceln("Got init state:%lu frame:%lu", state->cid, frame->cid);
     if (state->initialized && frame->cid != state->cid && state->cmd == U2FHID_INIT) {
         return FRAME_ERR_CHANNEL_BUSY;
     }
