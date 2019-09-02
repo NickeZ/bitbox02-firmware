@@ -19,6 +19,7 @@
 #include "usb/usb_processing.h"
 #include <stdbool.h>
 #include <stdlib.h>
+#include "util.h"
 
 // We can handle up to NUM_TIMEOUT_COUNTERS missing continuation frames
 #define NUM_TIMEOUT_COUNTERS 3
@@ -151,6 +152,7 @@ bool u2f_packet_process(const USB_FRAME* frame, void (*send_packet)(void))
     case ERR_NONE:
         _reset_timeout(frame->cid);
         if (_need_more_data()) {
+            traceln("%s", "need more data");
             // Do not send a message yet
             return true;
         }
