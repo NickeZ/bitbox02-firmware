@@ -135,6 +135,7 @@ static void _error(const uint16_t err, Packet* out_packet)
     uint8_t data[2];
     data[0] = err >> 8 & 0xFF;
     data[1] = err & 0xFF;
+    traceln("%lu Responding with error %x", out_packet->cid, err);
     _fill_message(data, sizeof(data), out_packet);
 }
 
@@ -343,6 +344,7 @@ static void _register(const USB_APDU* apdu, Packet* out_packet)
     size_t len =
         1 /* registerId */ + U2F_EC_POINT_SIZE + 1 /* keyhandleLen */ + kh_cert_sig_len + 2;
     _fill_message(data, len, out_packet);
+    traceln("%lu Register success!", out_packet->cid);
 }
 
 static void _hijack(const U2F_AUTHENTICATE_REQ* req, Packet* out_packet)
@@ -391,10 +393,12 @@ static void _authenticate(const USB_APDU* apdu, Packet* out_packet)
     }
     if (apdu->p1 == U2F_AUTH_CHECK_ONLY) {
         // success: "error:test-of-user-presense"
+        traceln("%lu auth check: success", out_packet->cid);
         _error(U2F_SW_CONDITIONS_NOT_SATISFIED, out_packet);
         return;
     }
     if (apdu->p1 != U2F_AUTH_ENFORCE) {
+        traceln("%lu auth enforce: fail, not supported", out_packet->cid);
         _error(U2F_SW_INS_NOT_SUPPORTED, out_packet);
         return;
     }
@@ -441,11 +445,14 @@ static void _authenticate(const USB_APDU* apdu, Packet* out_packet)
     memcpy(buf + auth_packet_len, "\x90\x00", 2);
 
     _fill_message(buf, auth_packet_len + 2, out_packet);
+    traceln("%lu Authenticate success!", out_packet->cid);
 }
 
 static void _cmd_ping(const Packet* in_packet, Packet* out_packet, const size_t max_out_len)
 {
     (void)max_out_len;
+
+    traceln("Got ping packet (cid=%lu)", in_packet->cid);
 
     // 0 and broadcast are reserved
     if (in_packet->cid == U2FHID_CID_BROADCAST || in_packet->cid == 0) {
@@ -464,6 +471,8 @@ static void _cmd_ping(const Packet* in_packet, Packet* out_packet, const size_t 
 static void _cmd_wink(const Packet* in_packet, Packet* out_packet, const size_t max_out_len)
 {
     (void)max_out_len;
+
+    traceln("Got wink packet (cid=%lu)", in_packet->cid);
 
     // 0 and broadcast are reserved
     if (in_packet->cid == U2FHID_CID_BROADCAST || in_packet->cid == 0) {
@@ -493,6 +502,7 @@ static void _cmd_wink(const Packet* in_packet, Packet* out_packet, const size_t 
  */
 static void _cmd_init(const Packet* in_packet, Packet* out_packet, const size_t max_out_len)
 {
+    traceln("Got init packet (cid=%lu)", in_packet->cid);
     if (U2FHID_INIT_RESP_SIZE >= max_out_len) {
         _error_hid(in_packet->cid, U2FHID_ERR_OTHER, out_packet);
         return;
@@ -513,7 +523,13 @@ static void _cmd_init(const Packet* in_packet, Packet* out_packet, const size_t 
 
     util_zero(&response, sizeof(response));
     memcpy(response.nonce, init_req->nonce, sizeof(init_req->nonce));
-    response.cid = in_packet->cid == U2FHID_CID_BROADCAST ? _next_cid() : in_packet->cid;
+    response.cid = in_packet->cid;
+    if (in_packet->cid == U2FHID_CID_BROADCAST) {
+        response.cid = _next_cid();
+        traceln("Device selected cid %lu", response.cid);
+    } else {
+        traceln("Application selected cid %lu", response.cid);
+    }
     response.versionInterface = U2FHID_IF_VERSION;
     response.versionMajor = DIGITAL_BITBOX_VERSION_MAJOR;
     response.versionMinor = DIGITAL_BITBOX_VERSION_MINOR;
@@ -543,11 +559,15 @@ static void _cmd_msg(const Packet* in_packet, Packet* out_packet, const size_t m
         return;
     }
 
+    traceln("Got msg packet (cid=%lu)", in_packet->cid);
+
     switch (apdu->ins) {
     case U2F_REGISTER:
+        traceln("%s", "U2F Register request");
         _register(apdu, out_packet);
         break;
     case U2F_AUTHENTICATE:
+        traceln("%s", "U2F Authenticate Request");
         _authenticate(apdu, out_packet);
         break;
     case U2F_VERSION:
