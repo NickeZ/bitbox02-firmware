@@ -104,4 +104,6 @@ void screen_init(void)
         &font_font_a_9X9,
         SCREEN_WIDTH,
         SCREEN_HEIGHT);
+
+    screensaver_init();
 }

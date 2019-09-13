@@ -34,6 +34,7 @@ set(DBB-FIRMWARE-SOURCES
   ${CMAKE_SOURCE_DIR}/src/backup.c
   ${CMAKE_SOURCE_DIR}/src/restore.c
   ${CMAKE_SOURCE_DIR}/src/reset.c
+  ${CMAKE_SOURCE_DIR}/src/screensaver.c
   ${CMAKE_SOURCE_DIR}/src/cipher/cipher.c
   ${CMAKE_SOURCE_DIR}/src/workflow/blocking.c
   ${CMAKE_SOURCE_DIR}/src/workflow/cancel.c

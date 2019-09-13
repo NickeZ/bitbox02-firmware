@@ -29,6 +29,7 @@
 #include "ui/event_handler.h"
 #include "util.h"
 #include <ui/component.h>
+#include "screensaver.h"
 
 #define MAX_REGISTRATIONS 7
 #define MAX_HISTORY 30
@@ -255,6 +256,7 @@ static void _measure_and_emit(void)
     }
 
     if (gesture_detected) {
+        screensaver_notify();
         _emit_continuous_slide_event();
         _emit_slide_release_event();
         _emit_long_tap_event();

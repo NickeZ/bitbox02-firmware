@@ -20,6 +20,7 @@
 #include <ui/screen_process.h>
 #include <ui/ugui/ugui.h>
 #include <usb/usb_processing.h>
+#include "screensaver.h"
 
 #define SCREEN_FRAME_RATE 30
 
@@ -44,6 +45,13 @@ static void _screen_process(bool (*is_done)(void), void (*on_timeout)(void), con
             Abort("could not create\nwaiting screen");
         }
     }
+    static component_t* screensaver_screen = NULL;
+    if (screensaver_screen == NULL) {
+        screensaver_screen = screensaver_create();
+        if (screensaver_screen == NULL) {
+            Abort("could not create\nscreensaver screen");
+        }
+    }
 
     bool screen_new = false;
     component_t* component = NULL;
@@ -64,7 +72,11 @@ static void _screen_process(bool (*is_done)(void), void (*on_timeout)(void), con
             }
             screen_frame_cnt = 0;
             timeout_cnt += 1;
-            ui_screen_render_component(component);
+            if (screensaver_is_active()) {
+                screensaver_draw();
+            } else {
+                ui_screen_render_component(component);
+            }
         }
         screen_frame_cnt++;
         ui_screen_stack_cleanup();
