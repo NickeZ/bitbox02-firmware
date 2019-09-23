@@ -29,6 +29,7 @@
 #include "ui/event_handler.h"
 #include "util.h"
 #include <ui/component.h>
+#include "firmware.h"
 
 #define MAX_REGISTRATIONS 7
 #define MAX_HISTORY 30
@@ -53,7 +54,7 @@ bool _released_since_new_screen = false;
 /**
  * The state of the gesture detection while the slider is not released.
  */
-typedef struct {
+struct gestures_detection_state {
     // Incremented by 1 for every update.
     uint32_t duration;
     // The start of the position.
@@ -68,21 +69,21 @@ typedef struct {
     enum gesture_type_t gesture_type;
     // The status of the slider.
     enum slider_status_t slider_status;
-} gestures_detection_state_t;
+};
 
 /**
  * The current state. A gesture is detected over multiple function calls to
  * gestures_measure_and_emit(). Thus, we need to store the information continuously in a file-local
  * state.
  */
-static gestures_detection_state_t _state[TOUCH_NUM_SLIDERS] = {0};
+static struct gestures_detection_state _state[TOUCH_NUM_SLIDERS];
 
 /********************************** STATE UPDATE **********************************/
 
 /**
  * Updates the state of a slider.
  */
-static void _slider_state_update(gestures_detection_state_t* state, uint16_t position)
+static void _slider_state_update(struct gestures_detection_state* state, uint16_t position)
 {
     if (state->duration == 0) {
         state->position_start = position;
@@ -134,7 +135,7 @@ static void _reset_state(void)
  * Prepares the gestures data to be sent with an emitted event
  */
 static void _collect_gestures_data(
-    gestures_detection_state_t* state,
+    struct gestures_detection_state* state,
     gestures_slider_data_t* slider_data)
 {
     slider_data->position = state->position_current;
@@ -275,11 +276,11 @@ static void _measure_and_emit(void)
     }
 }
 
-void gestures_detect(bool reset, bool emit_without_release)
+void gestures_detect(struct app_state* app)
 {
-    if (reset) {
+    if (app->gesture_detect_reset) {
         _reset_state();
-        _released_since_new_screen = emit_without_release;
+        _released_since_new_screen = true;
     }
     _measure_and_emit();
 }

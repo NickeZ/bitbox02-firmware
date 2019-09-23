@@ -18,11 +18,36 @@
 #include "component.h"
 #include "event.h"
 
+/**
+ * Get the top-most element from the "screen" stack
+ */
 component_t* ui_screen_stack_top(void);
+
+/**
+ * Push element onto "screen" stack.
+ */
 void ui_screen_stack_push(component_t* component);
+
+/**
+ * Moves element from "screen" stack to "pop" stack
+ */
 void ui_screen_stack_pop(void);
+
+/**
+ * Pop on complete "screen" stack.
+ */
 void ui_screen_stack_pop_all(void);
+
+/**
+ * Pop + push
+ */
 void ui_screen_stack_switch(component_t* component);
-void ui_screen_stack_cleanup(void);
+
+/**
+ * Frees all components that are on the "pop" stack.
+ *
+ * @return Number of components freed
+ */
+int ui_screen_stack_cleanup(void);
 
 #endif

@@ -20,12 +20,11 @@
 #include <ui/screen_process.h>
 #include <ui/ugui/ugui.h>
 #include <usb/usb_processing.h>
+#include "firmware.h"
 
 #define SCREEN_FRAME_RATE 30
 
-static uint8_t screen_frame_cnt = 0;
-
-void ui_screen_render_component(component_t* component)
+static void _render_component(component_t* component)
 {
     UG_ClearBuffer();
     component->position.left = 0;
@@ -34,58 +33,27 @@ void ui_screen_render_component(component_t* component)
     UG_SendBuffer();
 }
 
-static void _screen_process(bool (*is_done)(void), void (*on_timeout)(void), const uint32_t timeout)
-{
+static void _draw_waiting_screen(void) {
     static component_t* waiting_screen = NULL;
-    uint32_t timeout_cnt = 0;
     if (waiting_screen == NULL) {
         waiting_screen = waiting_create();
         if (waiting_screen == NULL) {
             Abort("could not create\nwaiting screen");
         }
     }
+    _render_component(waiting_screen);
+}
 
-    bool screen_new = false;
-    component_t* component = NULL;
-    while (is_done == NULL || !is_done()) {
-        component_t* next_component = ui_screen_stack_top();
-        if (next_component == NULL) {
-            next_component = waiting_screen;
+void screen_process(struct app_state* app)
+{
+    component_t* component = ui_screen_stack_top();
+    if ((app->counter % SCREEN_FRAME_RATE) == 0) {
+        if (component == NULL) {
+            _draw_waiting_screen();
         }
-        screen_new = false;
-        if (next_component != component) {
-            screen_new = true;
-            component = next_component;
-        }
-        gestures_detect(screen_new, component->emit_without_release);
-        if ((screen_frame_cnt % SCREEN_FRAME_RATE) == 0) {
-            if (is_done != NULL && on_timeout != NULL && timeout_cnt > timeout) {
-                on_timeout();
-            }
-            screen_frame_cnt = 0;
-            timeout_cnt += 1;
-            ui_screen_render_component(component);
-        }
-        screen_frame_cnt++;
-        ui_screen_stack_cleanup();
-        if (is_done == NULL) {
-            usb_processing_process(usb_processing_hww());
-#if defined(APP_U2F)
-            usb_processing_process(usb_processing_u2f());
-#endif
-        }
+        _render_component(component);
     }
-}
-
-void ui_screen_process(bool (*is_done)(void))
-{
-    _screen_process(is_done, NULL, 0);
-}
-
-void ui_screen_process_with_timeout(
-    bool (*is_done)(void),
-    void (*on_timeout)(void),
-    uint32_t timeout)
-{
-    _screen_process(is_done, on_timeout, timeout);
+    if(ui_screen_stack_cleanup() > 0) {
+        app->gesture_detect_reset = true;
+    }
 }

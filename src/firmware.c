@@ -20,6 +20,7 @@
 #include "ui/screen_process.h"
 #include "util.h"
 #include "workflow/workflow.h"
+#include "firmware.h"
 
 uint32_t __stack_chk_guard = 0;
 
@@ -35,4 +36,33 @@ int main(void)
     traceln("%s", "Device initialized");
     workflow_change_state(WORKFLOW_STATE_CHOOSE_ORIENTATION);
     ui_screen_process(NULL);
+    _event_loop();
+}
+
+static uint32_t counter;
+
+static void _event_loop(void) {
+    struct app_state app = {
+        .gesture_detect_reset = true,
+        .counter = 0,
+        .waiting_on_user_input = false,
+    };
+    for(;;) {
+        counter += 1;
+
+        // Draw the current screen
+        ui_screen_process(&app);
+
+        // Run workflow code
+        workflow_process(&app);
+
+        // sense inputs
+        gestures_detect(&app);
+
+        // Read/write usb
+        usb_processing_process(usb_processing_hww());
+#if defined(APP_U2F)
+        usb_processing_process(usb_processing_u2f());
+#endif
+    }
 }

@@ -78,11 +78,13 @@ void ui_screen_stack_switch(component_t* component)
     ui_screen_stack_push(component);
 }
 
-void ui_screen_stack_cleanup(void)
+int ui_screen_stack_cleanup(void)
 {
+    int res = _pop_stack.size;
     while (_pop_stack.size) {
         component_t* top = _pop_stack.screens[_pop_stack.size - 1];
         _pop_stack.size--;
         top->f->cleanup(top);
     }
+    return res;
 }
