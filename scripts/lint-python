@@ -32,7 +32,7 @@ ${MYPY} --implicit-reexport --namespace-packages --ignore-missing-imports --stri
 
 # Must run from root directory where .pylintrc is
 # We ignore refactor and convention messages because they can differ with `black`
-${PYLINT} --persistent=no "${ARGS[@]}" || {
+${PYLINT} --persistent=no --load-plugins=pylint_protobuf "${ARGS[@]}" || {
 	# pylint returns a bitmask as status code:
 	#
 	# 0     no error
