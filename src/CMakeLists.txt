@@ -13,6 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_library(app_btc STATIC
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_common.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_params.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_sign.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_bip143.c
+)
+
+add_library(app_ltc STATIC
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_common.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_params.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_sign.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_bip143.c
+)
+target_compile_definitions(app_ltc APP_LTC)
+
 set(DBB-FIRMWARE-SOURCES
   ${CMAKE_SOURCE_DIR}/src/commander/commander.c
   ${CMAKE_SOURCE_DIR}/src/commander/commander_btc.c
@@ -55,11 +72,6 @@ set(DBB-FIRMWARE-SOURCES
   ${CMAKE_SOURCE_DIR}/src/workflow/backup.c
   ${CMAKE_SOURCE_DIR}/src/workflow/reset.c
   ${CMAKE_SOURCE_DIR}/src/workflow/restore.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_common.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_params.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_sign.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_bip143.c
 )
 set(DBB-FIRMWARE-SOURCES ${DBB-FIRMWARE-SOURCES} PARENT_SCOPE)
 
