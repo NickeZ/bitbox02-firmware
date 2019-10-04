@@ -13,23 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(app_btc STATIC
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_common.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_params.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_sign.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_bip143.c
-)
-
-add_library(app_ltc STATIC
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_common.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_params.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_sign.c
-  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_bip143.c
-)
-target_compile_definitions(app_ltc APP_LTC)
-
 set(DBB-FIRMWARE-SOURCES
   ${CMAKE_SOURCE_DIR}/src/commander/commander.c
   ${CMAKE_SOURCE_DIR}/src/commander/commander_btc.c
@@ -199,9 +182,6 @@ set(INCLUDES
 )
 set(INCLUDES ${INCLUDES} PARENT_SCOPE)
 
-#-----------------------------------------------------------------------------
-# Build embedded firmware
-
 execute_process(COMMAND "which" "protoc-gen-nanopb"
   RESULT_VARIABLE protoc_nanopb_available
   OUTPUT_QUIET)
@@ -242,6 +222,37 @@ endif()
 # TODO: Not needed when building bootlaoder..
 find_package(Nanopb REQUIRED)
 
+add_library(app_btc STATIC
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_common.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_params.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_sign.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_bip143.c
+)
+target_link_libraries(app_btc PRIVATE wallycore)
+target_include_directories(app_btc PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${INCLUDES}
+  ${NANOPB_INCLUDE_DIRS}
+  )
+target_compile_definitions(app_btc PRIVATE APP_BTC)
+add_dependencies(app_btc generate-hww)
+
+add_library(app_btcltc STATIC
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_common.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_params.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_sign.c
+  ${CMAKE_SOURCE_DIR}/src/apps/btc/btc_bip143.c
+)
+target_include_directories(app_btcltc PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${INCLUDES}
+  ${NANOPB_INCLUDE_DIRS}
+  )
+target_compile_definitions(app_btcltc PRIVATE APP_BTC APP_LTC)
+add_dependencies(app_btcltc generate-hww)
+
 set(FIRMWARE-SOURCES
   ${DBB-FIRMWARE-SOURCES}
   ${DBB-FIRMWARE-USB-SOURCES}
@@ -260,6 +271,9 @@ set(BOOTLOADER-SOURCES
   ${DRIVER-SOURCES}
 )
 
+#-----------------------------------------------------------------------------
+# Build embedded firmware
+
 if(CMAKE_CROSSCOMPILING)
   set(STACK_SIZE "0x10000" CACHE STRING "Specify stack size for bootloader/firmware")
   set(STACK_SIZE ${STACK_SIZE} PARENT_SCOPE)
@@ -273,7 +287,6 @@ if(CMAKE_CROSSCOMPILING)
     add_executable(${elf} ${BOOTLOADER-SOURCES})
     target_link_libraries(${elf} PRIVATE c asf4-drivers-min -Wl,-u,exception_table)
     target_include_directories(${elf} PRIVATE ${INCLUDES})
-    target_include_directories(${elf} SYSTEM PRIVATE ${SYSTEMINCLUDES})
     target_compile_definitions(${elf} PRIVATE BOOTLOADER)
     # needed to find version.h
     target_include_directories(${elf} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
@@ -328,7 +341,6 @@ if(CMAKE_CROSSCOMPILING)
         -Wl,-u,exception_table)
     add_dependencies(${elf} generate-hww generate-backup)
     target_include_directories(${elf} PRIVATE ${INCLUDES})
-    target_include_directories(${elf} SYSTEM PRIVATE ${SYSTEMINCLUDES})
 
     # Include and provide configuration for nanopb
     target_include_directories(${elf} SYSTEM PRIVATE ${NANOPB_INCLUDE_DIRS})
@@ -357,19 +369,22 @@ if(CMAKE_CROSSCOMPILING)
   endforeach(firmware)
 
   target_sources(firmware.elf PRIVATE firmware.c)
-  target_compile_definitions(firmware.elf PRIVATE APP_BTC APP_LTC APP_ETH APP_U2F)
+  target_link_libraries(firmware.elf PRIVATE app_btcltc)
+  target_compile_definitions(firmware.elf PRIVATE APP_ETH APP_U2F)
   target_sources(firmware.elf PRIVATE ${FIRMWARE-U2F-SOURCES})
 
   target_sources(firmware-semihosting.elf PRIVATE firmware.c)
   target_sources(firmware-semihosting.elf PRIVATE ${FIRMWARE-U2F-SOURCES})
+  target_link_libraries(firmware-semihosting.elf PRIVATE app_btcltc)
   # Select an implementation of the system calls that can communicate with the debugger
   target_compile_options(firmware-semihosting.elf PRIVATE --specs=rdimon.specs)
   target_link_libraries(firmware-semihosting.elf PRIVATE --specs=rdimon.specs)
-  target_compile_definitions(firmware-semihosting.elf PRIVATE APP_BTC APP_LTC APP_ETH APP_U2F)
+  target_compile_definitions(firmware-semihosting.elf PRIVATE APP_ETH APP_U2F)
   target_compile_definitions(firmware-semihosting.elf PRIVATE SEMIHOSTING)
 
   target_sources(firmware-btc.elf PRIVATE firmware.c)
-  target_compile_definitions(firmware-btc.elf PRIVATE FIRMWARE_BTC_ONLY APP_BTC)
+  target_link_libraries(firmware-btc.elf PRIVATE app_btc)
+  target_compile_definitions(firmware-btc.elf PRIVATE FIRMWARE_BTC_ONLY)
 
   target_sources(factory-setup.elf PRIVATE factorysetup.c)
   target_compile_definitions(factory-setup.elf PRIVATE FACTORYSETUP)
