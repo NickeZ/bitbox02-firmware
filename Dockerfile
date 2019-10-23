@@ -35,16 +35,16 @@ RUN mkdir ~/Downloads &&\
 
 # Install nanopb
 RUN cd ~/Downloads &&\
-    wget https://jpa.kapsi.fi/nanopb/download/nanopb-0.3.9.2-linux-x86.tar.gz &&\
-    echo "00624f2834066ab31613dd2bb53b258a3b81cd83554df4a7cf49725c5cf34c46 nanopb-0.3.9.2-linux-x86.tar.gz" | sha256sum -c &&\
-    tar -xvzf nanopb-0.3.9.2-linux-x86.tar.gz &&\
-    rm -f nanopb-0.3.9.2-linux-x86.tar.gz &&\
-    mv ~/Downloads/nanopb-0.3.9.2-linux-x86/generator-bin/protoc* /usr/local/bin/ &&\
-    mv ~/Downloads/nanopb-0.3.9.2-linux-x86/generator-bin/nanopb_generator /usr/local/bin/ &&\
-    mv ~/Downloads/nanopb-0.3.9.2-linux-x86/generator-bin/libpython*so* /usr/local/bin/ &&\
-    mv ~/Downloads/nanopb-0.3.9.2-linux-x86/generator-bin/*so* /usr/local/lib/ &&\
-    mv ~/Downloads/nanopb-0.3.9.2-linux-x86/generator-bin/include/* /usr/local/include/ &&\
-    mv ~/Downloads/nanopb-0.3.9.2-linux-x86/generator/proto/google/ /usr/local/include/
+    wget https://jpa.kapsi.fi/nanopb/download/nanopb-0.3.9.4-linux-x86.tar.gz &&\
+    echo "e98dd6403ab8c5b271d32a6bc025e7e596bb181c7bc7e0492c5daa21fc44c940 nanopb-0.3.9.4-linux-x86.tar.gz" | sha256sum -c &&\
+    tar -xvzf nanopb-0.3.9.4-linux-x86.tar.gz &&\
+    rm -f nanopb-0.3.9.4-linux-x86.tar.gz &&\
+    mv ~/Downloads/nanopb-0.3.9.4-linux-x86/generator-bin/protoc* /usr/local/bin/ &&\
+    mv ~/Downloads/nanopb-0.3.9.4-linux-x86/generator-bin/nanopb_generator /usr/local/bin/ &&\
+    mv ~/Downloads/nanopb-0.3.9.4-linux-x86/generator-bin/libpython*so* /usr/local/bin/ &&\
+    mv ~/Downloads/nanopb-0.3.9.4-linux-x86/generator-bin/*so* /usr/local/lib/ &&\
+    mv ~/Downloads/nanopb-0.3.9.4-linux-x86/generator-bin/include/* /usr/local/include/ &&\
+    mv ~/Downloads/nanopb-0.3.9.4-linux-x86/generator/proto/google/ /usr/local/include/
 
 # Tools for building
 RUN apt-get update && apt-get install -y \
