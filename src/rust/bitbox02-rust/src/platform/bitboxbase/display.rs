@@ -24,7 +24,7 @@ use crate::util::FixedCString;
 
 fn write_status<W: Write>(w: &mut W, config: &Config) {
     let _ = write!(w, "hostname: ");
-    if let Some(hostname) = &config.hostname {
+    if let Some(hostname) = config.get_hostname() {
         let _ = write!(w, "{}", hostname);
     } else {
         let _ = write!(w, "<unnamed>");
@@ -32,7 +32,8 @@ fn write_status<W: Write>(w: &mut W, config: &Config) {
     let _ = write!(w, "\n");
     let _ = write!(w, "ip: ");
     if let Some(ip) = &config.ip {
-        let _ = write!(w, "{}", ip);
+        let port = config.get_port().unwrap_or(8845);
+        let _ = write!(w, "{}:{}", ip, port);
     } else {
         let _ = write!(w, "<unassigned>");
     }

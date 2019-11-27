@@ -74,7 +74,7 @@ fn set_config(request: &bitbox02::BitBoxBaseSetConfigRequest) -> bitbox02::Comma
         bitbox02::BitBoxBaseSetConfigRequest_ip_tag => {
             // Accessing c union types is unsafe
             let ip: Ipv4Addr = unsafe { request.ip_option.ip }.into();
-            config.set_ip(ip);
+            config.ip = Some(ip);
         }
         _ => (), // ip not set
     }
@@ -82,14 +82,28 @@ fn set_config(request: &bitbox02::BitBoxBaseSetConfigRequest) -> bitbox02::Comma
     if request.status_led_mode > 3 {
         return bitbox02::COMMANDER_ERR_GENERIC;
     }
-    let status_led_mode = unsafe { core::mem::transmute(request.status_led_mode) };
-    config.set_status_led_mode(status_led_mode);
+    config.status_led_mode = unsafe { core::mem::transmute(request.status_led_mode) };
 
     if request.status_screen_mode > 3 {
         return bitbox02::COMMANDER_ERR_GENERIC;
     }
-    let status_screen_mode = unsafe { core::mem::transmute(request.status_screen_mode) };
-    config.set_status_screen_mode(status_screen_mode);
+    config.status_screen_mode = unsafe { core::mem::transmute(request.status_screen_mode) };
+
+    if request.port > u16::max_value() as u32 {
+        return bitbox02::COMMANDER_ERR_GENERIC;
+    }
+    config.set_port(request.port as u16);
+
+    let onion =
+        bitbox02::util::str_from_null_terminated(&request.onion[..]).expect("Invalid utf-8");
+    let onion = match onion {
+        "" => None,
+        onion => Some(onion),
+    };
+    match config.set_onion(onion) {
+        Err(_) => return bitbox02::COMMANDER_ERR_GENERIC,
+        _ => (),
+    }
 
     bitbox02::COMMANDER_OK
 }

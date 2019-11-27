@@ -15,4 +15,5 @@
 #[derive(Debug)]
 pub enum Error {
     InvalidHostname,
+    InvalidOnionAddress,
 }

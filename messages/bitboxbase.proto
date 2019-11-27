@@ -65,7 +65,11 @@ message BitBoxBaseSetConfigRequest {
   oneof ip_option {
         bytes ip = 3;
   }
-  string hostname = 4; // Empty string means unsetting the hostname
+  string hostname = 4; // Empty string means not modifying the hostname
+  uint32 port = 5; // Only values up to UINT16_MAX is actually supported, 0 means "default"
+  oneof onion_option{
+    string onion = 6; // Empty string means clear the value. Must be 16 or 56 char + ".onion"
+  }
 }
 
 message BitBoxBaseDisplayStatusRequest {

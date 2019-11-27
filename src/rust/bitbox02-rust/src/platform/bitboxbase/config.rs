@@ -50,12 +50,15 @@ pub enum StatusScreenMode {
     OnError,
 }
 
+// Fields that require validation must be set via setter functions
 pub struct Config {
     pub(crate) status_led_mode: StatusLedMode,
     pub(crate) status_screen_mode: StatusScreenMode,
     pub(crate) default_display_duration: Duration,
-    pub(crate) hostname: Option<ArrayString<[u8; 64]>>,
+    hostname: Option<ArrayString<[u8; 64]>>,
     pub(crate) ip: Option<Ipv4Addr>,
+    port: Option<u16>,
+    onion: Option<ArrayString<[u8; 64]>>, // TODO(nc): change to 62 when we have const generics
 }
 
 impl Config {
@@ -66,15 +69,9 @@ impl Config {
             default_display_duration: Duration::from_secs(10),
             hostname: None,
             ip: None,
+            port: None,
+            onion: None,
         }
-    }
-
-    pub fn set_status_led_mode(&mut self, mode: StatusLedMode) {
-        self.status_led_mode = mode;
-    }
-
-    pub fn set_status_screen_mode(&mut self, mode: StatusScreenMode) {
-        self.status_screen_mode = mode;
     }
 
     pub fn set_hostname(&mut self, hostname: &str) -> Result<(), Error> {
@@ -95,8 +92,46 @@ impl Config {
         Ok(())
     }
 
-    pub fn set_ip(&mut self, ip: Ipv4Addr) {
-        self.ip = Some(ip);
+    pub fn get_hostname(&self) -> Option<&str> {
+        self.hostname.as_ref().map(|h| h.as_str())
+    }
+
+    pub fn set_port(&mut self, port: u16) {
+        self.port = match port {
+            0 => None,
+            port => Some(port),
+        };
+    }
+
+    pub fn get_port(&self) -> Option<u16> {
+        self.port
+    }
+
+    pub fn set_onion(&mut self, onion: Option<&str>) -> Result<(), Error> {
+        const EXT_LEN: usize = 6; // sizeof ".onion"
+        match onion {
+            None => self.onion = None,
+            Some(onion) => {
+                if !onion.ends_with(".onion") {
+                    return Err(Error::InvalidOnionAddress);
+                }
+                if onion.len() != 16 + EXT_LEN || onion.len() != 56 + EXT_LEN {
+                    return Err(Error::InvalidOnionAddress);
+                }
+                if !onion.is_ascii() {
+                    return Err(Error::InvalidOnionAddress);
+                }
+                {
+                    // Onion address without ".onion"
+                    let address = &onion[..(onion.len() - EXT_LEN)];
+                    if address.chars().any(|c| !c.is_alphanumeric()) {
+                        return Err(Error::InvalidOnionAddress);
+                    }
+                }
+                self.onion = Some(ArrayString::from(onion).expect("Buffer to short"));
+            }
+        }
+        Ok(())
     }
 
     pub unsafe fn get_singleton() -> &'static Config {
