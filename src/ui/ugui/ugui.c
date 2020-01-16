@@ -630,6 +630,71 @@ void UG_MeasureStringCentered(UG_S16 *xout, UG_S16 *yout, const char *str)
     *xout = MAX(*xout, calc_width_line);
 }
 
+static UG_S16 _word_len(const char* p) {
+    const UG_FONT* font = &gui->font;
+    UG_S16 x = 0;
+    while(*p != ' ' && *p != '\n' && *p != '\0'){
+        x += font->widths[(UG_U8)*p - font->start_char];
+        p += 1;
+    }
+    return x;
+}
+
+// Try to wrap string at spaces if it is longer than `width`.
+// Only wrap the first line. The rest of the lines may span the whole screen.
+// Only wrap once so that we get two lines. More lines are not useful in the title
+void UG_WrapString(const char* str, char* str_out, UG_S16 width) {
+    const char* start = str;
+    const UG_FONT* font = &gui->font;
+    UG_S16 x = 0;
+    while(*str) {
+        if (*str == '\n') {
+            break;
+        }
+        if (*str == ' ') {
+            UG_S16 wlen = _word_len(str+1);
+            if (x + font->widths[(UG_U8)' ' - font->start_char] + wlen > width) {
+                *str_out = '\n';
+                str_out += 1;
+                str += 1;
+                break;
+            } else {
+                *str_out = *str;
+                str_out += 1;
+                str += 1;
+            }
+            while (*str != ' ' && *str != '\n' && *str != '\0') {
+                *str_out = *str;
+                if (*str >= font->start_char){
+                    x += font->widths[(UG_U8)*str - font->start_char];
+                }
+                str_out += 1;
+                str += 1;
+            }
+            continue;
+        }
+        // If the first word doesn't fit. Insert a newline
+        if(start == str) {
+            UG_S16 wlen = _word_len(str);
+            if (wlen > width) {
+                *str_out = '\n';
+                str_out++;
+                break;
+            }
+        }
+        *str_out = *str;
+        if (*str >= font->start_char && *str < font->end_char){
+            x += font->widths[(UG_U8)*str - font->start_char];
+        }
+        str_out += 1;
+        str += 1;
+    }
+    // Copy any bytes that are left
+    while(*str) {
+        *str_out++ = *str++;
+    }
+}
+
 void UG_PutString( UG_S16 x, UG_S16 y, const char *str, bool inverted)
 {
     _UG_PutString(x, y, NULL, NULL, str, 1, 0, inverted);
@@ -772,9 +837,13 @@ void UG_FontSetVSpace( UG_U16 s )
 }
 
 void UG_SendBuffer(void) {
+#ifndef TESTING
     oled_send_buffer();
+#endif
 }
 
 void UG_ClearBuffer(void) {
+#ifndef TESTING
     oled_clear_buffer();
+#endif
 }

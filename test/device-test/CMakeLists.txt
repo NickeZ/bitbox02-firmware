@@ -74,9 +74,9 @@ target_link_libraries(bitbox02-platform
 )
 
 # Always enable semihosting for the test firmwares
-target_compile_definitions(bitbox02-platform PUBLIC PRODUCT_BITBOX_MULTI SEMIHOSTING)
-target_link_libraries(bitbox02-platform PUBLIC --specs=nano.specs --specs=rdimon.specs)
-target_compile_options(bitbox02-platform PUBLIC --specs=nano.specs --specs=rdimon.specs)
+target_compile_definitions(bitbox02-platform PUBLIC PRODUCT_BITBOX_MULTI)
+target_link_libraries(bitbox02-platform PUBLIC --specs=nano.specs --specs=nosys.specs)
+target_compile_options(bitbox02-platform PUBLIC --specs=nano.specs --specs=nosys.specs)
 
 set(BB02_TEST_LIST
   all_variants_menu
@@ -104,6 +104,7 @@ set(BB02_TEST_LIST
   usb_u2f_ep_out
   usbdc_init
   write_sd
+  token_pub
 )
 
 add_custom_target(device-tests)

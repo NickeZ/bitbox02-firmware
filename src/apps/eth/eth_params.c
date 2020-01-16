@@ -623,7 +623,7 @@ static const app_eth_erc20_params_t _erc20_params[] = {
     },
     {
         .coin = ETHCoin_ETH,
-        .name = "BAT",
+        .name = "Basic Attention Token",
         .unit = "BAT",
         .contract_address =
             "\x0d\x87\x75\xf6\x48\x43\x06\x79\xa7\x09\xe9\x8d\x2b\x0c\xb6\x25\x0d\x28\x87\xef",

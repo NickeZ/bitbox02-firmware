@@ -79,13 +79,13 @@ commander_error_t commander_btc_pub(const BTCPubRequest* request, PubResponse* r
         case BTCPubRequest_OutputType_ADDRESS: {
             switch (request->script_type) {
             case BTCScriptType_SCRIPT_P2PKH:
-                snprintf(title, sizeof(title), "%s\nLegacy", coin);
+                snprintf(title, sizeof(title), "%s Legacy", coin);
                 break;
             case BTCScriptType_SCRIPT_P2WPKH_P2SH:
                 snprintf(title, sizeof(title), "%s", coin);
                 break;
             case BTCScriptType_SCRIPT_P2WPKH:
-                snprintf(title, sizeof(title), "%s\nbech32", coin);
+                snprintf(title, sizeof(title), "%s bech32", coin);
                 break;
             default:
                 return COMMANDER_ERR_GENERIC;
