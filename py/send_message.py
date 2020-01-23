@@ -338,6 +338,8 @@ class SendMessage:
             ("Check if SD card inserted", self._check_sd_presence),
             ("Toggle BIP39 Mnemonic Passphrase", self._toggle_mnemonic_passphrase),
             ("Retrieve Ethereum address", self._display_eth_address),
+            ("Sign a known token on ETH", self._sign_known_eth_token),
+            ("Sign an unknown token on ETH", self._sign_unknown_eth_token),
             ("Reset Device", self._reset_device),
         )
         choice = ask_user(choices)
