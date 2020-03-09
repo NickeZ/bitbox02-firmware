@@ -351,34 +351,10 @@ add_custom_target(rust-bindgen
   COMMAND
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/rust
   COMMAND
-    ${BINDGEN}
+    ${CMAKE_COMMAND} -E env BINDGEN=${BINDGEN} ${CMAKE_CURRENT_SOURCE_DIR}/rust/run-bindgen.sh
     --output ${CMAKE_CURRENT_BINARY_DIR}/rust/bindings.rs
-    --use-core
-    --ctypes-prefix util::c_types
-    --whitelist-function delay_us
-    --whitelist-function delay_ms
-    --whitelist-function UG_PutString
-    --whitelist-function UG_FontSelect
-    --whitelist-function UG_ClearBuffer
-    --whitelist-function UG_SendBuffer
-    --whitelist-function workflow_confirm_blocking
-    --whitelist-function screen_print_debug
-    --whitelist-function ui_screen_stack_push
-    --whitelist-function ui_screen_stack_pop
-    --whitelist-function label_create
-    --whitelist-function bitboxbase_watchdog_reset
-    --whitelist-function bitboxbase_screensaver_reset
-    --whitelist-function leds_turn_small_led
-    --whitelist-function leds_turn_big_led
-    --whitelist-function wally_sha256
-    --whitelist-type component_t
-    --whitelist-type commander_error_t
-    --whitelist-type BitBoxBaseRequest
-    --whitelist-var ".*_tag"
-    --whitelist-var font_font_a_9X9
-    --whitelist-var font_monogram_5X9
-    --whitelist-var WALLY_OK
-    ${CMAKE_CURRENT_SOURCE_DIR}/rust/bitbox02-sys/wrapper.h --
+    ${CMAKE_CURRENT_SOURCE_DIR}/rust/bitbox02-sys/wrapper.h
+    --
     -DPB_NO_PACKED_STRUCTS=1 -DPB_FIELD_16BIT=1 -fshort-enums ${RUST_BINDGEN_FLAGS} ${RUST_INCLUDES}
   )
 add_dependencies(rust-bindgen generate-protobufs)
