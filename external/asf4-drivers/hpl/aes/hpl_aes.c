@@ -3,39 +3,29 @@
  *
  * \brief AES Advanced Encryption Standard(Sync) functionality declaration.
  *
- * Copyright (C) 2015-2016 Atmel Corporation. All rights reserved.
+ * Copyright (c) 2015-2018 Microchip Technology Inc. and its subsidiaries.
  *
  * \asf_license_start
  *
  * \page License
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Subject to your compliance with these terms, you may use Microchip
+ * software and any derivatives exclusively with Microchip products.
+ * It is your responsibility to comply with third party license terms applicable
+ * to your use of third party software (including open source software) that
+ * may accompany Microchip software.
  *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * 3. The name of Atmel may not be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * 4. This software may only be redistributed and used in connection with an
- *    Atmel microcontroller product.
- *
- * THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
- * EXPRESSLY AND SPECIFICALLY DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES,
+ * WHETHER EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE,
+ * INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY,
+ * AND FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT WILL MICROCHIP BE
+ * LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, INCIDENTAL OR CONSEQUENTIAL
+ * LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND WHATSOEVER RELATED TO THE
+ * SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS BEEN ADVISED OF THE
+ * POSSIBILITY OR THE DAMAGES ARE FORESEEABLE.  TO THE FULLEST EXTENT
+ * ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN ANY WAY
+ * RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
+ * THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
  *
  * \asf_license_stop
  *
@@ -118,8 +108,7 @@ static inline void __aes_sync_set_iv(struct _aes_sync_device *const dev, uint8_t
 			hri_aes_write_INTVECTV_reg(dev->hw,
 			                           i,
 			                           ((uint8_t *)iv)[i << 2] | ((uint8_t *)iv)[(i << 2) + 1] >> 8
-			                               | ((uint8_t *)iv)[(i << 2) + 2] >> 16
-			                               | ((uint8_t *)iv)[(i << 2) + 3] >> 24);
+			                               | ((uint8_t *)iv)[(i << 2) + 2] >> 16 | ((uint8_t *)iv)[(i << 2) + 3] >> 24);
 		} else {
 			hri_aes_write_INTVECTV_reg(dev->hw, i, ((uint32_t *)iv)[i]);
 		}
@@ -131,13 +120,13 @@ static inline void __aes_sync_set_indata(struct _aes_sync_device *const dev, con
 	uint32_t i;
 
 	for (i = 0; i < words; i++) {
-		if (((const uint32_t)data) & 0x3) {
+		if (((uint32_t)data) & 0x3) {
 			hri_aes_write_INDATA_reg(dev->hw,
-			                         ((const uint8_t *)data)[i << 2] | ((const uint8_t *)data)[(i << 2) + 1] << 8
-			                             | ((const uint8_t *)data)[(i << 2) + 2] << 16
-			                             | ((const uint8_t *)data)[(i << 2) + 3] << 24);
+			                         ((uint8_t *)data)[i << 2] | ((uint8_t *)data)[(i << 2) + 1] << 8
+			                             | ((uint8_t *)data)[(i << 2) + 2] << 16
+			                             | ((uint8_t *)data)[(i << 2) + 3] << 24);
 		} else {
-			hri_aes_write_INDATA_reg(dev->hw, ((const uint32_t *)data)[i]);
+			hri_aes_write_INDATA_reg(dev->hw, ((uint32_t *)data)[i]);
 		}
 	}
 }
@@ -177,9 +166,9 @@ static inline void __aes_sync_update_cfb_iv(const enum aes_action enc, const uin
  */
 int32_t _aes_sync_init(struct _aes_sync_device *const dev, void *const hw)
 {
-	if (hri_aes_get_CTRLA_ENABLE_bit(hw)) {
-		return ERR_DENIED;
-	}
+	hri_aes_write_CTRLA_reg(hw, 0);
+	hri_aes_write_CTRLA_reg(hw, AES_CTRLA_SWRST);
+
 	dev->hw = hw;
 
 	hri_aes_write_DBGCTRL_reg(dev->hw, _aes.dbgctrl);
@@ -243,7 +232,7 @@ int32_t _aes_sync_ecb_crypt(struct _aes_sync_device *const dev, const enum aes_a
 
 	/* Key must be set for each ECB encrypt */
 	__aes_sync_set_key(dev);
-	hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+	hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 	__aes_sync_set_indata(dev, input, 4);
 	hri_aes_set_CTRLB_START_bit(dev->hw);
 	while (hri_aes_get_interrupt_ENCCMP_bit(dev->hw) == 0)
@@ -282,7 +271,7 @@ int32_t _aes_sync_cbc_crypt(struct _aes_sync_device *const dev, const enum aes_a
 	inptr  = input;
 	outptr = output;
 	for (block = 0; block < (length >> 4); block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 		__aes_sync_set_indata(dev, inptr, 4);
 		inptr += 16;
 		hri_aes_set_CTRLB_START_bit(dev->hw);
@@ -312,8 +301,8 @@ int32_t _aes_sync_cfb128_crypt(struct _aes_sync_device *const dev, const enum ae
 
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, enc);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 3);
-	hri_aes_set_CTRLA_CFBS_bf(dev->hw, 0);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 3);
+	hri_aes_clear_CTRLA_CFBS_bf(dev->hw, 0x7u);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	/* Write IV */
@@ -324,7 +313,7 @@ int32_t _aes_sync_cfb128_crypt(struct _aes_sync_device *const dev, const enum ae
 	inptr  = input;
 	outptr = output;
 	for (block = 0; block < (length >> 4); block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 		__aes_sync_set_indata(dev, inptr, 4);
 		inptr += 16;
 		hri_aes_set_CTRLB_START_bit(dev->hw);
@@ -348,16 +337,15 @@ int32_t _aes_sync_cfb128_crypt(struct _aes_sync_device *const dev, const enum ae
 int32_t _aes_sync_cfb64_crypt(struct _aes_sync_device *const dev, const enum aes_action enc, const uint8_t *input,
                               uint8_t *output, uint32_t length, uint8_t *iv)
 {
-	uint8_t        index;
 	uint8_t        block; /* Number of blocks (8 bytes) */
 	const uint8_t *inptr;
 	uint8_t *      outptr;
 
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, enc);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 3);
-	hri_aes_set_CTRLA_CFBS_bf(dev->hw, 1);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, (dev->keysize >> 6) - 2);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 3);
+	hri_aes_write_CTRLA_CFBS_bf(dev->hw, 1);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -369,11 +357,8 @@ int32_t _aes_sync_cfb64_crypt(struct _aes_sync_device *const dev, const enum aes
 	/* Enc/Dec plain text */
 	inptr  = input;
 	outptr = output;
-	for (index = 0; index < 4; index++) {
-		hri_aes_write_INDATA_reg(dev->hw, 0x00);
-	}
 	for (block = 0; block < (length >> 3); block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 		__aes_sync_set_indata(dev, inptr, 2);
 		inptr += 8;
 		hri_aes_set_CTRLB_START_bit(dev->hw);
@@ -396,16 +381,15 @@ int32_t _aes_sync_cfb64_crypt(struct _aes_sync_device *const dev, const enum aes
 int32_t _aes_sync_cfb32_crypt(struct _aes_sync_device *const dev, const enum aes_action enc, const uint8_t *input,
                               uint8_t *output, uint32_t length, uint8_t *iv)
 {
-	uint8_t        index;
 	uint8_t        block; /* Number of blocks (4 bytes) */
 	const uint8_t *inptr;
 	uint8_t *      outptr;
 
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, enc);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 3);
-	hri_aes_set_CTRLA_CFBS_bf(dev->hw, 1);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, (dev->keysize >> 6) - 2);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 3);
+	hri_aes_write_CTRLA_CFBS_bf(dev->hw, 2);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -417,11 +401,8 @@ int32_t _aes_sync_cfb32_crypt(struct _aes_sync_device *const dev, const enum aes
 	/* Enc/Dec plain text */
 	inptr  = input;
 	outptr = output;
-	for (index = 0; index < 4; index++) {
-		hri_aes_write_INDATA_reg(dev->hw, 0x00);
-	}
 	for (block = 0; block < (length >> 2); block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 		__aes_sync_set_indata(dev, inptr, 1);
 		inptr += 4;
 		hri_aes_set_CTRLB_START_bit(dev->hw);
@@ -443,14 +424,13 @@ int32_t _aes_sync_cfb32_crypt(struct _aes_sync_device *const dev, const enum aes
 int32_t _aes_sync_cfb16_crypt(struct _aes_sync_device *const dev, const enum aes_action enc, const uint8_t *input,
                               uint8_t *output, uint32_t length, uint8_t *iv)
 {
-	uint8_t index;
 	uint8_t block; /* Number of blocks (2 bytes) */
 
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, enc);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 3);
-	hri_aes_set_CTRLA_CFBS_bf(dev->hw, 3);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, (dev->keysize >> 6) - 2);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 3);
+	hri_aes_write_CTRLA_CFBS_bf(dev->hw, 3);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -460,12 +440,9 @@ int32_t _aes_sync_cfb16_crypt(struct _aes_sync_device *const dev, const enum aes
 	__aes_sync_set_iv(dev, iv);
 
 	/* Enc/Dec plain text */
-	for (index = 0; index < 4; index++) {
-		hri_aes_write_INDATA_reg(dev->hw, 0x00);
-	}
 	for (block = 0; block < (length >> 1); block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
-		hri_aes_write_INDATA_reg(dev->hw, ((const uint16_t *)input)[block]);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
+		hri_aes_write_INDATA_reg(dev->hw, ((uint16_t *)input)[block]);
 		hri_aes_set_CTRLB_START_bit(dev->hw);
 		while (hri_aes_get_interrupt_ENCCMP_bit(dev->hw) == 0)
 			;
@@ -485,15 +462,14 @@ int32_t _aes_sync_cfb16_crypt(struct _aes_sync_device *const dev, const enum aes
 int32_t _aes_sync_cfb8_crypt(struct _aes_sync_device *const dev, const enum aes_action enc, const uint8_t *input,
                              uint8_t *output, uint32_t length, uint8_t *iv)
 {
-	uint8_t index;
 	uint8_t block; /* Number of blocks (1 bytes) */
 
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_reg(dev->hw, 0);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, enc);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 3);
-	hri_aes_set_CTRLA_CFBS_bf(dev->hw, 4);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 3);
+	hri_aes_write_CTRLA_CFBS_bf(dev->hw, 4);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -503,12 +479,9 @@ int32_t _aes_sync_cfb8_crypt(struct _aes_sync_device *const dev, const enum aes_
 	__aes_sync_set_iv(dev, iv);
 
 	/* Enc/Dec plain text */
-	for (index = 0; index < 4; index++) {
-		hri_aes_write_INDATA_reg(dev->hw, 0x00);
-	}
 	for (block = 0; block < length; block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
-		hri_aes_write_INDATA_reg(dev->hw, ((const uint8_t *)input)[block]);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
+		hri_aes_write_INDATA_reg(dev->hw, ((uint8_t *)input)[block]);
 		hri_aes_set_CTRLB_START_bit(dev->hw);
 		while (hri_aes_get_interrupt_ENCCMP_bit(dev->hw) == 0)
 			;
@@ -537,8 +510,8 @@ int32_t _aes_sync_ofb_crypt(struct _aes_sync_device *const dev, const uint8_t *i
 	hri_aes_write_CTRLA_reg(dev->hw, 0);
 	hri_aes_write_CTRLB_reg(dev->hw, 0);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, 1);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 2);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 2);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -551,7 +524,7 @@ int32_t _aes_sync_ofb_crypt(struct _aes_sync_device *const dev, const uint8_t *i
 	inptr  = input;
 	outptr = output;
 	for (block = 0; block < (length >> 4); block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 		__aes_sync_set_indata(dev, inptr, 4);
 		inptr += 16;
 		hri_aes_set_CTRLB_START_bit(dev->hw);
@@ -585,8 +558,8 @@ int32_t _aes_sync_ctr_crypt(struct _aes_sync_device *const dev, const uint8_t *i
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_reg(dev->hw, 0x00);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, 1);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 4);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 4);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -598,7 +571,7 @@ int32_t _aes_sync_ctr_crypt(struct _aes_sync_device *const dev, const uint8_t *i
 	inptr  = input;
 	outptr = output;
 	for (block = 0; block < (length >> 4); block++) {
-		hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+		hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 		__aes_sync_set_indata(dev, inptr, 4);
 		inptr += 16;
 		hri_aes_set_CTRLB_START_bit(dev->hw);
@@ -693,8 +666,8 @@ static void __aes_sync_gcm_start(struct _aes_sync_device *const dev, const enum 
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_reg(dev->hw, 0);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, 1);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 0); /* ECB */
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_clear_CTRLA_AESMODE_bf(dev->hw, 0x7u); /* 0: ECB */
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -710,9 +683,9 @@ static void __aes_sync_gcm_start(struct _aes_sync_device *const dev, const enum 
 	hri_aes_clear_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLA_STARTMODE_bit(dev->hw, 0);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, 1);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 6); /* GCM */
-	hri_aes_set_CTRLA_CTYPE_bf(dev->hw, 0);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 6); /* GCM */
+	hri_aes_clear_CTRLA_CTYPE_bf(dev->hw, 0xFu);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 
 	__aes_sync_set_key(dev);
@@ -820,12 +793,12 @@ static void __aes_sync_gcm_update(struct _aes_sync_device *const dev, const uint
 	const uint8_t *inptr;
 	uint8_t *      outptr;
 
-	/* Set workbuf = j1 =  j0 + 1 */
-	memcpy(workbuf, dev->iv, 16);
+	/* Set iv = j1 =  j0 + 1 */
 	for (index = 16; index > 0; index--) {
-		if (++workbuf[index - 1] != 0)
+		if (++dev->iv[index - 1] != 0)
 			break;
 	}
+	memcpy(workbuf, dev->iv, 16);
 
 	/* Step 2 Plain text Processing */
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
@@ -839,7 +812,7 @@ static void __aes_sync_gcm_update(struct _aes_sync_device *const dev, const uint
 	/* Enc/Dec plain text */
 	inptr  = input;
 	outptr = output;
-	hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+	hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 	for (block = 0; block < (length >> 4); block++) {
 		if (((length & 0xF) == 0) && block == ((length >> 4) - 1)) {
 			hri_aes_set_CTRLB_EOM_bit(dev->hw);
@@ -902,14 +875,14 @@ static void __aes_sync_gcm_generate_tag(struct _aes_sync_device *const dev, uint
 	/* When change to Counter mode, all CTRLA should be reset */
 	hri_aes_write_CTRLA_reg(dev->hw, 0);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, 1);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 4); /* Counter */
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 4); /* Counter */
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 	hri_aes_write_CTRLB_reg(dev->hw, 0);
 
 	__aes_sync_set_key(dev);
 
-	hri_aes_set_DATABUFPTR_INDATAPTR_bf(dev->hw, 0);
+	hri_aes_clear_DATABUFPTR_INDATAPTR_bf(dev->hw, 0x3u);
 	__aes_sync_set_iv(dev, j0);
 	for (index = 0; index < 4; index++) {
 		hri_aes_write_INDATA_reg(dev->hw, (uint32_t)hri_aes_read_GHASH_reg(dev->hw, index));
@@ -976,13 +949,13 @@ int32_t __aes_sync_ccm_crypt_and_tag(struct _aes_sync_device *const dev, const u
 	hri_aes_write_CTRLB_reg(dev->hw, 0);
 	hri_aes_write_CTRLA_STARTMODE_bit(dev->hw, 0);
 	hri_aes_write_CTRLA_CIPHER_bit(dev->hw, 1);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 5); /* CCM */
-	hri_aes_set_CTRLA_LOD_bit(dev->hw);       /* CBC-MAC */
-	hri_aes_set_CTRLA_CTYPE_bf(dev->hw, 0);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 5); /* CCM */
+	hri_aes_set_CTRLA_LOD_bit(dev->hw);         /* CBC-MAC */
+	hri_aes_clear_CTRLA_CTYPE_bf(dev->hw, 0xFu);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
-	hri_aes_set_CTRLB_reg(dev->hw, 0);
-	hri_aes_set_DATABUFPTR_reg(dev->hw, 0);
+	hri_aes_write_CTRLB_reg(dev->hw, 0);
+	hri_aes_write_DATABUFPTR_reg(dev->hw, 0);
 	__aes_sync_set_key(dev);
 	/* For CBC-MAC, zero block is used as the IV (SP800-38C, 5.2) */
 	for (index = 0; index < 4; index++) {
@@ -1152,10 +1125,10 @@ int32_t __aes_sync_ccm_decrypt_and_tag(struct _aes_sync_device *const dev, const
 	hri_aes_write_CTRLB_reg(dev->hw, 0);
 	hri_aes_write_CTRLA_STARTMODE_bit(dev->hw, 0);
 	hri_aes_clear_CTRLA_CIPHER_bit(dev->hw);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 5); /* CCM */
-	hri_aes_clear_CTRLA_LOD_bit(dev->hw);     /* Counter mode */
-	hri_aes_set_CTRLA_CTYPE_bf(dev->hw, 0);
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 5); /* CCM */
+	hri_aes_clear_CTRLA_LOD_bit(dev->hw);       /* Counter mode */
+	hri_aes_clear_CTRLA_CTYPE_bf(dev->hw, 0xFu);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 	__aes_sync_set_key(dev);
 
@@ -1165,7 +1138,7 @@ int32_t __aes_sync_ccm_decrypt_and_tag(struct _aes_sync_device *const dev, const
 	src      = input;
 	dst      = output;
 	while (len_left > 0) {
-		len_use = len_left > 16 ? 16 : len_left;
+		size_t len_use = len_left > 16 ? 16 : len_left;
 		{
 			if (len_use < 16) {
 				memset(b, 0, 16);
@@ -1191,9 +1164,9 @@ int32_t __aes_sync_ccm_decrypt_and_tag(struct _aes_sync_device *const dev, const
 	/* Step 7(SP800-38C, 6.2) Prepare CBC-MAC */
 	hri_aes_write_CTRLA_reg(dev->hw, 0);
 	hri_aes_write_CTRLA_STARTMODE_bit(dev->hw, 0);
-	hri_aes_set_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
-	hri_aes_set_CTRLA_AESMODE_bf(dev->hw, 5); /* CCM */
-	hri_aes_set_CTRLA_LOD_bit(dev->hw);       /* CBC-MAC */
+	hri_aes_write_CTRLA_KEYSIZE_bf(dev->hw, dev->keysize);
+	hri_aes_write_CTRLA_AESMODE_bf(dev->hw, 5); /* CCM */
+	hri_aes_set_CTRLA_LOD_bit(dev->hw);         /* CBC-MAC */
 	hri_aes_set_CTRLA_CIPHER_bit(dev->hw);
 	hri_aes_set_CTRLA_ENABLE_bit(dev->hw);
 

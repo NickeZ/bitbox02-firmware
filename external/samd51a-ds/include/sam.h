@@ -3,11 +3,13 @@
  *
  * \brief Top level header file
  *
- * Copyright (c) 2017 Atmel Corporation, a wholly owned subsidiary of Microchip Technology Inc.
+ * Copyright (c) 2019 Microchip Technology Inc.
  *
  * \license_start
  *
  * \page License
+ *
+ * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +30,7 @@
 #ifndef _SAM_
 #define _SAM_
 
-#if   defined(__SAMD51G18A__) || defined(__ATSAMD51G18A__)
+#if defined(__SAMD51G18A__) || defined(__ATSAMD51G18A__)
 #include "samd51g18a.h"
 #elif defined(__SAMD51G19A__) || defined(__ATSAMD51G19A__)
 #include "samd51g19a.h"
@@ -51,4 +53,3 @@
 #endif
 
 #endif /* _SAM_ */
-
