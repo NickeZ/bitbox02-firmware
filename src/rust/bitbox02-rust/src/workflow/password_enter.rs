@@ -42,5 +42,6 @@ pub async fn password_enter(title: &str, special_chars: bool, password_out: &mut
     //let result: &Option<Password> = &*result;
     //let result: Option<&Password> = result.as_ref();
     //let result: &Password = result.unwrap();
-    password_out.clone_from(&component.result.unwrap());
+    let result = component.result().unwrap();
+    password_out.clone_from(&result);
 }

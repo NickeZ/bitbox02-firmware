@@ -36,6 +36,12 @@ impl IntoComponent for TrinaryInputStringCreatePassword {
     }
 }
 
+impl TrinaryInputStringCreatePassword {
+    pub fn result(&mut self) -> Option<Password> {
+        self.result.take()
+    }
+}
+
 // To disallow move out from the struct
 impl Drop for TrinaryInputStringCreatePassword {
     fn drop(&mut self) {
@@ -50,6 +56,12 @@ pub struct ConfirmCreate {
 impl IntoComponent for ConfirmCreate {
     fn ptr(&mut self) -> *mut bitbox02_sys::component_t {
         self.component
+    }
+}
+
+impl ConfirmCreate {
+    pub fn result(&mut self) -> Option<bool> {
+        self.result.take()
     }
 }
 

@@ -33,5 +33,5 @@ pub async fn confirm(params: &Params<'_>) -> bool {
     option(&component.result).await;
     bitbox02::ui::screen_stack_pop();
 
-    component.result.unwrap()
+    component.result().unwrap()
 }
