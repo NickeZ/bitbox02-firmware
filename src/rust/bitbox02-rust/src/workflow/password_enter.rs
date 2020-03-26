@@ -25,19 +25,20 @@ use core::pin::Pin;
 /// // use pw.
 /// ```
 pub async fn password_enter(title: &str, special_chars: bool, password_out: &mut Password) {
-    let mut result: Pin<Box<Option<Password>>> = Box::pin(None);
+    //let mut result: Pin<Box<Option<Password>>> = Box::pin(None);
+    let mut result = None;
 
     // The component will set the result password when the user entered it.
     let mut component =
-        bitbox02::ui::trinary_input_string_create_password(title, special_chars, result.as_mut());
+        bitbox02::ui::trinary_input_string_create_password(title, special_chars, &mut result);
 
     bitbox02::ui::screen_stack_push(&mut component);
     // Wait for result to contain the password
-    option(&result).await;
+    option(&mut result).await;
     bitbox02::ui::screen_stack_pop();
 
-    let result: &Option<Password> = &*result;
-    let result: Option<&Password> = result.as_ref();
-    let result: &Password = result.unwrap();
-    password_out.clone_from(&result);
+    //let result: &Option<Password> = &*result;
+    //let result: Option<&Password> = result.as_ref();
+    //let result: &Password = result.unwrap();
+    password_out.clone_from(&result.unwrap());
 }

@@ -29,16 +29,17 @@ pub struct Component(*mut bitbox02_sys::component_t);
 pub fn trinary_input_string_create_password(
     title: &str,
     special_chars: bool,
-    result: Pin<&mut Option<Password>>,
+    result: &mut Option<Password>,
 ) -> Component {
-    extern "C" fn on_done_cb(password: *const c_char, param: *mut c_void) {
-        let mut out: Box<Pin<&mut Option<Password>>> = unsafe { Box::from_raw(param as *mut _) };
+    unsafe extern "C" fn on_done_cb(password: *const c_char, param: *mut c_void) {
+        //let mut out: Box<Pin<&mut Option<Password>>> = unsafe { Box::from_raw(param as *mut _) };
+        let out = (param as *mut Option<Password>).as_mut().expect("null ptr");
         let mut password_out = Password::new();
         let len = password_out.as_ref().len();
         password_out
             .as_mut()
-            .copy_from_slice(unsafe { core::slice::from_raw_parts(password, len) });
-        out.set(Some(password_out));
+            .copy_from_slice(core::slice::from_raw_parts(password, len));
+        *out = Some(password_out);
     }
 
     let component = unsafe {
@@ -46,7 +47,8 @@ pub fn trinary_input_string_create_password(
             crate::str_to_cstr_force!(title, 100).as_ptr(),
             special_chars,
             Some(on_done_cb),
-            Box::into_raw(Box::new(result)) as *mut _, // passed to on_done_cb as `param`.
+            //Box::into_raw(Box::new(result)) as *mut _, // passed to on_done_cb as `param`.
+            result as *mut _ as *mut c_void,
             None,
             core::ptr::null_mut(),
         )
@@ -77,7 +79,7 @@ pub struct ConfirmParams<'a> {
 
 /// Creates a user confirmation dialog screen.
 /// `result` - will be asynchronously set to `Some(bool)` once the user accets or rejects.
-pub fn confirm_create(params: &ConfirmParams, result: Pin<&mut Option<bool>>) -> Component {
+pub fn confirm_create(params: &ConfirmParams, result: &mut Option<bool>) -> Component {
     let params = bitbox02_sys::confirm_params_t {
         title: crate::str_to_cstr_force!(params.title, 200).as_ptr(),
         body: crate::str_to_cstr_force!(params.body, 200).as_ptr(),
@@ -90,16 +92,20 @@ pub fn confirm_create(params: &ConfirmParams, result: Pin<&mut Option<bool>>) ->
         display_size: params.display_size as u32,
     };
 
-    extern "C" fn on_accept_cb(param: *mut c_void) {
-        let mut out: Box<Pin<&mut Option<bool>>> = unsafe { Box::from_raw(param as *mut _) };
-        out.set(Some(true));
+    unsafe extern "C" fn on_accept_cb(param: *mut c_void) {
+        let param = (param as *mut Option<bool>).as_mut().expect("null ptr");
+        *param = Some(true);
+        //let mut out: Box<Pin<&mut Option<bool>>> = unsafe { Box::from_raw(param as *mut _) };
+        //out.set(Some(true));
     }
-    extern "C" fn on_reject_cb(param: *mut c_void) {
-        let mut out: Box<Pin<&mut Option<bool>>> = unsafe { Box::from_raw(param as *mut _) };
-        out.set(Some(false));
+    unsafe extern "C" fn on_reject_cb(param: *mut c_void) {
+        //let mut out: Box<Pin<&mut Option<bool>>> = unsafe { Box::from_raw(param as *mut _) };
+        //out.set(Some(false));
+        let param = (param as *mut Option<bool>).as_mut().expect("null ptr");
+        *param = Some(false);
     }
 
-    let result_ptr = Box::into_raw(Box::new(result)) as *mut _; // passed to callbacks `param`.
+    let result_ptr = result as *mut _ as *mut c_void; // passed to callbacks `param`.
     let component = unsafe {
         bitbox02_sys::confirm_create(
             &params,

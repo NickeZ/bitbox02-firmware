@@ -21,10 +21,11 @@ pub use bitbox02::ui::ConfirmParams as Params;
 
 /// Returns true if the user accepts, false if the user rejects.
 pub async fn confirm(params: &Params<'_>) -> bool {
-    let mut result: Pin<Box<Option<bool>>> = Box::pin(None);
+    //let mut result: Pin<Box<Option<bool>>> = Box::pin(None);
+    let mut result: Option<bool> = None;
 
     // The component will set the result when the user accepted/rejected.
-    let mut component = bitbox02::ui::confirm_create(&params, result.as_mut());
+    let mut component = bitbox02::ui::confirm_create(&params, &mut result);
 
     bitbox02::ui::screen_stack_push(&mut component);
     option(&result).await;
