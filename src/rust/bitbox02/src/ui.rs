@@ -20,17 +20,26 @@ use alloc::boxed::Box;
 use core::pin::Pin;
 
 /// Wraps the C component_t to be used in Rust.
-pub struct Component(*mut bitbox02_sys::component_t);
+pub struct Component<'a> {
+    component: *mut bitbox02_sys::component_t,
+    phantom: core::marker::PhantomData<&'a *mut bitbox02_sys::component_t>,
+}
+
+impl<'a> Component<'a> {
+    pub fn new(component: *mut bitbox02_sys::component_t) -> Self {
+        Component{ component, phantom: core::marker::PhantomData }
+    }
+}
 
 /// Creates a password input component.
 /// `title` - Shown before any input is entered as the screen title. **Panics** if more than 100 bytes.
 /// `special_chars` - whether to enable the special characters keyboard.
 /// `result` - will be asynchronously set to `Some(<password>)` once the user confirms.
-pub fn trinary_input_string_create_password(
+pub fn trinary_input_string_create_password<'a>(
     title: &str,
     special_chars: bool,
-    result: &mut Option<Password>,
-) -> Component {
+    result: &'a mut Option<Password>,
+) -> Component<'a> {
     unsafe extern "C" fn on_done_cb(password: *const c_char, param: *mut c_void) {
         //let mut out: Box<Pin<&mut Option<Password>>> = unsafe { Box::from_raw(param as *mut _) };
         let out = (param as *mut Option<Password>).as_mut().expect("null ptr");
@@ -53,7 +62,7 @@ pub fn trinary_input_string_create_password(
             core::ptr::null_mut(),
         )
     };
-    Component(component)
+    Component::new(component)
 }
 
 #[derive(Default)]
@@ -79,7 +88,7 @@ pub struct ConfirmParams<'a> {
 
 /// Creates a user confirmation dialog screen.
 /// `result` - will be asynchronously set to `Some(bool)` once the user accets or rejects.
-pub fn confirm_create(params: &ConfirmParams, result: &mut Option<bool>) -> Component {
+pub fn confirm_create<'a>(params: &ConfirmParams, result: &'a mut Option<bool>) -> Component<'a> {
     let params = bitbox02_sys::confirm_params_t {
         title: crate::str_to_cstr_force!(params.title, 200).as_ptr(),
         body: crate::str_to_cstr_force!(params.body, 200).as_ptr(),
@@ -119,12 +128,12 @@ pub fn confirm_create(params: &ConfirmParams, result: &mut Option<bool>) -> Comp
             result_ptr,
         )
     };
-    Component(component)
+    Component::new(component)
 }
 
 pub fn screen_stack_push(component: &mut Component) {
     unsafe {
-        bitbox02_sys::ui_screen_stack_push(component.0);
+        bitbox02_sys::ui_screen_stack_push(component.component);
     }
 }
 
