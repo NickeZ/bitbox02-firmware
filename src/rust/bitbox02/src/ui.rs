@@ -20,56 +20,29 @@ use alloc::boxed::Box;
 use core::pin::Pin;
 
 /// Wraps the C component_t to be used in Rust.
-///
-pub trait IntoComponent {
-    fn ptr(&mut self) -> *mut bitbox02_sys::component_t;
+pub struct ComponentReturn<T> {
+    component: *mut bitbox02_sys::component_t,
+    result: Box<Option<T>>,
 }
 
-pub struct TrinaryInputStringCreatePassword {
-    pub component: *mut bitbox02_sys::component_t,
-    pub result: Box<Option<Password>>,
-}
-
-impl IntoComponent for TrinaryInputStringCreatePassword {
-    fn ptr(&mut self) -> *mut bitbox02_sys::component_t {
+impl<T> ComponentReturn<T> {
+    pub fn new(component: *mut bitbox02_sys::component_t, result: Box<Option<T>>) -> Self {
+        ComponentReturn {component, result}
+    }
+    pub fn result(&mut self) -> Option<T> {
+        self.result.take()
+    }
+    pub fn ptr(&mut self) -> *mut bitbox02_sys::component_t {
         self.component
     }
 }
 
-impl TrinaryInputStringCreatePassword {
-    pub fn result(&mut self) -> Option<Password> {
-        self.result.take()
-    }
-}
-
 // To disallow move out from the struct
-impl Drop for TrinaryInputStringCreatePassword {
+impl<T> Drop for ComponentReturn<T> {
     fn drop(&mut self) {
     }
 }
 
-pub struct ConfirmCreate {
-    pub component: *mut bitbox02_sys::component_t,
-    pub result: Box<Option<bool>>,
-}
-
-impl IntoComponent for ConfirmCreate {
-    fn ptr(&mut self) -> *mut bitbox02_sys::component_t {
-        self.component
-    }
-}
-
-impl ConfirmCreate {
-    pub fn result(&mut self) -> Option<bool> {
-        self.result.take()
-    }
-}
-
-// To disallow move out from the struct
-impl Drop for ConfirmCreate {
-    fn drop(&mut self) {
-    }
-}
 
 /// Creates a password input component.
 /// `title` - Shown before any input is entered as the screen title. **Panics** if more than 100 bytes.
@@ -78,7 +51,7 @@ impl Drop for ConfirmCreate {
 pub fn trinary_input_string_create_password(
     title: &str,
     special_chars: bool,
-) -> TrinaryInputStringCreatePassword {
+) -> ComponentReturn<Password> {
     unsafe extern "C" fn on_done_cb(password: *const c_char, param: *mut c_void) {
         //let mut out: Box<Pin<&mut Option<Password>>> = unsafe { Box::from_raw(param as *mut _) };
         let out = (param as *mut Option<Password>).as_mut().expect("null ptr");
@@ -103,7 +76,7 @@ pub fn trinary_input_string_create_password(
             core::ptr::null_mut(),
         )
     };
-    TrinaryInputStringCreatePassword{component, result}
+    ComponentReturn::new(component, result)
 }
 
 #[derive(Default)]
@@ -129,7 +102,7 @@ pub struct ConfirmParams<'a> {
 
 /// Creates a user confirmation dialog screen.
 /// `result` - will be asynchronously set to `Some(bool)` once the user accets or rejects.
-pub fn confirm_create(params: &ConfirmParams) -> ConfirmCreate {
+pub fn confirm_create(params: &ConfirmParams) -> ComponentReturn<bool> {
     let params = bitbox02_sys::confirm_params_t {
         title: crate::str_to_cstr_force!(params.title, 200).as_ptr(),
         body: crate::str_to_cstr_force!(params.body, 200).as_ptr(),
@@ -170,7 +143,7 @@ pub fn confirm_create(params: &ConfirmParams) -> ConfirmCreate {
             result.as_mut() as *mut _ as *mut c_void,
         )
     };
-    ConfirmCreate{component, result}
+    ComponentReturn::new(component, result)
 }
 
 //struct ScreenStack;
@@ -182,7 +155,7 @@ pub fn confirm_create(params: &ConfirmParams) -> ConfirmCreate {
 //    }
 //}
 
-pub fn screen_stack_push(component: &mut dyn IntoComponent) {
+pub fn screen_stack_push<T>(component: &mut ComponentReturn<T>) {
     unsafe {
         bitbox02_sys::ui_screen_stack_push(component.ptr());
     }

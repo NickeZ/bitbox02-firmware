@@ -17,7 +17,7 @@ use crate::bb02_async::option;
 use alloc::boxed::Box;
 use core::pin::Pin;
 
-use bitbox02::ui::IntoComponent;
+//use bitbox02::ui::IntoComponent;
 
 pub use bitbox02::ui::ConfirmParams as Params;
 
@@ -30,8 +30,8 @@ pub async fn confirm(params: &Params<'_>) -> bool {
     let mut component = bitbox02::ui::confirm_create(&params);
 
     bitbox02::ui::screen_stack_push(&mut component);
-    option(&component.result).await;
+    let result = option(&component.result()).await;
     bitbox02::ui::screen_stack_pop();
 
-    component.result().unwrap()
+    result
 }

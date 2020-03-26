@@ -18,7 +18,7 @@ use alloc::boxed::Box;
 use bitbox02::password::Password;
 use core::pin::Pin;
 
-use bitbox02::ui::IntoComponent;
+//use bitbox02::ui::IntoComponent;
 
 /// Example:
 /// ```no_run
@@ -36,12 +36,12 @@ pub async fn password_enter(title: &str, special_chars: bool, password_out: &mut
 
     bitbox02::ui::screen_stack_push(&mut component);
     // Wait for result to contain the password
-    option(&mut component.result).await;
+    let result = option(&mut component.result()).await;
     bitbox02::ui::screen_stack_pop();
 
     //let result: &Option<Password> = &*result;
     //let result: Option<&Password> = result.as_ref();
     //let result: &Password = result.unwrap();
-    let result = component.result().unwrap();
+    //let result = component.result().unwrap();
     password_out.clone_from(&result);
 }

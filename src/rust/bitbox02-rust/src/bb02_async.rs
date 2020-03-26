@@ -33,14 +33,14 @@ pub fn spin<O>(task: &mut Task<O>) -> core::task::Poll<O> {
 pub struct AsyncOption<'a, O>(&'a Option<O>);
 
 impl<O> core::future::Future for AsyncOption<'_, O> {
-    type Output = ();
+    type Output = O;
     fn poll(
         self: core::pin::Pin<&mut Self>,
         _cx: &mut core::task::Context<'_>,
     ) -> core::task::Poll<Self::Output> {
         match self.0 {
             None => core::task::Poll::Pending,
-            Some(_) => core::task::Poll::Ready(()),
+            Some(o) => core::task::Poll::Ready(*o),
         }
     }
 }
