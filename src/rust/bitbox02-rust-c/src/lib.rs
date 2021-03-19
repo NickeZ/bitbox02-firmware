@@ -61,3 +61,12 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     bitbox02_rust::print_debug!(0, "Error: {}", info);
     loop {}
 }
+
+#[no_mangle]
+pub extern "C" fn rust_mainloop() {
+    //smol::block_on(async {
+    //    loop {
+    //        println!("hej");
+    //    }
+    //})
+}

@@ -25,6 +25,7 @@
 #include "util.h"
 #include "workflow/idle_workflow.h"
 #include "workflow/orientation_screen.h"
+#include "rust/rust.h"
 
 uint32_t __stack_chk_guard = 0;
 
@@ -40,10 +41,11 @@ int main(void)
     common_main();
     bitbox02_smarteeprom_init();
     traceln("%s", "Device initialized");
+    rust_mainloop();
 #if PLATFORM_BITBOX02 == 1
-    orientation_screen_blocking();
+    //orientation_screen_blocking();
 #endif
-    idle_workflow_blocking();
-    firmware_main_loop();
+    //idle_workflow_blocking();
+    //firmware_main_loop();
     return 0;
 }

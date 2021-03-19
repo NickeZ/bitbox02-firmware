@@ -22,6 +22,7 @@ members = [
     "bitbox02-noise",
     "bitbox02",
     "bitbox02-sys",
+    #"smol",
 ]
 
 [profile.release]

@@ -26,8 +26,8 @@
 //! [`parse_macro_input!`]: ../macro.parse_macro_input.html
 //!
 //! ```
-//! extern crate proc_macro;
-//!
+//! # extern crate proc_macro;
+//! #
 //! use proc_macro::TokenStream;
 //! use syn::{braced, parse_macro_input, token, Field, Ident, Result, Token};
 //! use syn::parse::{Parse, ParseStream};
@@ -153,8 +153,8 @@
 //! [`Parser`]: trait.Parser.html
 //!
 //! ```
-//! extern crate proc_macro;
-//!
+//! # extern crate proc_macro;
+//! #
 //! use proc_macro::TokenStream;
 //! use syn::parse::Parser;
 //! use syn::punctuated::Punctuated;
@@ -184,11 +184,22 @@
 //!
 //! ---
 //!
-//! *This module is available if Syn is built with the `"parsing"` feature.*
+//! *This module is available only if Syn is built with the `"parsing"` feature.*
 
 #[path = "discouraged.rs"]
 pub mod discouraged;
 
+use crate::buffer::{Cursor, TokenBuffer};
+use crate::error;
+use crate::lookahead;
+#[cfg(all(
+    not(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "wasi"))),
+    feature = "proc-macro"
+))]
+use crate::proc_macro;
+use crate::punctuated::Punctuated;
+use crate::token::Token;
+use proc_macro2::{self, Delimiter, Group, Literal, Punct, Span, TokenStream, TokenTree};
 use std::cell::Cell;
 use std::fmt::{self, Debug, Display};
 use std::marker::PhantomData;
@@ -197,24 +208,16 @@ use std::ops::Deref;
 use std::rc::Rc;
 use std::str::FromStr;
 
-#[cfg(all(
-    not(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "wasi"))),
-    feature = "proc-macro"
-))]
-use crate::proc_macro;
-use proc_macro2::{self, Delimiter, Group, Literal, Punct, Span, TokenStream, TokenTree};
-
-use crate::buffer::{Cursor, TokenBuffer};
-use crate::error;
-use crate::lookahead;
-use crate::punctuated::Punctuated;
-use crate::token::Token;
-
 pub use crate::error::{Error, Result};
 pub use crate::lookahead::{Lookahead1, Peek};
 
 /// Parsing interface implemented by all types that can be parsed in a default
 /// way from a token stream.
+///
+/// Refer to the [module documentation] for details about implementing and using
+/// the `Parse` trait.
+///
+/// [module documentation]: self
 pub trait Parse: Sized {
     fn parse(input: ParseStream) -> Result<Self>;
 }
@@ -266,10 +269,10 @@ pub struct ParseBuffer<'a> {
 
 impl<'a> Drop for ParseBuffer<'a> {
     fn drop(&mut self) {
-        if !self.is_empty() {
+        if let Some(unexpected_span) = span_of_unexpected_ignoring_nones(self.cursor()) {
             let (inner, old_span) = inner_unexpected(self);
             if old_span.is_none() {
-                inner.set(Unexpected::Some(self.cursor().span()));
+                inner.set(Unexpected::Some(unexpected_span));
             }
         }
     }
@@ -331,7 +334,6 @@ impl<'a> Debug for ParseBuffer<'a> {
 /// #     .unwrap();
 /// # assert_eq!(remainder.to_string(), "b c");
 /// ```
-#[derive(Copy, Clone)]
 pub struct StepCursor<'c, 'a> {
     scope: Span,
     // This field is covariant in 'c.
@@ -352,6 +354,14 @@ impl<'c, 'a> Deref for StepCursor<'c, 'a> {
 
     fn deref(&self) -> &Self::Target {
         &self.cursor
+    }
+}
+
+impl<'c, 'a> Copy for StepCursor<'c, 'a> {}
+
+impl<'c, 'a> Clone for StepCursor<'c, 'a> {
+    fn clone(&self) -> Self {
+        *self
     }
 }
 
@@ -388,7 +398,6 @@ pub(crate) fn new_parse_buffer(
     }
 }
 
-#[derive(Clone)]
 pub(crate) enum Unexpected {
     None,
     Some(Span),
@@ -398,6 +407,16 @@ pub(crate) enum Unexpected {
 impl Default for Unexpected {
     fn default() -> Self {
         Unexpected::None
+    }
+}
+
+impl Clone for Unexpected {
+    fn clone(&self) -> Self {
+        match self {
+            Unexpected::None => Unexpected::None,
+            Unexpected::Some(span) => Unexpected::Some(*span),
+            Unexpected::Chain(next) => Unexpected::Chain(next.clone()),
+        }
     }
 }
 
@@ -423,6 +442,23 @@ fn inner_unexpected(buffer: &ParseBuffer) -> (Rc<Cell<Unexpected>>, Option<Span>
 
 pub(crate) fn get_unexpected(buffer: &ParseBuffer) -> Rc<Cell<Unexpected>> {
     cell_clone(&buffer.unexpected).unwrap()
+}
+
+fn span_of_unexpected_ignoring_nones(mut cursor: Cursor) -> Option<Span> {
+    if cursor.eof() {
+        return None;
+    }
+    while let Some((inner, _span, rest)) = cursor.group(Delimiter::None) {
+        if let Some(unexpected) = span_of_unexpected_ignoring_nones(inner) {
+            return Some(unexpected);
+        }
+        cursor = rest;
+    }
+    if cursor.eof() {
+        None
+    } else {
+        Some(cursor.span())
+    }
 }
 
 impl<'a> ParseBuffer<'a> {
@@ -1077,7 +1113,7 @@ impl Parse for Literal {
 ///
 /// [module documentation]: self
 ///
-/// *This trait is available if Syn is built with the `"parsing"` feature.*
+/// *This trait is available only if Syn is built with the `"parsing"` feature.*
 pub trait Parser: Sized {
     type Output;
 
@@ -1092,7 +1128,7 @@ pub trait Parser: Sized {
     /// This function will check that the input is fully parsed. If there are
     /// any unparsed tokens at the end of the stream, an error is returned.
     ///
-    /// *This method is available if Syn is built with both the `"parsing"` and
+    /// *This method is available only if Syn is built with both the `"parsing"` and
     /// `"proc-macro"` features.*
     #[cfg(all(
         not(all(target_arch = "wasm32", any(target_os = "unknown", target_os = "wasi"))),
@@ -1149,10 +1185,10 @@ where
         let state = tokens_to_parse_buffer(&buf);
         let node = self(&state)?;
         state.check_unexpected()?;
-        if state.is_empty() {
-            Ok(node)
+        if let Some(unexpected_span) = span_of_unexpected_ignoring_nones(state.cursor()) {
+            Err(Error::new(unexpected_span, "unexpected token"))
         } else {
-            Err(state.error("unexpected token"))
+            Ok(node)
         }
     }
 
@@ -1165,10 +1201,10 @@ where
         let state = new_parse_buffer(scope, cursor, unexpected);
         let node = self(&state)?;
         state.check_unexpected()?;
-        if state.is_empty() {
-            Ok(node)
+        if let Some(unexpected_span) = span_of_unexpected_ignoring_nones(state.cursor()) {
+            Err(Error::new(unexpected_span, "unexpected token"))
         } else {
-            Err(state.error("unexpected token"))
+            Ok(node)
         }
     }
 
@@ -1195,8 +1231,8 @@ pub(crate) fn parse_stream<F: Parser>(f: F, input: ParseStream) -> Result<F::Out
 /// provided any attribute args.
 ///
 /// ```
-/// extern crate proc_macro;
-///
+/// # extern crate proc_macro;
+/// #
 /// use proc_macro::TokenStream;
 /// use syn::parse_macro_input;
 /// use syn::parse::Nothing;
