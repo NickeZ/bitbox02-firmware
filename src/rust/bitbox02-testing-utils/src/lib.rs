@@ -16,16 +16,20 @@
 
 extern crate alloc;
 extern crate std;
+
+#[macro_use]
+extern crate lazy_static;
+
 use core::cell::RefCell;
 use std::boxed::Box;
 
-use crate::keystore;
+use bitbox02::keystore;
 
 use core::convert::TryInto;
 
 #[derive(Default)]
 pub struct Data {
-    pub ui_confirm_create: Option<Box<dyn Fn(&super::ui::ConfirmParams) -> bool>>,
+    pub ui_confirm_create: Option<Box<dyn Fn(&bitbox02::ui::ConfirmParams) -> bool>>,
     pub reset: Option<Box<dyn Fn(bool)>>,
     pub sdcard_inserted: Option<bool>,
     pub ui_sdcard_create_arg: Option<bool>,
@@ -60,7 +64,7 @@ pub fn mock_unlocked() {
         .try_into()
         .unwrap();
     unsafe { bitbox02_sys::mock_state(seed.as_ptr(), core::ptr::null()) }
-    keystore::unlock_bip39(&crate::input::SafeInputString::new()).unwrap();
+    keystore::unlock_bip39(&bitbox02::input::SafeInputString::new()).unwrap();
 }
 
 /// This mounts a new FAT32 volume in RAM for use in unit tests. As there is only one volume, access only when holding `MUTEX`.

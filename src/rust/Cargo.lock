@@ -55,7 +55,6 @@ name = "bitbox02"
 version = "0.1.0"
 dependencies = [
  "bitbox02-sys",
- "lazy_static",
  "util",
  "zeroize",
 ]
@@ -111,6 +110,15 @@ name = "bitbox02-sys"
 version = "0.1.0"
 dependencies = [
  "util",
+]
+
+[[package]]
+name = "bitbox02-testing-utils"
+version = "0.1.0"
+dependencies = [
+ "bitbox02",
+ "bitbox02-sys",
+ "lazy_static",
 ]
 
 [[package]]
