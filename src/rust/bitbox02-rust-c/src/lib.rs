@@ -14,6 +14,7 @@
 
 #![no_std]
 #![feature(alloc_error_handler)] // used in alloc.rs
+#![feature(lang_items)]
 
 #[cfg(test)]
 #[macro_use]
@@ -53,4 +54,9 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     #[cfg(feature = "firmware")]
     bitbox02_rust::print_debug!(0, "Error: {}", info);
     loop {}
+}
+
+#[lang = "eh_personality"]
+#[no_mangle]
+pub extern fn rust_eh_personality() {
 }
