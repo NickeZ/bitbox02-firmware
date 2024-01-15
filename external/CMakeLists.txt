@@ -248,3 +248,21 @@ add_library(ctaes
   ctaes/ctaes.c
 )
 target_include_directories(ctaes SYSTEM PUBLIC ctaes)
+
+# optiga-trust-m
+
+add_library(optiga
+  optiga-trust-m/optiga/cmd/optiga_cmd.c
+  optiga-trust-m/optiga/common/optiga_lib_common.c
+  optiga-trust-m/optiga/common/optiga_lib_logger.c
+  optiga-trust-m/optiga/comms/ifx_i2c/ifx_i2c.c
+  optiga-trust-m/optiga/comms/ifx_i2c/ifx_i2c_config.c
+  optiga-trust-m/optiga/comms/ifx_i2c/ifx_i2c_data_link_layer.c
+  optiga-trust-m/optiga/comms/ifx_i2c/ifx_i2c_physical_layer.c
+  optiga-trust-m/optiga/comms/ifx_i2c/ifx_i2c_presentation_layer.c
+  optiga-trust-m/optiga/comms/ifx_i2c/ifx_i2c_transport_layer.c
+  optiga-trust-m/optiga/comms/optiga_comms_ifx_i2c.c
+  optiga-trust-m/optiga/crypt/optiga_crypt.c
+  optiga-trust-m/optiga/util/optiga_util.c
+)
+target_include_directories(optiga SYSTEM PUBLIC optiga-trust-m/optiga/include)

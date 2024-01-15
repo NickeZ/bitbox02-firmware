@@ -588,6 +588,7 @@ if(CMAKE_CROSSCOMPILING)
     # Must manually link against C so that malloc can find _sbrk
     target_link_libraries(${elf}
       PRIVATE
+        optiga
         cryptoauthlib
         fatfs
         ctaes
