@@ -145,6 +145,19 @@ set(CRYPTOAUTHLIB-SOURCES
 )
 set(CRYPTOAUTHLIB-SOURCES ${CRYPTOAUTHLIB-SOURCES} PARENT_SCOPE)
 
+set(OPTOGAPAL-SOURCES
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_gpio.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_i2c.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_ifx_i2c_config.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_logger.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_datastore.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_event.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_lock.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_timer.c
+)
+set(OPTIGAPAL-SOURCES ${OPTIGAPAL-SOURCES} PARENT_SCOPE)
+
 set(ETHEREUM-SOURCES
   ${CMAKE_SOURCE_DIR}/src/apps/eth/eth_params.c
 )
@@ -189,6 +202,7 @@ set(FIRMWARE-SOURCES
   ${FIRMWARE-DRIVER-SOURCES}
   ${DRIVER-SOURCES}
   ${CRYPTOAUTHLIB-SOURCES}
+  ${OPTIGAPAL-SOURCES}
   ${CMAKE_SOURCE_DIR}/src/common_main.c
 )
 

@@ -38,15 +38,16 @@
 #include "optiga/pal/pal_gpio.h"
 #include "optiga/pal/pal_i2c.h"
 #include "optiga/ifx_i2c/ifx_i2c_config.h"
+#include "driver_init.h"
 
 // !!!OPTIGA_LIB_PORTING_REQUIRED
-typedef struct locl_i2c_struct_to_descroibe_master
-{
-    // you parameters to control the master instance
-    // See other implementation to get intuition on how to implement this part
-}local_i2c_struct_to_descroibe_master_t;
-
-local_i2c_struct_to_descroibe_master_t i2c_master_0;
+//typedef struct locl_i2c_struct_to_descroibe_master
+//{
+//    // you parameters to control the master instance
+//    // See other implementation to get intuition on how to implement this part
+//}local_i2c_struct_to_descroibe_master_t;
+//
+//local_i2c_struct_to_descroibe_master_t i2c_master_0;
 
 /**
  * \brief PAL I2C configuration for OPTIGA. 
@@ -54,7 +55,7 @@ local_i2c_struct_to_descroibe_master_t i2c_master_0;
 pal_i2c_t optiga_pal_i2c_context_0 =
 {
     /// Pointer to I2C master platform specific context
-    (void*)&i2c_master_0,
+    (void*)&I2C_0,
     /// Upper layer context
     NULL,
     /// Callback event handler
@@ -64,7 +65,8 @@ pal_i2c_t optiga_pal_i2c_context_0 =
 };
 
 /**
-* \brief PAL vdd pin configuration for OPTIGA. 
+ * \brief PAL vdd pin configuration for OPTIGA. 
+ * NC on bitbox02
  */
 pal_gpio_t optiga_vdd_0 =
 {
@@ -72,11 +74,12 @@ pal_gpio_t optiga_vdd_0 =
     // Platform specific GPIO context for the pin used to toggle Vdd.
     // You should have vdd_pin define in your system,
     // alternativly you can put here raw GPIO number, but without the & sign
-    (void*)&vdd_pin
+    0
 };
 
 /**
  * \brief PAL reset pin configuration for OPTIGA.
+ * NC on bitbox02
  */
 pal_gpio_t optiga_reset_0 =
 {
@@ -84,7 +87,7 @@ pal_gpio_t optiga_reset_0 =
     // Platform specific GPIO context for the pin used to toggle Reset.
     // You should have reset_pin define in your system,
     // alternativly you can put here raw GPIO number, but without the & sign
-    (void*)&reset_pin
+    0
 };
 
 /**

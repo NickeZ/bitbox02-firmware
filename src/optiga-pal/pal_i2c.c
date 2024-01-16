@@ -36,6 +36,7 @@
 */
 
 #include "optiga/pal/pal_i2c.h"
+#include "hpl_i2c_m_sync.h"
 
 #define PAL_I2C_MASTER_MAX_BITRATE  (400U)
 
@@ -125,6 +126,14 @@ pal_status_t pal_i2c_deinit(const pal_i2c_t * p_i2c_context)
 pal_status_t pal_i2c_write(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t length)
 {
     pal_status_t status = PAL_STATUS_FAILURE;
+    struct _i2c_m_msg packet;
+    uint8_t retries = 25u;
+    int32_t r;
+
+    packet.addr = p_i2c_context->slave_address;
+    packet.len = (int32_t) length;
+    packet.buffer = p_data;
+    packet.flags = I2C_M_SEVEN | I2C_M_STOP;
 
     //Acquire the I2C bus before read/write
     if (PAL_STATUS_SUCCESS == pal_i2c_acquire(p_i2c_context))
@@ -133,11 +142,12 @@ pal_status_t pal_i2c_write(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t
 
         //Invoke the low level i2c master driver API to write to the bus
         // !!!OPTIGA_LIB_PORTING_REQUIRED
-        if (!foo_i2c_write(p_i2c_context->p_i2c_hw_config,
-                          (p_i2c_context->slave_address << 1),
-                          p_data,
-                          length,
-                          )
+        do {
+            r = i2c_m_sync_transfer(p_i2c_context->p_i2c_hw_config, &packet);
+            delay_ms(2u);
+        } while(retries-- && r != I2C_OK);
+
+        if (r != I2C_OK)
         {
             //If I2C Master fails to invoke the write operation, invoke upper layer event handler with error.
 
@@ -165,6 +175,7 @@ pal_status_t pal_i2c_write(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t
             *    invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
             *    
             */
+            invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
             status = PAL_STATUS_SUCCESS;
         }
     }
@@ -180,6 +191,14 @@ pal_status_t pal_i2c_write(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t
 pal_status_t pal_i2c_read(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t length)
 {
     pal_status_t status = PAL_STATUS_FAILURE;
+    struct _i2c_m_msg packet;
+    uint8_t retries = 25u;
+    int32_t r;
+
+    packet.addr = p_i2c_context->slave_address;
+    packet.len = (int32_t) length;
+    packet.buffer = p_data;
+    packet.flags = I2C_M_SEVEN | I2C_M_RD | I2C_M_STOP;
 
     //Acquire the I2C bus before read/write
     if (PAL_STATUS_SUCCESS == pal_i2c_acquire(p_i2c_context))
@@ -187,11 +206,12 @@ pal_status_t pal_i2c_read(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t 
         gp_pal_i2c_current_ctx = p_i2c_context;
 
         //Invoke the low level i2c master driver API to read from the bus
-        if (foo_i2c_read(p_i2c_context->p_i2c_hw_config,
-                          (p_i2c_context->slave_address << 1),
-                          p_data,
-                          length,
-                          )
+        do {
+            r = i2c_m_sync_transfer(p_i2c_context->p_i2c_hw_config, &packet);
+            delay_ms(2u);
+        } while(retries-- && r != I2C_OK);
+
+        if (r != I2C_OK)
         {
             //If I2C Master fails to invoke the read operation, invoke upper layer event handler with error.
             ((upper_layer_callback_t)(p_i2c_context->upper_layer_event_handler))
@@ -208,6 +228,7 @@ pal_status_t pal_i2c_read(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t 
             * invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
             * if you have blocking (non-interrupt) i2c calls
             */
+            invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
             status = PAL_STATUS_SUCCESS;
         }
     }
@@ -237,15 +258,16 @@ pal_status_t pal_i2c_set_bitrate(const pal_i2c_t * p_i2c_context, uint16_t bitra
         // !!!OPTIGA_LIB_PORTING_REQUIRED
         // This function is NOT absolutely required for the correct working of the system, but it's recommended
         // to implement it, though
-        if (foo_i2c_set_baudrate(bitrate)
-        {
-            return_status = PAL_STATUS_FAILURE;
-        }
-        else
-        {
-            return_status = PAL_STATUS_SUCCESS;
-            event = PAL_I2C_EVENT_SUCCESS;
-        }
+        //if (foo_i2c_set_baudrate(bitrate))
+        //{
+        //    return_status = PAL_STATUS_FAILURE;
+        //}
+        //else
+        //{
+        //    return_status = PAL_STATUS_SUCCESS;
+        //    event = PAL_I2C_EVENT_SUCCESS;
+        //}
+        return_status = PAL_STATUS_FAILURE;
     }
     else
     {
