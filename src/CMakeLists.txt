@@ -145,7 +145,7 @@ set(CRYPTOAUTHLIB-SOURCES
 )
 set(CRYPTOAUTHLIB-SOURCES ${CRYPTOAUTHLIB-SOURCES} PARENT_SCOPE)
 
-set(OPTOGAPAL-SOURCES
+set(OPTIGAPAL-SOURCES
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_gpio.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_i2c.c
@@ -155,6 +155,8 @@ set(OPTOGAPAL-SOURCES
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_event.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_lock.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_timer.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_memory.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/securityfunctions.c
 )
 set(OPTIGAPAL-SOURCES ${OPTIGAPAL-SOURCES} PARENT_SCOPE)
 

@@ -36,12 +36,16 @@
 */
 
 #include "optiga/pal/pal_i2c.h"
-#include "hpl_i2c_m_sync.h"
+#include "optiga/pal/pal_os_timer.h"
+#include "hal_i2c_m_sync.h"
+#include "hal_delay.h"
+#include "util.h"
+extern struct i2c_m_sync_desc I2C_0;
 
 #define PAL_I2C_MASTER_MAX_BITRATE  (400U)
 
 static volatile uint32_t g_entry_count = 0;
-static pal_i2c_t * gp_pal_i2c_current_ctx;
+static const pal_i2c_t * gp_pal_i2c_current_ctx;
 
 static pal_status_t pal_i2c_acquire(const void * p_i2c_context)
 {
@@ -57,6 +61,7 @@ static pal_status_t pal_i2c_acquire(const void * p_i2c_context)
             return PAL_STATUS_SUCCESS;
         }
     }
+    traceln("%s: acquired failed", __func__);
     return PAL_STATUS_FAILURE;
 }
 
@@ -69,11 +74,16 @@ static void pal_i2c_release(const void * p_i2c_context)
     g_entry_count = 0;
 }
 
-void invoke_upper_layer_callback (const pal_i2c_t * p_pal_i2c_ctx, optiga_lib_status_t event)
+static void invoke_upper_layer_callback (const pal_i2c_t * p_pal_i2c_ctx, optiga_lib_status_t event)
 {
     upper_layer_callback_t upper_layer_handler;
 
+    // Casting a data pointer to a function pointer is not OK according to ISO C. However, everyone
+    // does it...
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     upper_layer_handler = (upper_layer_callback_t)p_pal_i2c_ctx->upper_layer_event_handler;
+#pragma GCC diagnostic pop
 
     upper_layer_handler(p_pal_i2c_ctx->p_upper_layer_ctx, event);
 
@@ -85,31 +95,30 @@ void invoke_upper_layer_callback (const pal_i2c_t * p_pal_i2c_ctx, optiga_lib_st
 
 // !!!OPTIGA_LIB_PORTING_REQUIRED
 // The next 5 functions are required only in case you have interrupt based i2c implementation
-void i2c_master_end_of_transmit_callback(void)
-{
-    invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
-}
-
-void i2c_master_end_of_receive_callback(void)
-{
-    invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
-}
-
-void i2c_master_error_detected_callback(void)
-{
-    invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_ERROR);
-}
-
-void i2c_master_nack_received_callback(void)
-{
-    i2c_master_error_detected_callback();
-}
-
-void i2c_master_arbitration_lost_callback(void)
-{
-    i2c_master_error_detected_callback();
-}
-
+//void i2c_master_end_of_transmit_callback(void)
+//{
+//    invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
+//}
+//
+//void i2c_master_end_of_receive_callback(void)
+//{
+//    invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_SUCCESS);
+//}
+//
+//void i2c_master_error_detected_callback(void)
+//{
+//    invoke_upper_layer_callback(gp_pal_i2c_current_ctx, PAL_I2C_EVENT_ERROR);
+//}
+//
+//void i2c_master_nack_received_callback(void)
+//{
+//    i2c_master_error_detected_callback();
+//}
+//
+//void i2c_master_arbitration_lost_callback(void)
+//{
+//    i2c_master_error_detected_callback();
+//}
 
 pal_status_t pal_i2c_init(const pal_i2c_t * p_i2c_context)
 {
@@ -123,8 +132,9 @@ pal_status_t pal_i2c_deinit(const pal_i2c_t * p_i2c_context)
     return PAL_STATUS_SUCCESS;
 }
 
-pal_status_t pal_i2c_write(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t length)
+pal_status_t pal_i2c_write(const pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t length)
 {
+    //traceln("%s", __func__);
     pal_status_t status = PAL_STATUS_FAILURE;
     struct _i2c_m_msg packet;
     uint8_t retries = 25u;
@@ -151,11 +161,16 @@ pal_status_t pal_i2c_write(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t
         {
             //If I2C Master fails to invoke the write operation, invoke upper layer event handler with error.
 
+    // Casting a data pointer to a function pointer is not OK according to ISO C. However, everyone
+    // does it...
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
             ((upper_layer_callback_t)(p_i2c_context->upper_layer_event_handler))
                                                        (p_i2c_context->p_upper_layer_ctx , PAL_I2C_EVENT_ERROR);
+#pragma GCC diagnostic pop
             
             //Release I2C Bus
-            pal_i2c_release((void * )p_i2c_context);
+            pal_i2c_release(p_i2c_context);
         }
         else
         {
@@ -182,14 +197,21 @@ pal_status_t pal_i2c_write(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t
     else
     {
         status = PAL_STATUS_I2C_BUSY;
+    // Casting a data pointer to a function pointer is not OK according to ISO C. However, everyone
+    // does it...
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
         ((upper_layer_callback_t)(p_i2c_context->upper_layer_event_handler))
                                                         (p_i2c_context->p_upper_layer_ctx , PAL_I2C_EVENT_BUSY);
+#pragma GCC diagnostic pop
     }
     return status;
 }
 
-pal_status_t pal_i2c_read(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t length)
+pal_status_t pal_i2c_read(const pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t length)
 {
+    //traceln("%s", __func__);
+    //int32_t start = pal_os_timer_get_time_in_milliseconds();
     pal_status_t status = PAL_STATUS_FAILURE;
     struct _i2c_m_msg packet;
     uint8_t retries = 25u;
@@ -213,12 +235,18 @@ pal_status_t pal_i2c_read(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t 
 
         if (r != I2C_OK)
         {
+            traceln("%s transfer failed", __func__);
             //If I2C Master fails to invoke the read operation, invoke upper layer event handler with error.
+    // Casting a data pointer to a function pointer is not OK according to ISO C. However, everyone
+    // does it...
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
             ((upper_layer_callback_t)(p_i2c_context->upper_layer_event_handler))
                                                        (p_i2c_context->p_upper_layer_ctx , PAL_I2C_EVENT_ERROR);
+#pragma GCC diagnostic pop
 
             //Release I2C Bus
-            pal_i2c_release((void * )p_i2c_context);
+            pal_i2c_release(p_i2c_context);
         }
         else
         {
@@ -235,14 +263,22 @@ pal_status_t pal_i2c_read(pal_i2c_t * p_i2c_context, uint8_t * p_data, uint16_t 
     else
     {
         status = PAL_STATUS_I2C_BUSY;
+    // Casting a data pointer to a function pointer is not OK according to ISO C. However, everyone
+    // does it...
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
         ((upper_layer_callback_t)(p_i2c_context->upper_layer_event_handler))
                                                         (p_i2c_context->p_upper_layer_ctx , PAL_I2C_EVENT_BUSY);
+#pragma GCC diagnostic pop
     }
+    //uint32_t final_time = pal_os_timer_get_time_in_milliseconds() - start;
+    //traceln("took %lu ms", final_time);
     return status;
 }
 
 pal_status_t pal_i2c_set_bitrate(const pal_i2c_t * p_i2c_context, uint16_t bitrate)
 {
+    //traceln("%s %d", __func__, bitrate);
     pal_status_t return_status = PAL_STATUS_FAILURE;
     optiga_lib_status_t event = PAL_I2C_EVENT_ERROR;
 
@@ -255,19 +291,28 @@ pal_status_t pal_i2c_set_bitrate(const pal_i2c_t * p_i2c_context, uint16_t bitra
         {
             bitrate = PAL_I2C_MASTER_MAX_BITRATE;
         }
-        // !!!OPTIGA_LIB_PORTING_REQUIRED
-        // This function is NOT absolutely required for the correct working of the system, but it's recommended
-        // to implement it, though
-        //if (foo_i2c_set_baudrate(bitrate))
-        //{
-        //    return_status = PAL_STATUS_FAILURE;
-        //}
-        //else
-        //{
-        //    return_status = PAL_STATUS_SUCCESS;
-        //    event = PAL_I2C_EVENT_SUCCESS;
-        //}
-        return_status = PAL_STATUS_FAILURE;
+
+        do {
+            if(0 != i2c_m_sync_disable(&I2C_0)) {
+                traceln("%s: failed to disable i2c", __func__);
+                return_status = PAL_STATUS_FAILURE;
+                break;
+            }
+
+            if (0 != i2c_m_sync_set_baudrate(p_i2c_context->p_i2c_hw_config, 0, bitrate)) {
+                traceln("%s: failed to set bitrate", __func__);
+                return_status = PAL_STATUS_FAILURE;
+                break;
+            }
+
+            if(0 != i2c_m_sync_enable(&I2C_0)) {
+                traceln("%s: failed to enable i2c", __func__);
+                return_status = PAL_STATUS_FAILURE;
+                break;
+            }
+            event = PAL_I2C_EVENT_SUCCESS;
+            return_status = PAL_STATUS_SUCCESS;
+        } while(0);
     }
     else
     {
@@ -276,12 +321,16 @@ pal_status_t pal_i2c_set_bitrate(const pal_i2c_t * p_i2c_context, uint16_t bitra
     }
     if (0 != p_i2c_context->upper_layer_event_handler)
     {
-        ((callback_handler_t)(p_i2c_context->upper_layer_event_handler))(p_i2c_context->p_upper_layer_ctx , event);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+        ((upper_layer_callback_t)(p_i2c_context->upper_layer_event_handler))
+            (p_i2c_context->p_upper_layer_ctx , event);
+#pragma GCC diagnostic pop
     }
     //Release I2C Bus if its acquired 
     if (PAL_STATUS_I2C_BUSY != return_status)
     {
-        pal_i2c_release((void * )p_i2c_context);
+        pal_i2c_release(p_i2c_context);
     }
     return return_status;
 }

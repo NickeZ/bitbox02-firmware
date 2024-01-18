@@ -25,6 +25,7 @@
 #include "securechip/securechip.h"
 #include "util.h"
 #include <wally_core.h>
+#include "optiga-pal/securityfunctions.h"
 
 extern void __attribute__((noreturn)) __stack_chk_fail(void);
 void __attribute__((noreturn)) __stack_chk_fail(void)
@@ -45,12 +46,12 @@ static const memory_interface_functions_t _memory_interface_functions = {
     .random_32_bytes = random_32_bytes_mcu,
 };
 
-static const securechip_interface_functions_t _securechip_interface_functions = {
-    .get_auth_key = memory_get_authorization_key,
-    .get_io_protection_key = memory_get_io_protection_key,
-    .get_encryption_key = memory_get_encryption_key,
-    .random_32_bytes = random_32_bytes,
-};
+//static const securechip_interface_functions_t _securechip_interface_functions = {
+//    .get_auth_key = memory_get_authorization_key,
+//    .get_io_protection_key = memory_get_io_protection_key,
+//    .get_encryption_key = memory_get_encryption_key,
+//    .random_32_bytes = random_32_bytes,
+//};
 
 static void _wally_patched_bzero(void* ptr, size_t len)
 {
@@ -85,14 +86,16 @@ void common_main(void)
 
     // securechip_setup must come after memory_setup, so the io/auth keys to be
     // used are already initialized.
-    int securechip_result = securechip_setup(&_securechip_interface_functions);
-    if (securechip_result) {
+    printf("%s\n", "setting up optiga");
+    int32_t res = optiga_setup(NULL);
+    //int securechip_result = securechip_setup(&_securechip_interface_functions);
+    if (res) {
         char errmsg[100] = {0};
         snprintf(
             errmsg,
             sizeof(errmsg),
-            "Securechip setup failed.\nError code: %i\nPlease contact support.",
-            securechip_result);
-        AbortAutoenter(errmsg);
+            "Securechip setup failed.\nError code: %li\nPlease contact support.",
+            res);
+        //AbortAutoenter(errmsg);
     }
 }

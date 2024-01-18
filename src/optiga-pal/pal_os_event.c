@@ -36,6 +36,9 @@
 */
 
 #include "optiga/pal/pal_os_event.h"
+#include "hal_timer.h"
+#include "util.h"
+extern struct timer_descriptor TIMER_0;
 
 static pal_os_event_t pal_os_event_0 = {0};
 
@@ -62,14 +65,12 @@ pal_os_event_t * pal_os_event_create(register_callback callback, void * callback
     return (&pal_os_event_0);
 }
 
+static struct timer_task scheduler;
+
 void pal_os_event_trigger_registered_callback(void)
 {
+    //traceln("%s: called", __func__);
     register_callback callback;
-
-    // !!!OPTIGA_LIB_PORTING_REQUIRED
-    // User should take care to stop the timer if it sin't stoped automatically
-    // IMPORTANT: Make sure you don't call this callback from the ISR. 
-    // It could work, but not recommended.
 
     if (pal_os_event_0.callback_registered)
     {
@@ -78,6 +79,10 @@ void pal_os_event_trigger_registered_callback(void)
     }
 }
 
+static void _timer_cb(const struct timer_task * const timer_task) {
+    (void) timer_task;
+    pal_os_event_trigger_registered_callback();
+}
 
 void pal_os_event_register_callback_oneshot(pal_os_event_t * p_pal_os_event,
                                              register_callback callback,
@@ -87,15 +92,15 @@ void pal_os_event_register_callback_oneshot(pal_os_event_t * p_pal_os_event,
     p_pal_os_event->callback_registered = callback;
     p_pal_os_event->callback_ctx = callback_args;
 
-    // !!!OPTIGA_LIB_PORTING_REQUIRED
-    // User should start the timer here with the 
-    // pal_os_event_trigger_registered_callback() function as a callback
+    scheduler.interval = (time_us+99)/100;
+    scheduler.cb = _timer_cb;
+    scheduler.mode = TIMER_TASK_ONE_SHOT;
+    timer_add_task(&TIMER_0, &scheduler);
 }
 
 void pal_os_event_destroy(pal_os_event_t * pal_os_event)
 {
     (void)pal_os_event;
-    // User should take care to destroy the event if it's not required
 }
 
 /**

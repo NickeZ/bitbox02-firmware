@@ -35,11 +35,20 @@
  * @{
  */
 #include "optiga/pal/pal_logger.h"
+#include "util.h"
+
+pal_logger_t logger_console =
+{
+    .logger_config_ptr = NULL,
+    .logger_rx_flag = 0,
+    .logger_tx_flag = 1,
+};
 
 pal_status_t pal_logger_init(void * p_logger_context)
 {
     pal_status_t return_status = PAL_STATUS_FAILURE;
     pal_logger_t * p_log_context = p_logger_context;
+    (void) p_log_context;
 
     do
     {
@@ -53,6 +62,7 @@ pal_status_t pal_logger_deinit(void * p_logger_context)
 {
     pal_status_t return_status = PAL_STATUS_FAILURE;
     pal_logger_t * p_log_context = p_logger_context;
+    (void) p_log_context;
 
     do
     {
@@ -67,9 +77,19 @@ pal_status_t pal_logger_write(void * p_logger_context, const uint8_t * p_log_dat
 
     int32_t return_status = PAL_STATUS_FAILURE;
     pal_logger_t * p_log_context = p_logger_context;
-
+    (void) p_log_context;
+    (void) log_data_length;
     do
     {
+        const char* p = (const char*)p_log_data;
+        while(p < (const char*) p_log_data+log_data_length) {
+            // Optega library logs with \r\n as line ending, but we only need \n.
+            if (*p != '\r') {
+                putchar(*p);
+            }
+            p++;
+        }
+        return_status = PAL_STATUS_SUCCESS;
         // !!!OPTIGA_LIB_PORTING_REQUIRED
     } while(0);
     return ((pal_status_t)return_status);
@@ -80,6 +100,9 @@ pal_status_t pal_logger_read(void * p_logger_context, uint8_t * p_log_data, uint
 
     int32_t return_status = PAL_STATUS_FAILURE;
     pal_logger_t * p_log_context = p_logger_context;
+    (void) p_log_context;
+    (void) p_log_data;
+    (void) log_data_length;
 
     do
     {

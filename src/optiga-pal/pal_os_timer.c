@@ -36,6 +36,7 @@
 */
 
 #include "optiga/pal/pal_os_timer.h"
+#include "hpl_time_measure.h"
 
 
 static volatile uint32_t g_tick_count = 0;
@@ -51,9 +52,7 @@ uint32_t pal_os_timer_get_time_in_microseconds(void)
 
 uint32_t pal_os_timer_get_time_in_milliseconds(void)
 {
-    // !!!OPTIGA_LIB_PORTING_REQUIRED
-    // You need to return here a unique value corresponding to the real-time
-    return (g_tick_count);
+    return _system_time_get(SysTick);
 }
 
 void pal_os_timer_delay_in_milliseconds(uint16_t milliseconds)
