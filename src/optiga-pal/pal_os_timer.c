@@ -37,6 +37,7 @@
 
 #include "optiga/pal/pal_os_timer.h"
 #include "hpl_time_measure.h"
+#include "hal_delay.h"
 
 
 static volatile uint32_t g_tick_count = 0;
@@ -57,22 +58,23 @@ uint32_t pal_os_timer_get_time_in_milliseconds(void)
 
 void pal_os_timer_delay_in_milliseconds(uint16_t milliseconds)
 {
-    uint32_t start_time;
-    uint32_t current_time;
-    uint32_t time_stamp_diff;
+    delay_us(milliseconds*1000);
+    //uint32_t start_time;
+    //uint32_t current_time;
+    //uint32_t time_stamp_diff;
 
-    start_time = pal_os_timer_get_time_in_milliseconds();
-    current_time = start_time;
-    time_stamp_diff = current_time - start_time;
-    while (time_stamp_diff <= (uint32_t)milliseconds)
-    {
-        current_time = pal_os_timer_get_time_in_milliseconds();
-        time_stamp_diff = current_time - start_time;
-        if (start_time > current_time)
-        {
-            time_stamp_diff = (0xFFFFFFFF + (current_time - start_time)) + 0x01;
-        }        
-    }
+    //start_time = pal_os_timer_get_time_in_milliseconds();
+    //current_time = start_time;
+    //time_stamp_diff = current_time - start_time;
+    //while (time_stamp_diff <= (uint32_t)milliseconds)
+    //{
+    //    current_time = pal_os_timer_get_time_in_milliseconds();
+    //    time_stamp_diff = current_time - start_time;
+    //    if (start_time > current_time)
+    //    {
+    //        time_stamp_diff = (0xFFFFFFFF + (current_time - start_time)) + 0x01;
+    //    }        
+    //}
 }
 
 pal_status_t pal_timer_init(void)

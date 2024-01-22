@@ -15,9 +15,13 @@
 #ifndef _SECURITYFUNCTIONS_H_
 #define _SECURITYFUNCTIONS_H_
 #include "stdint.h"
+#include "stddef.h"
+#include "stdbool.h"
 
 typedef struct {int32_t dummy;}
 securityfunctions_interface_functions_t;
 
 int32_t optiga_setup(const securityfunctions_interface_functions_t* ifs);
+bool securityfunctions_random(uint8_t* rand_out);
+int securityfunctions_kdf(const uint8_t* msg, size_t len, uint8_t* kdf_out);
 #endif // _SECURITYFUNCTIONS_H_

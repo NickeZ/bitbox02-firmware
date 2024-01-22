@@ -36,6 +36,7 @@
 */
 
 #include "optiga/pal/pal_os_datastore.h"
+#include "memory/memory.h"
 /// @cond hidden
 
 /// Size of length field 
@@ -74,18 +75,8 @@ pal_status_t pal_os_datastore_write(uint16_t datastore_id,
     {
         case OPTIGA_PLATFORM_BINDING_SHARED_SECRET_ID:
         {
-            // !!!OPTIGA_LIB_PORTING_REQUIRED
-            // This has to be enhanced by user only, in case of updating
-            // the platform binding shared secret during the runtime into NVM.
-            // In current implementation, platform binding shared secret is 
-            // stored in RAM.
-            if (length <= OPTIGA_SHARED_SECRET_MAX_LENGTH)
-            {
-                optiga_platform_binding_shared_secret[offset++] = (uint8_t)(length>>8);
-                optiga_platform_binding_shared_secret[offset++] = (uint8_t)(length);
-                memcpy(&optiga_platform_binding_shared_secret[offset], p_buffer, length);
-                return_status = PAL_STATUS_SUCCESS;
-            }
+            // Not implemented
+            return_status = PAL_STATUS_FAILURE;
             break;
         }
         case OPTIGA_COMMS_MANAGE_CONTEXT_ID:
@@ -135,20 +126,11 @@ pal_status_t pal_os_datastore_read(uint16_t datastore_id,
     {
         case OPTIGA_PLATFORM_BINDING_SHARED_SECRET_ID:
         {
-            // !!!OPTIGA_LIB_PORTING_REQUIRED
-            // This has to be enhanced by user only,
-            // if the platform binding shared secret is stored in non-volatile 
-            // memory with a specific location and not as a context segment 
-            // else updating the share secret content is good enough.
-
-            data_length = (uint16_t) (optiga_platform_binding_shared_secret[offset++] << 8);
-            data_length |= (uint16_t)(optiga_platform_binding_shared_secret[offset++]);
-            if (data_length <= OPTIGA_SHARED_SECRET_MAX_LENGTH)
-            {
-                memcpy(p_buffer,&optiga_platform_binding_shared_secret[offset], data_length);
-                *p_buffer_length = data_length;
-                return_status = PAL_STATUS_SUCCESS;
+            if(!memory_get_optiga_binding_key(p_buffer, p_buffer_length)) {
+                return_status = PAL_STATUS_FAILURE;
+                break;
             }
+            return_status = PAL_STATUS_SUCCESS;
             break;
         }
         case OPTIGA_COMMS_MANAGE_CONTEXT_ID:

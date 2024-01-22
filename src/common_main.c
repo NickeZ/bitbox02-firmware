@@ -86,8 +86,17 @@ void common_main(void)
 
     // securechip_setup must come after memory_setup, so the io/auth keys to be
     // used are already initialized.
-    printf("%s\n", "setting up optiga");
+    traceln("%s", "Setting up optiga");
     int32_t res = optiga_setup(NULL);
+
+    for(int i=0; i<2L; ++i) {
+        uint8_t msg[32] = {0};
+        securityfunctions_random(msg);
+        char msg_ascii[sizeof(msg)*2+1] = {0};
+        util_uint8_to_hex(msg, sizeof(msg), msg_ascii);
+        traceln("Random bytes: %s", msg_ascii);
+    }
+
     //int securechip_result = securechip_setup(&_securechip_interface_functions);
     if (res) {
         char errmsg[100] = {0};

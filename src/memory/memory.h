@@ -245,4 +245,6 @@ USE_RESULT memory_result_t memory_multisig_set_by_hash(const uint8_t* hash, cons
  */
 USE_RESULT bool memory_multisig_get_by_hash(const uint8_t* hash, char* name_out);
 
+USE_RESULT bool memory_get_optiga_binding_key(uint8_t* buf, uint16_t* buf_len);
+
 #endif // _MEMORY_H_

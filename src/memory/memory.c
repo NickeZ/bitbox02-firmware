@@ -72,6 +72,7 @@ typedef union {
         uint8_t io_protection_key[32];
         uint8_t authorization_key[32];
         uint8_t encryption_key[32];
+        uint8_t optiga_binding_shared_secret[64];
         attestation_t attestation;
     } fields;
     uint8_t bytes[CHUNK_SIZE];
@@ -788,4 +789,20 @@ bool memory_multisig_get_by_hash(const uint8_t* hash, char* name_out)
         }
     }
     return false;
+}
+
+bool memory_get_optiga_binding_key(uint8_t* buf, uint16_t* buf_len) {
+    chunk_0_t chunk = {0};
+    CLEANUP_CHUNK(chunk);
+    _read_chunk(CHUNK_0_PERMANENT, chunk.bytes);
+    uint8_t empty[64] = {0};
+    memset(empty, 0xFF, sizeof(empty));
+    if(MEMEQ(chunk.fields.optiga_binding_shared_secret, empty, 64)) {
+        _interface_functions->random_32_bytes(chunk.fields.optiga_binding_shared_secret);
+        _interface_functions->random_32_bytes(chunk.fields.optiga_binding_shared_secret + 32);
+        _write_chunk(CHUNK_0_PERMANENT, chunk.bytes);
+    }
+    *buf_len = 64;
+    memcpy(buf, chunk.fields.optiga_binding_shared_secret, 64);
+    return true;
 }
