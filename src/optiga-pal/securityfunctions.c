@@ -20,9 +20,13 @@
 #include "optiga/pal/pal_os_datastore.h"
 #include "mbedtls/memory_buffer_alloc.h"
 
+#define OPTIGA_DATA_OBJECT_ID_HMAC 0xF1D0
+
 //static pal_i2c_t pal_i2c_ctx = {0};
 
 static volatile optiga_lib_status_t optiga_lib_status;
+static optiga_util_t* util;
+static optiga_crypt_t* crypt;
 
 // Wait until callback has updated optiga_lib_status from busy to result
 static optiga_lib_status_t _wait_check(optiga_lib_status_t return_status, const char* error_msg) {
@@ -119,34 +123,34 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
     uint8_t platform_binding_secret_metadata[44];
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
     pal_status_t pal_return_status;
-    optiga_util_t * me_util = NULL;
-    optiga_crypt_t * me_crypt = NULL;
+    //optiga_util_t * me_util = NULL;
+    //optiga_crypt_t * me_crypt = NULL;
 
     do
     {
         /**
          * 1. Create OPTIGA Util and Crypt Instances
          */
-        me_util = optiga_util_create(0, optiga_lib_callback, NULL);
-        if (NULL == me_util)
-        {
-            break;
-        }
+        //me_util = optiga_util_create(0, optiga_lib_callback, NULL);
+        //if (NULL == me_util)
+        //{
+        //    break;
+        //}
 
-        me_crypt = optiga_crypt_create(0, optiga_lib_callback, NULL);
-        if (NULL == me_crypt)
-        {
-            break;
-        }
+        //me_crypt = optiga_crypt_create(0, optiga_lib_callback, NULL);
+        //if (NULL == me_crypt)
+        //{
+        //    break;
+        //}
 
         /**
          * 2. Initialize the protection level and protocol version for the instances
          */
-        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(me_util,OPTIGA_COMMS_NO_PROTECTION);
-        OPTIGA_UTIL_SET_COMMS_PROTOCOL_VERSION(me_util,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
+        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_NO_PROTECTION);
+        OPTIGA_UTIL_SET_COMMS_PROTOCOL_VERSION(util,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
 
-        OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(me_crypt,OPTIGA_COMMS_NO_PROTECTION);
-        OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(me_crypt,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
+        OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt,OPTIGA_COMMS_NO_PROTECTION);
+        OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(crypt,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
 
         /**
          * 3. Read Platform Binding Shared secret (0xE140) data object metadata from OPTIGA
@@ -155,7 +159,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
         bytes_to_read = sizeof(platform_binding_secret_metadata);
         optiga_lib_status = OPTIGA_LIB_BUSY;
         
-        return_status = _wait_check(optiga_util_read_metadata(me_util,
+        return_status = _wait_check(optiga_util_read_metadata(util,
                                                   0xE140,
                                                   platform_binding_secret_metadata,
                                                   &bytes_to_read), "read_metadata");
@@ -220,8 +224,8 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
          * 7. Write random(secret) to OPTIGA platform Binding shared secret data object (0xE140)
          */
         optiga_lib_status = OPTIGA_LIB_BUSY;
-        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(me_util,OPTIGA_COMMS_NO_PROTECTION);
-        return_status = _wait_check(optiga_util_write_data(me_util,
+        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_NO_PROTECTION);
+        return_status = _wait_check(optiga_util_write_data(util,
                                                0xE140,
                                                OPTIGA_UTIL_ERASE_AND_WRITE,
                                                0,
@@ -251,8 +255,8 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
          * 9. Update metadata of OPTIGA Platform Binding shared secret data object (0xE140)
          */
         optiga_lib_status = OPTIGA_LIB_BUSY;
-        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(me_util,OPTIGA_COMMS_NO_PROTECTION);
-        return_status = _wait_check(optiga_util_write_metadata(me_util,
+        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_NO_PROTECTION);
+        return_status = _wait_check(optiga_util_write_metadata(util,
                                                    0xE140,
                                                    platform_binding_shared_secret_metadata_final,
                                                    sizeof(platform_binding_shared_secret_metadata_final)), "write_metadata");
@@ -265,133 +269,133 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
     } while(FALSE);
     traceln("%s %d", __func__, return_status);
     
-    if(me_util)
-    {
-        //Destroy the instance after the completion of usecase if not required.
-        return_status = optiga_util_destroy(me_util);
-        if(OPTIGA_LIB_SUCCESS != return_status)
-        {
-            //lint --e{774} suppress This is a generic macro
-            traceln("%s %d", __func__, return_status);
-        }
-    }
-    if(me_crypt)
-    {
-        //Destroy the instance after the completion of usecase if not required.
-        return_status = optiga_crypt_destroy(me_crypt);
-        if(OPTIGA_LIB_SUCCESS != return_status)
-        {
-            //lint --e{774} suppress This is a generic macro
-            traceln("%s %d", __func__, return_status);
-        }
-    }
+    //if(me_util)
+    //{
+    //    //Destroy the instance after the completion of usecase if not required.
+    //    return_status = optiga_util_destroy(me_util);
+    //    if(OPTIGA_LIB_SUCCESS != return_status)
+    //    {
+    //        //lint --e{774} suppress This is a generic macro
+    //        traceln("%s %d", __func__, return_status);
+    //    }
+    //}
+    //if(me_crypt)
+    //{
+    //    //Destroy the instance after the completion of usecase if not required.
+    //    return_status = optiga_crypt_destroy(me_crypt);
+    //    if(OPTIGA_LIB_SUCCESS != return_status)
+    //    {
+    //        //lint --e{774} suppress This is a generic macro
+    //        traceln("%s %d", __func__, return_status);
+    //    }
+    //}
     return return_status;
 }
 
-//static unsigned char memory_buf[100];
+static const uint8_t hmac_metadata [] = {
+    //Metadata tag in the data object
+    0x20, 0x06,
+        //Data object type set to PRESSEC
+        0xE8, 0x01, 0x21,
+        0xD3, 0x01, 0x00,
+};
 
 int32_t optiga_setup(const securityfunctions_interface_functions_t* ifs)
 {
     (void) ifs;
     optiga_lib_status_t res;
-    optiga_util_t* util = NULL;
 
-    //mbedtls_memory_buffer_alloc_init( memory_buf, sizeof(memory_buf) );
-
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Wpedantic"
-//    pal_i2c_ctx.upper_layer_event_handler = optiga_lib_callback;
-//#pragma GCC diagnostic pop
-
-    do {
-
-    //res = pair_host_and_optiga_using_pre_shared_secret();
-    //if (res != OPTIGA_LIB_SUCCESS) {
-    //    printf("%s: %d\n", "failed to do TLS handshake", res);
-    //    return 1;
-    //}
-
-
-    util = optiga_util_create(0, optiga_lib_callback, NULL);
-
+    util = optiga_util_create(OPTIGA_INSTANCE_ID_0, optiga_lib_callback, NULL);
     if(NULL == util) {
-        puts("optiga_util_create failed");
+        traceln("%s", "util_create returned null");
         return 1;
     }
 
-    // OPTIGA_UTIL_SET_COMMS_PROTOCOL_VERSION(util, OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
-    //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
-
-    //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_FULL_PROTECTION);
+    crypt = optiga_crypt_create(OPTIGA_INSTANCE_ID_0, optiga_lib_callback, NULL);
+    if (NULL == crypt) {
+        traceln("%s", "crypt_create returned null");
+        return 1;
+    }
 
     optiga_lib_status = OPTIGA_LIB_BUSY;
     OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
     res = _wait_check(optiga_util_open_application(util, 0), "open_application");
-    printf("%s\n", "Application open");
+    traceln("%s", "Application open");
 
+    // FACTORY SETUP
+
+    // Generate and store tls key
     res = pair_host_and_optiga_using_pre_shared_secret();
     if (res != OPTIGA_LIB_SUCCESS) {
         printf("%s: %d\n", "failed to do TLS handshake", res);
         return 1;
     }
 
-    optiga_util_destroy(util);
-    util = NULL;
 
-    
-    //OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(crypt, OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
-    //OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_RESPONSE_PROTECTION);
-
-    //OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt,OPTIGA_COMMS_FULL_PROTECTION);
-
-    } while(0);
+    // Use data object OPTIGA_DATA_OBJECT_ID_HMAC for HMAC
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    optiga_lib_status_t return_status = _wait_check(optiga_util_write_metadata(util,
+            OPTIGA_DATA_OBJECT_ID_HMAC,
+            hmac_metadata,
+            sizeof(hmac_metadata)), "write_metadata");
+    (void) return_status;
 
     return 0;
 }
 
-int securityfunctions_kdf(const uint8_t* msg, size_t len, uint8_t* kdf_out) {
-    (void) msg;
-    (void) len;
-    (void) kdf_out;
-    return 0;
+static bool _update_hmac_key(void) {
+    uint8_t new_key[32] = {0};
+    // TODO: use host randomness as well
+    securityfunctions_random(new_key);
+
+    traceln("new hmac key: %s", util_uint8_to_hex_alloc(new_key, sizeof(new_key)));
+
+    // Write secret in any data slot (0xf1d0 used here)
+    // called _update_kdf_key in securechip?
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    optiga_lib_status_t return_status = _wait_check(optiga_util_write_data(util,
+            0xF1D0,
+            OPTIGA_UTIL_ERASE_AND_WRITE,
+            0x00,
+            new_key,
+            sizeof(new_key)), "util_write");
+    if (return_status != OPTIGA_LIB_SUCCESS) {
+        return false;
+    }
+    return true;
+}
+
+int securityfunctions_hmac(const uint8_t* msg, size_t len, uint8_t* mac_out) {
+    // The equivalient of python `mac_out = hmac.new(key, msg[:len], hashlib.sha256).digest()`
+
+    _update_hmac_key();
+
+    uint32_t mac_out_len = 32;
+
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    optiga_lib_status_t return_status = _wait_check(optiga_crypt_hmac(crypt,
+            OPTIGA_HMAC_SHA_256,
+            0xF1D0, /* Input secret OID */
+            msg, /* input data */
+            len, /* input data len */
+            mac_out,
+            &mac_out_len), "crypt_hmac");
+    if (mac_out_len != 32) {
+        traceln("%s", "HMAC out isn't 32 bytes...");
+    }
+    traceln("mac_out: %s", util_uint8_to_hex_alloc(mac_out, mac_out_len));
+
+    return return_status;
 }
 
 // rand_out must be 32 bytes
 bool securityfunctions_random(uint8_t* rand_out) {
-    optiga_util_t* util;
-    optiga_crypt_t* crypt;
-
-    util = optiga_util_create(OPTIGA_INSTANCE_ID_0, optiga_lib_callback, NULL);
-    if (NULL == util) {
-        traceln("%s", "util_create");
-        return false;
-    }
-
     optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
     optiga_lib_status_t res = _wait_check(
-        optiga_util_open_application(util, 0),
-        "util_open_application");
-    if(res != OPTIGA_LIB_SUCCESS) {
-        return false;
-    }
-
-    crypt = optiga_crypt_create(OPTIGA_INSTANCE_ID_0, optiga_lib_callback, NULL);
-    if (NULL == crypt) {
-        traceln("%s", "crypt_create");
-        return false;
-    }
-
-    optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
-    res = _wait_check(
         optiga_crypt_random(crypt, OPTIGA_RNG_TYPE_TRNG, rand_out, 32),
         "crypt_random");
     if(res != OPTIGA_LIB_SUCCESS) {
         return false;
     }
-
-    optiga_util_destroy(util);
-    optiga_crypt_destroy(crypt);
     return true;
 }
