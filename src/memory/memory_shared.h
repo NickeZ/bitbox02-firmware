@@ -41,8 +41,8 @@ typedef union {
         uint8_t auto_enter;
         uint8_t upside_down;
         uint8_t screen_type;
+        uint8_t securechip_type;
         // Following are used by firmware only
-        uint8_t reserved[1];
         uint8_t io_protection_key_split[32];
         uint8_t authorization_key_split[32];
         uint8_t encryption_key_split[32];
@@ -58,6 +58,11 @@ void memory_read_shared_bootdata(chunk_shared_t* chunk_out);
 #define MEMORY_SCREEN_TYPE_SH1107 0xFF
 #define MEMORY_SCREEN_TYPE_SSD1312 0x01
 
+// 0xFF is the default memory value if not set otherwise. We use this value for the ATECC
+// for backwards compatibility.
+#define MEMORY_SECURECHIP_TYPE_ATECC 0xFF
+#define MEMORY_SECURECHIP_TYPE_OPTIGA 0x01
+
 /**
  * Which screen is mounted? Currently there are two possible screens. The original screen uses the
  * SH1107 driver, and the newer display uses the SSD1312 driver.  See the `SCREEN_TYPE_` consts.
@@ -67,5 +72,12 @@ void memory_read_shared_bootdata(chunk_shared_t* chunk_out);
  * Can be called before `memory_setup()`.
  */
 USE_RESULT uint8_t memory_get_screen_type(void);
+
+/**
+ * Which securechip is mounted?
+ *
+ * Can be called before `memory_setup()`.
+ */
+USE_RESULT uint8_t memory_get_securechip_type(void);
 
 #endif

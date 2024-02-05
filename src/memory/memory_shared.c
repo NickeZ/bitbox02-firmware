@@ -51,3 +51,21 @@ uint8_t memory_get_screen_type(void)
         return MEMORY_SCREEN_TYPE_SH1107;
     }
 }
+
+uint8_t memory_get_securechip_type(void)
+{
+    chunk_shared_t chunk = {0};
+    memory_read_shared_bootdata(&chunk);
+    uint8_t securechip_type = chunk.fields.securechip_type;
+    util_zero(&chunk, sizeof(chunk));
+
+    switch (securechip_type) {
+    case MEMORY_SECURECHIP_TYPE_OPTIGA:
+        return securechip_type;
+    default:
+        // Just in case the memory was not 0xFF for devices before we started using the
+        // `securechip` field, we default to the old securechip if it is not explicitly set to any
+        // other type.
+        return MEMORY_SECURECHIP_TYPE_ATECC;
+    }
+}

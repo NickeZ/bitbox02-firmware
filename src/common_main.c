@@ -71,6 +71,11 @@ static bool _setup_wally(void)
 void common_main(void)
 {
     mpu_bitbox02_init();
+
+    if(!securechip_init()) {
+        AbortAutoenter("Failed to identify securechip");
+    }
+
     if (!memory_setup(&_memory_interface_functions)) {
         // If memory setup failed, this also might fail, but can't hurt to try.
         AbortAutoenter("memory_setup failed");
