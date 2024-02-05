@@ -213,7 +213,7 @@ static void _read_chunk(uint32_t chunk_num, uint8_t* chunk_out)
 #endif
 }
 
-static const memory_interface_functions_t* _interface_functions = NULL;
+static const securechip_platform_interface_t* _platform = NULL;
 
 /********* Exposed functions ****************/
 
@@ -265,12 +265,12 @@ void memory_get_seed_birthdate(uint32_t* timestamp_out)
     }
 }
 
-bool memory_setup(const memory_interface_functions_t* ifs)
+bool memory_setup(const securechip_platform_interface_t* fns)
 {
-    if (ifs == NULL) {
+    if (fns == NULL) {
         return false;
     }
-    _interface_functions = ifs;
+    _securechip_fns = fns;
 
     chunk_0_t chunk = {0};
     CLEANUP_CHUNK(chunk);
@@ -300,12 +300,12 @@ bool memory_setup(const memory_interface_functions_t* ifs)
         Abort("io/auth/enc key already set");
     }
 
-    _interface_functions->random_32_bytes(chunk.fields.io_protection_key);
-    _interface_functions->random_32_bytes(shared_chunk.fields.io_protection_key_split);
-    _interface_functions->random_32_bytes(chunk.fields.authorization_key);
-    _interface_functions->random_32_bytes(shared_chunk.fields.authorization_key_split);
-    _interface_functions->random_32_bytes(chunk.fields.encryption_key);
-    _interface_functions->random_32_bytes(shared_chunk.fields.encryption_key_split);
+    _securechip_fns->random(chunk.fields.io_protection_key);
+    _securechip_fns->random(shared_chunk.fields.io_protection_key_split);
+    _securechip_fns->random(chunk.fields.authorization_key);
+    _securechip_fns->random(shared_chunk.fields.authorization_key_split);
+    _securechip_fns->random(chunk.fields.encryption_key);
+    _securechip_fns->random(shared_chunk.fields.encryption_key_split);
 
     if (!_write_to_address(FLASH_SHARED_DATA_START, 0, shared_chunk.bytes)) {
         return false;

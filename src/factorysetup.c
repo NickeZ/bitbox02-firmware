@@ -19,7 +19,7 @@
 #include "memory/memory.h"
 #include "platform_init.h"
 #include "screen.h"
-#include "securechip/securechip.h"
+#include "atecc/atecc.h"
 #include "usb/usb.h"
 #include "usb/usb_packet.h"
 #include "usb/usb_processing.h"
@@ -152,7 +152,7 @@ static void _api_msg(const Packet* in_packet, Packet* out_packet, const size_t m
     case OP_GENKEY: {
         screen_print_debug("generating pubkey...", 0);
         uint8_t pubkey[64];
-        if (!securechip_gen_attestation_key(pubkey)) {
+        if (!atecc_gen_attestation_key(pubkey)) {
             screen_print_debug("generating pubkey\nfailed", 0);
             result = ERR_FAILED;
             break;
@@ -219,13 +219,13 @@ static void _api_msg(const Packet* in_packet, Packet* out_packet, const size_t m
         screen_print_debug("DONE", 0);
         break;
     case OP_SC_ROLLKEYS:
-        if (!securechip_update_keys()) {
+        if (!atecc_update_keys()) {
             screen_print_debug("rollkeys: failed", 0);
             result = ERR_FAILED;
             break;
         }
         screen_print_debug("rollkeys: success", 100);
-        if (!securechip_u2f_counter_set(0)) {
+        if (!atecc_u2f_counter_set(0)) {
             screen_print_debug("reset u2f counter", 0);
             result = ERR_FAILED;
             break;

@@ -73,7 +73,7 @@ static void random_32_bytes_sec(uint8_t* buf)
     }
 #else
     if (!securechip_random(random)) {
-        Abort("Abort: securechip_random");
+        Abort("Abort: securechip_crypt_interface_t.random");
     }
 #endif
     for (size_t i = 0; i < sizeof(random); i++) {

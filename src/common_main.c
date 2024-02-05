@@ -42,19 +42,6 @@ uint32_t common_stack_chk_guard(void)
     return rand_sync_read32(&RAND_0);
 }
 
-static const memory_interface_functions_t _memory_interface_functions = {
-    // Use random_32_bytes_mcu over random_32_bytes as the latter mixes in
-    // randomness from the securechip, which is initialized only later.
-    .random_32_bytes = random_32_bytes_mcu,
-};
-
-//static const securechip_interface_functions_t _securechip_interface_functions = {
-//    .get_auth_key = memory_get_authorization_key,
-//    .get_io_protection_key = memory_get_io_protection_key,
-//    .get_encryption_key = memory_get_encryption_key,
-//    .random_32_bytes = random_32_bytes,
-//};
-
 static void _wally_patched_bzero(void* ptr, size_t len)
 {
     util_zero(ptr, len);
@@ -74,7 +61,15 @@ static bool _setup_wally(void)
 void common_main(void)
 {
     mpu_bitbox02_init();
-    if (!memory_setup(&_memory_interface_functions)) {
+    memory_interface_t fns = {0};
+    securechip_detect(&fns);
+
+    static const random_interface_t _random_interface = {
+        // Use random_32_bytes_mcu over random_32_bytes as the latter mixes in
+        // randomness from the securechip, which is initialized only later.
+        .random_32_bytes = random_32_bytes_mcu,
+    };
+    if (!memory_setup(&_random_interface)) {
         // If memory setup failed, this also might fail, but can't hurt to try.
         AbortAutoenter("memory_setup failed");
     }

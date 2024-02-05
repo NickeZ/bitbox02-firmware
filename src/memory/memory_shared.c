@@ -37,12 +37,10 @@ void memory_read_shared_bootdata(chunk_shared_t* chunk_out)
 
 uint8_t memory_get_screen_type(void)
 {
-    //chunk_shared_t chunk = {0};
-    //memory_read_shared_bootdata(&chunk);
-    //uint8_t screen_type = chunk.fields.screen_type;
-    //util_zero(&chunk, sizeof(chunk));
-    return MEMORY_SCREEN_TYPE_SSD1312;
-    /*
+    chunk_shared_t chunk = {0};
+    memory_read_shared_bootdata(&chunk);
+    uint8_t screen_type = chunk.fields.screen_type;
+    util_zero(&chunk, sizeof(chunk));
     switch (screen_type) {
     case MEMORY_SCREEN_TYPE_SSD1312:
         return screen_type;
@@ -52,5 +50,4 @@ uint8_t memory_get_screen_type(void)
         // other screen type.
         return MEMORY_SCREEN_TYPE_SH1107;
     }
-    */
 }

@@ -48,14 +48,9 @@ void reset_reset(bool status)
 {
     keystore_lock();
 #if !defined(TESTING)
-    if (!securechip_update_keys()) {
+    if (!securechip_reset()) {
         Abort("Could not reset secure chip.");
     }
-#if APP_U2F == 1
-    if (!securechip_u2f_counter_set(0)) {
-        Abort("Could not initialize U2F counter.");
-    }
-#endif
 #endif
     if (!memory_reset_hww()) {
         Abort("Could not reset memory.");

@@ -18,6 +18,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef struct {
+    // rand_out must be 32 bytes long buffer
+    void (*const random_32_bytes)(uint8_t* rand_out);
+} random_interface_t;
+
 #define RANDOM_NUM_SIZE ((uint8_t)32)
 
 // random_32_bytes_mcu generates 32 random bytes using the mcu trng and xors it into buf.

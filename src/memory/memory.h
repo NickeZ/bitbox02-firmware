@@ -20,6 +20,7 @@
 
 #include "compiler_util.h"
 #include "util.h"
+#include "random.h"
 
 #define NOISE_PUBKEY_SIZE 32
 
@@ -29,9 +30,20 @@
 // How many multisig configurations (accounts) can be registered.
 #define MEMORY_MULTISIG_NUM_ENTRIES 25
 
+// Data objects that the secure chip can store in the MCU memory
+typedef enum {
+    MEMORY_ATECC_AUTH,
+    MEMORY_ATECC_IO_PROTECTION,
+    MEMORY_ATECC_ENCRYPTION,
+    MEMORY_OPTIGA_PLATFORM_BINDING,
+} memory_securechip_datastore_oid_t;
+
+// This interface defines a way to read crypto-related memory locations
+// and how to generate random numbers
 typedef struct {
-    void (*const random_32_bytes)(uint8_t* buf_out);
-} memory_interface_functions_t;
+    // key_out must be the length of the requested object
+    void (* read)(memory_securechip_datastore_oid_t oid, uint8_t* key_out);
+} memory_interface_t;
 
 typedef enum {
     // success
@@ -52,7 +64,7 @@ typedef enum {
  * @param[in] ifs Interface functions.
  * @return true on success, false on failure.
  */
-USE_RESULT bool memory_setup(const memory_interface_functions_t* ifs);
+USE_RESULT bool memory_setup(const random_interface_t* ifs);
 USE_RESULT bool memory_reset_hww(void);
 
 /**
