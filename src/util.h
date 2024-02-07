@@ -60,6 +60,9 @@ void util_zero(volatile void* dst, size_t len);
 
 // `out` must be of size in_len*2+1. Use BB_HEX_SIZE() to compute the size.
 void util_uint8_to_hex(const uint8_t* in_bin, size_t in_len, char* out);
+#if SEMIHOSTING==1
+char* util_uint8_to_hex_alloc(const uint8_t* in_bin, size_t in_len);
+#endif
 
 #define BB_HEX_SIZE(in_bin) (sizeof((in_bin)) * 2 + 1)
 
