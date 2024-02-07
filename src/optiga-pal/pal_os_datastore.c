@@ -37,6 +37,7 @@
 
 #include "optiga/pal/pal_os_datastore.h"
 #include "memory/memory.h"
+#include "hardfault.h"
 /// @cond hidden
 
 /// Size of length field 
@@ -126,10 +127,12 @@ pal_status_t pal_os_datastore_read(uint16_t datastore_id,
     {
         case OPTIGA_PLATFORM_BINDING_SHARED_SECRET_ID:
         {
-            if(!memory_get_optiga_binding_key(p_buffer, p_buffer_length)) {
+            if(*p_buffer_length < 32) {
                 return_status = PAL_STATUS_FAILURE;
                 break;
             }
+            memory_get_io_protection_key(p_buffer);
+            *p_buffer_length = 32;
             return_status = PAL_STATUS_SUCCESS;
             break;
         }
