@@ -118,9 +118,10 @@ const uint8_t platform_binding_shared_secret_metadata_final [] = {
 
 static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 {
-    uint16_t bytes_to_read;
-    uint8_t platform_binding_secret[64];
+    uint8_t platform_binding_secret[32];
     uint8_t platform_binding_secret_metadata[44];
+    uint16_t bytes_to_read = sizeof(platform_binding_secret_metadata);
+    traceln("bytes to read %u", bytes_to_read);
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
     pal_status_t pal_return_status;
     //optiga_util_t * me_util = NULL;
@@ -182,7 +183,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 
         // 5,6,8 done in memory.c
 
-        uint16_t len;
+        uint16_t len = sizeof(platform_binding_secret);
         pal_return_status = pal_os_datastore_read(OPTIGA_PLATFORM_BINDING_SHARED_SECRET_ID, platform_binding_secret, &len);
 
         if(PAL_STATUS_SUCCESS != pal_return_status) {

@@ -792,17 +792,18 @@ bool memory_multisig_get_by_hash(const uint8_t* hash, char* name_out)
 }
 
 bool memory_get_optiga_binding_key(uint8_t* buf, uint16_t* buf_len) {
-    chunk_0_t chunk = {0};
-    CLEANUP_CHUNK(chunk);
-    _read_chunk(CHUNK_0_PERMANENT, chunk.bytes);
-    uint8_t empty[64] = {0};
-    memset(empty, 0xFF, sizeof(empty));
-    if(MEMEQ(chunk.fields.optiga_binding_shared_secret, empty, 64)) {
-        _interface_functions->random_32_bytes(chunk.fields.optiga_binding_shared_secret);
-        _interface_functions->random_32_bytes(chunk.fields.optiga_binding_shared_secret + 32);
-        _write_chunk(CHUNK_0_PERMANENT, chunk.bytes);
-    }
-    *buf_len = 64;
-    memcpy(buf, chunk.fields.optiga_binding_shared_secret, 64);
+    memory_get_io_protection_key(buf);
+    //chunk_0_t chunk = {0};
+    //CLEANUP_CHUNK(chunk);
+    //_read_chunk(CHUNK_0_PERMANENT, chunk.bytes);
+    //uint8_t empty[64] = {0};
+    //memset(empty, 0xFF, sizeof(empty));
+    //if(MEMEQ(chunk.fields.optiga_binding_shared_secret, empty, 64)) {
+    //    _interface_functions->random_32_bytes(chunk.fields.optiga_binding_shared_secret);
+    //    _interface_functions->random_32_bytes(chunk.fields.optiga_binding_shared_secret + 32);
+    //    _write_chunk(CHUNK_0_PERMANENT, chunk.bytes);
+    //}
+    *buf_len = 32;
+    //memcpy(buf, chunk.fields.optiga_binding_shared_secret, 32);
     return true;
 }
