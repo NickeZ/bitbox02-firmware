@@ -16,6 +16,7 @@
 #include "optiga/optiga_crypt.h"
 #include "optiga/optiga_util.h"
 #include "optiga/pal/pal_i2c.h"
+#include "optiga/pal/pal_os_timer.h"
 #include "util.h"
 #include "hal_delay.h"
 #include "optiga/pal/pal_os_datastore.h"
@@ -23,23 +24,23 @@
 
 #define OPTIGA_DATA_OBJECT_ID_HMAC 0xF1D0
 
-//static pal_i2c_t pal_i2c_ctx = {0};
-
 static volatile optiga_lib_status_t optiga_lib_status;
 static optiga_util_t* util;
 static optiga_crypt_t* crypt;
 
+static const securechip_interface_functions_t* _ifs = NULL;
+
 // Wait until callback has updated optiga_lib_status from busy to result
 static optiga_lib_status_t _wait_check(optiga_lib_status_t return_status, const char* error_msg) {
     if(return_status != OPTIGA_UTIL_SUCCESS) {
-        printf("ERROR: %s (code: 0x%03x)", error_msg, return_status);
+        printf("ERROR: %s (code: 0x%03x)\n", error_msg, return_status);
         return return_status;
     }
     while (OPTIGA_LIB_BUSY == optiga_lib_status)
     { }
     if (OPTIGA_LIB_SUCCESS != optiga_lib_status)
     {
-        printf("ERROR: %s (code: 0x%03x)", error_msg, optiga_lib_status);
+        printf("ERROR: %s (code: 0x%03x)\n", error_msg, optiga_lib_status);
         return optiga_lib_status;
     }
     return optiga_lib_status;
@@ -87,63 +88,46 @@ const uint8_t platform_binding_shared_secret_metadata_final [] = {
                     0x22,   // Platform binding secret type
 };
 
-//static optiga_lib_status_t read_and_print_secret(optiga_util_t* me_util) {
-//    uint8_t platform_binding_secret[64];
-//    uint16_t len;
-//    optiga_lib_status_t return_status;
-//    do {
-//        optiga_lib_status = OPTIGA_LIB_BUSY;
-//        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(me_util,OPTIGA_COMMS_NO_PROTECTION);
-//        memset(platform_binding_secret, 0xff, 64);
-//        return_status = optiga_util_read_data(me_util,
-//                                               0xE140,
-//                                               0,
-//                                               platform_binding_secret,
-//                                               &len);
-//        WAIT(return_status, optiga_lib_status);
-//
-//        if(len < 64) {
-//            traceln("%s", "read less than 64 bytes");
-//        }
-//
-//        char msg[sizeof(platform_binding_secret)*2+1] = {0};
-//        util_uint8_to_hex(platform_binding_secret, sizeof(platform_binding_secret), msg);
-//        trace("%s", "secret: ");
-//        for (unsigned int i = 0; i < sizeof(platform_binding_secret); ++i) {
-//            printf("%c%c ", msg[i*2], msg[i*2+1]);
-//        }
-//        printf("\n");
-//    } while(0);
-//    return return_status;
-//}
+static optiga_lib_status_t read_and_print_secret(void) {
+    uint8_t platform_binding_secret[32];
+    uint16_t len = 32;
+    optiga_lib_status_t return_status;
+    do {
+        optiga_lib_status = OPTIGA_LIB_BUSY;
+        OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_NO_PROTECTION);
+        memset(platform_binding_secret, 0xff, 32);
+        return_status = optiga_util_read_data(util,
+                                               0xE140,
+                                               0,
+                                               platform_binding_secret,
+                                               &len);
+        _wait_check(return_status, "read_data");
+
+        if(len < 32) {
+            traceln("%s", "read less than 32 bytes");
+        }
+
+        char msg[sizeof(platform_binding_secret)*2+1] = {0};
+        util_uint8_to_hex(platform_binding_secret, sizeof(platform_binding_secret), msg);
+        trace("%s", "secret: ");
+        for (unsigned int i = 0; i < sizeof(platform_binding_secret); ++i) {
+            printf("%c%c ", msg[i*2], msg[i*2+1]);
+        }
+        printf("\n");
+    } while(0);
+    return return_status;
+}
 
 static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 {
-    uint16_t bytes_to_read;
-    uint8_t platform_binding_secret[64];
+    uint8_t platform_binding_secret[32];
     uint8_t platform_binding_secret_metadata[44];
+    uint16_t bytes_to_read = sizeof(platform_binding_secret_metadata);
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
     pal_status_t pal_return_status;
-    //optiga_util_t * me_util = NULL;
-    //optiga_crypt_t * me_crypt = NULL;
 
     do
     {
-        /**
-         * 1. Create OPTIGA Util and Crypt Instances
-         */
-        //me_util = optiga_util_create(0, optiga_lib_callback, NULL);
-        //if (NULL == me_util)
-        //{
-        //    break;
-        //}
-
-        //me_crypt = optiga_crypt_create(0, optiga_lib_callback, NULL);
-        //if (NULL == me_crypt)
-        //{
-        //    break;
-        //}
-
         /**
          * 2. Initialize the protection level and protocol version for the instances
          */
@@ -181,9 +165,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
             break;
         }
 
-        // 5,6,8 done in memory.c
-
-        uint16_t len;
+        uint16_t len = sizeof(platform_binding_secret);
         pal_return_status = pal_os_datastore_read(OPTIGA_PLATFORM_BINDING_SHARED_SECRET_ID, platform_binding_secret, &len);
 
         if(PAL_STATUS_SUCCESS != pal_return_status) {
@@ -195,31 +177,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 
         char msg2[sizeof(platform_binding_secret)*2+1] = {0};
         util_uint8_to_hex(platform_binding_secret, sizeof(platform_binding_secret), msg2);
-        traceln("generated secret: %s", msg2);
-
-        /**
-         * 5. Generate Random using optiga_crypt_random
-         *       - Specify the Random type as TRNG
-         *    a. The maximum supported size of secret is 64 bytes.
-         *       The minimum recommended is 32 bytes.
-         *    b. If the host platform doesn't support random generation,
-         *       use OPTIGA to generate the maximum size chosen.
-         *       else choose the appropriate length of random to be generated by OPTIGA
-         *
-         */
-        //optiga_lib_status = OPTIGA_LIB_BUSY;
-        //return_status = optiga_crypt_random(me_crypt,
-        //                                    OPTIGA_RNG_TYPE_TRNG,
-        //                                    platform_binding_secret,
-        //                                    sizeof(platform_binding_secret));
-        //WAIT_AND_CHECK_STATUS(return_status, optiga_lib_status);
-
-        /**
-         * 6. Generate random on Host
-         *    If the host platform doesn't support, skip this step
-         */
-
-        //read_and_print_secret(me_util);
+        traceln("secret stored in host: %s", msg2);
 
         /**
          * 7. Write random(secret) to OPTIGA platform Binding shared secret data object (0xE140)
@@ -233,23 +191,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
                                                platform_binding_secret,
                                                sizeof(platform_binding_secret)), "write_data");
 
-        //read_and_print_secret(me_util);
-
-        /**
-         * 8. Write/store the random(secret) on the Host platform
-         *
-         */
-        //pal_return_status = pal_os_datastore_write(OPTIGA_PLATFORM_BINDING_SHARED_SECRET_ID,
-        //                                           platform_binding_secret,
-        //                                           sizeof(platform_binding_secret));
-
-        //if (PAL_STATUS_SUCCESS != pal_return_status)
-        //{
-        //    //Storing of Pre-shared secret on Host failed.
-        //    optiga_lib_status = pal_return_status;
-        //    break;
-        //}
-
+        read_and_print_secret();
 
 
         /**
@@ -263,33 +205,12 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
                                                    sizeof(platform_binding_shared_secret_metadata_final)), "write_metadata");
 
         // READ AND CHECK
-        //read_and_print_secret(me_util);
+        read_and_print_secret();
         
         return_status = OPTIGA_LIB_SUCCESS;
 
     } while(FALSE);
     traceln("%s %d", __func__, return_status);
-    
-    //if(me_util)
-    //{
-    //    //Destroy the instance after the completion of usecase if not required.
-    //    return_status = optiga_util_destroy(me_util);
-    //    if(OPTIGA_LIB_SUCCESS != return_status)
-    //    {
-    //        //lint --e{774} suppress This is a generic macro
-    //        traceln("%s %d", __func__, return_status);
-    //    }
-    //}
-    //if(me_crypt)
-    //{
-    //    //Destroy the instance after the completion of usecase if not required.
-    //    return_status = optiga_crypt_destroy(me_crypt);
-    //    if(OPTIGA_LIB_SUCCESS != return_status)
-    //    {
-    //        //lint --e{774} suppress This is a generic macro
-    //        traceln("%s %d", __func__, return_status);
-    //    }
-    //}
     return return_status;
 }
 
@@ -301,9 +222,13 @@ static const uint8_t hmac_metadata [] = {
         0xD3, 0x01, 0x00,
 };
 
-int32_t optiga_setup(const optiga_interface_functions_t* ifs)
+int optiga_setup(const securechip_interface_functions_t* ifs)
 {
-    (void) ifs;
+    if (ifs == NULL) {
+        return SC_ERR_IFS;
+    }
+    _ifs = ifs;
+    pal_timer_init();
     optiga_lib_status_t res;
 
     util = optiga_util_create(OPTIGA_INSTANCE_ID_0, optiga_lib_callback, NULL);
@@ -332,7 +257,6 @@ int32_t optiga_setup(const optiga_interface_functions_t* ifs)
         return 1;
     }
 
-
     // Use data object OPTIGA_DATA_OBJECT_ID_HMAC for HMAC
     optiga_lib_status = OPTIGA_LIB_BUSY;
     optiga_lib_status_t return_status = _wait_check(optiga_util_write_metadata(util,
@@ -347,15 +271,13 @@ int32_t optiga_setup(const optiga_interface_functions_t* ifs)
 static bool _update_hmac_key(void) {
     uint8_t new_key[32] = {0};
     // TODO: use host randomness as well
-    optiga_random(new_key);
+    _ifs->random_32_bytes(new_key);
 
     traceln("new hmac key: %s", util_uint8_to_hex_alloc(new_key, sizeof(new_key)));
 
-    // Write secret in any data slot (0xf1d0 used here)
-    // called _update_kdf_key in securechip?
     optiga_lib_status = OPTIGA_LIB_BUSY;
     optiga_lib_status_t return_status = _wait_check(optiga_util_write_data(util,
-            0xF1D0,
+            OPTIGA_DATA_OBJECT_ID_HMAC,
             OPTIGA_UTIL_ERASE_AND_WRITE,
             0x00,
             new_key,
@@ -366,17 +288,19 @@ static bool _update_hmac_key(void) {
     return true;
 }
 
-int optiga_hmac(const uint8_t* msg, size_t len, uint8_t* mac_out) {
+int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t* mac_out) {
+    (void) slot;
     // The equivalient of python `mac_out = hmac.new(key, msg[:len], hashlib.sha256).digest()`
 
     _update_hmac_key();
 
     uint32_t mac_out_len = 32;
 
+    OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_NO_PROTECTION);
     optiga_lib_status = OPTIGA_LIB_BUSY;
     optiga_lib_status_t return_status = _wait_check(optiga_crypt_hmac(crypt,
             OPTIGA_HMAC_SHA_256,
-            0xF1D0, /* Input secret OID */
+            OPTIGA_DATA_OBJECT_ID_HMAC, /* Input secret OID */
             msg, /* input data */
             len, /* input data len */
             mac_out,
@@ -401,10 +325,15 @@ bool optiga_random(uint8_t* rand_out) {
     return true;
 }
 
-bool _ecc_write_priv_key(uint8_t* priv_key) {
-    
+bool optiga_model(securechip_model_t* model_out){
+    *model_out = OPTIGA_TRUST_M_V3;
+    return true;
 }
 
-bool securitufunctions_ecc_generate_public_key(uint8_t* priv_key, uint8_t* pub_key) {
-    _ecc_write_priv_key(priv_key
-}
+//bool _ecc_write_priv_key(uint8_t* priv_key) {
+//    
+//}
+//
+//bool securitufunctions_ecc_generate_public_key(uint8_t* priv_key, uint8_t* pub_key) {
+//    _ecc_write_priv_key(priv_key
+//}
