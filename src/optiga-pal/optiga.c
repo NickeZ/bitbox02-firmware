@@ -49,7 +49,7 @@ static optiga_lib_status_t _wait_check(optiga_lib_status_t return_status, const 
 static void optiga_lib_callback(void* callback_ctx, optiga_lib_status_t event) {
     (void)callback_ctx;
     optiga_lib_status = event;
-    printf("%s\n", "optiga_lib_callback");
+    printf("optiga_lib_callback 0x%.3x\n", event);
 }
 
 
@@ -89,13 +89,13 @@ const uint8_t platform_binding_shared_secret_metadata_final [] = {
 };
 
 static optiga_lib_status_t read_and_print_secret(void) {
-    uint8_t platform_binding_secret[32];
-    uint16_t len = 32;
+    uint8_t platform_binding_secret[64];
+    uint16_t len = sizeof(platform_binding_secret);
     optiga_lib_status_t return_status;
     do {
         optiga_lib_status = OPTIGA_LIB_BUSY;
         OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_NO_PROTECTION);
-        memset(platform_binding_secret, 0xff, 32);
+        memset(platform_binding_secret, 0xff, sizeof(platform_binding_secret));
         return_status = optiga_util_read_data(util,
                                                0xE140,
                                                0,
@@ -103,8 +103,8 @@ static optiga_lib_status_t read_and_print_secret(void) {
                                                &len);
         _wait_check(return_status, "read_data");
 
-        if(len < 32) {
-            traceln("%s", "read less than 32 bytes");
+        if(len < sizeof(platform_binding_secret)) {
+            traceln("%s", "read too few bytes");
         }
 
         char msg[sizeof(platform_binding_secret)*2+1] = {0};
@@ -120,7 +120,7 @@ static optiga_lib_status_t read_and_print_secret(void) {
 
 static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 {
-    uint8_t platform_binding_secret[32];
+    uint8_t platform_binding_secret[64];
     uint8_t platform_binding_secret_metadata[44];
     uint16_t bytes_to_read = sizeof(platform_binding_secret_metadata);
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
@@ -136,6 +136,8 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 
         OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt,OPTIGA_COMMS_NO_PROTECTION);
         OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(crypt,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
+
+        read_and_print_secret();
 
         /**
          * 3. Read Platform Binding Shared secret (0xE140) data object metadata from OPTIGA
@@ -155,7 +157,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
          */
 
         char msg[sizeof(platform_binding_secret_metadata)*2+1] = {0};
-        util_uint8_to_hex(platform_binding_secret_metadata, sizeof(platform_binding_secret_metadata), msg);
+        util_uint8_to_hex(platform_binding_secret_metadata, bytes_to_read, msg);
         traceln("metadata: %s", msg);
 
         if (platform_binding_secret_metadata[4] >= LCSO_STATE_OPERATIONAL)
@@ -259,6 +261,7 @@ int optiga_setup(const securechip_interface_functions_t* ifs)
 
     // Use data object OPTIGA_DATA_OBJECT_ID_HMAC for HMAC
     optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_RESPONSE_PROTECTION);
     optiga_lib_status_t return_status = _wait_check(optiga_util_write_metadata(util,
             OPTIGA_DATA_OBJECT_ID_HMAC,
             hmac_metadata,

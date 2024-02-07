@@ -25,6 +25,8 @@
 #include "securechip/securechip.h"
 #include "util.h"
 #include <wally_core.h>
+#include "optiga-pal/optiga.h"
+#include "hpl_time_measure.h"
 
 extern void __attribute__((noreturn)) __stack_chk_fail(void);
 void __attribute__((noreturn)) __stack_chk_fail(void)
@@ -90,14 +92,29 @@ void common_main(void)
 
     // securechip_setup must come after memory_setup, so the io/auth keys to be
     // used are already initialized.
-    int securechip_result = securechip_setup(&_securechip_interface_functions);
-    if (securechip_result) {
+
+    traceln("%s", "Setting up optiga");
+    int res = securechip_setup(&_securechip_interface_functions);
+
+    //for(int i=0; i<2; ++i) {
+    //    uint8_t msg[32] = {0};
+    //    bool res2 = securechip_random(msg);
+    //    (void)res2;
+    //    traceln("Random bytes: %s", util_uint8_to_hex_alloc(msg, sizeof(msg)));
+    //}
+
+    uint8_t msg[2] = {'h', 'i'};
+    uint8_t kdf_out[32] = {0};
+    bool res2 = securechip_kdf(SECURECHIP_SLOT_KDF, msg, sizeof(msg), kdf_out);
+    (void)res2;
+
+    if (res) {
         char errmsg[100] = {0};
         snprintf(
             errmsg,
             sizeof(errmsg),
             "Securechip setup failed.\nError code: %i\nPlease contact support.",
-            securechip_result);
-        AbortAutoenter(errmsg);
+            res);
+        //AbortAutoenter(errmsg);
     }
 }
