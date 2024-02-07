@@ -43,7 +43,10 @@ static securechip_crypt_interface_t _fns = {0};
 bool securechip_init(void) {
     switch(memory_get_securechip_type()) {
     case MEMORY_SECURECHIP_TYPE_OPTIGA:
-        Abort("nono");
+        _fns.setup = optiga_setup;
+        _fns.kdf = optiga_hmac;
+        _fns.random = optiga_random;
+        _fns.model = optiga_model;
         break;
     case MEMORY_SECURECHIP_TYPE_ATECC:
     default:
