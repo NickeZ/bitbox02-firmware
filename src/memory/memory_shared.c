@@ -54,3 +54,7 @@ uint8_t memory_get_screen_type(void)
     }
     */
 }
+
+uint8_t memory_get_securechip_type(void) {
+    return MEMORY_SECURECHIP_TYPE_OPTIGA;
+}

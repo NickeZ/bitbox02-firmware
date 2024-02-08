@@ -140,12 +140,9 @@ set(PLATFORM-BITBOX02-SOURCES
 )
 set(PLATFORM-BITBOX02-SOURCES ${PLATFORM-BITBOX02-SOURCES} PARENT_SCOPE)
 
-set(CRYPTOAUTHLIB-SOURCES
+set(SECURECHIP-SOURCES
+  ${CMAKE_SOURCE_DIR}/src/atecc/atecc.c
   ${CMAKE_SOURCE_DIR}/src/securechip/securechip.c
-)
-set(CRYPTOAUTHLIB-SOURCES ${CRYPTOAUTHLIB-SOURCES} PARENT_SCOPE)
-
-set(OPTIGAPAL-SOURCES
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_crypt_mbedtls.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_gpio.c
@@ -157,9 +154,9 @@ set(OPTIGAPAL-SOURCES
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_lock.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_timer.c
   ${CMAKE_SOURCE_DIR}/src/optiga-pal/pal_os_memory.c
-  ${CMAKE_SOURCE_DIR}/src/optiga-pal/securityfunctions.c
+  ${CMAKE_SOURCE_DIR}/src/optiga-pal/optiga.c
 )
-set(OPTIGAPAL-SOURCES ${OPTIGAPAL-SOURCES} PARENT_SCOPE)
+set(SECURECHIP-SOURCES ${SECURECHIP-SOURCES} PARENT_SCOPE)
 
 set(ETHEREUM-SOURCES
   ${CMAKE_SOURCE_DIR}/src/apps/eth/eth_params.c
@@ -204,8 +201,7 @@ set(FIRMWARE-SOURCES
   ${DBB-FIRMWARE-UI-SOURCES}
   ${FIRMWARE-DRIVER-SOURCES}
   ${DRIVER-SOURCES}
-  ${CRYPTOAUTHLIB-SOURCES}
-  ${OPTIGAPAL-SOURCES}
+  ${SECURECHIP-SOURCES}
   ${CMAKE_SOURCE_DIR}/src/common_main.c
 )
 

@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _SECURITYFUNCTIONS_H_
-#define _SECURITYFUNCTIONS_H_
-#include "stdint.h"
-#include "stddef.h"
-#include "stdbool.h"
+#ifndef _OPTIGA_H_
+#define _OPTIGA_H_
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include "securechip/securechip.h"
 
-typedef struct {int32_t dummy;}
-securityfunctions_interface_functions_t;
-
-int32_t optiga_setup(const securityfunctions_interface_functions_t* ifs);
-bool securityfunctions_random(uint8_t* rand_out);
-int securityfunctions_hmac(const uint8_t* msg, size_t len, uint8_t* kdf_out);
-#endif // _SECURITYFUNCTIONS_H_
+int optiga_setup(const securechip_interface_functions_t* ifs);
+bool optiga_random(uint8_t* rand_out);
+int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t* mac_out);
+bool optiga_model(securechip_model_t* model_out);
+#endif // _OPTIGA_H_

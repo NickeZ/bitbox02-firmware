@@ -25,7 +25,7 @@
 #include "securechip/securechip.h"
 #include "util.h"
 #include <wally_core.h>
-#include "optiga-pal/securityfunctions.h"
+#include "optiga-pal/optiga.h"
 #include "hpl_time_measure.h"
 #include "optiga/pal/pal_os_timer.h"
 
@@ -48,12 +48,12 @@ static const memory_interface_functions_t _memory_interface_functions = {
     .random_32_bytes = random_32_bytes_mcu,
 };
 
-//static const securechip_interface_functions_t _securechip_interface_functions = {
-//    .get_auth_key = memory_get_authorization_key,
-//    .get_io_protection_key = memory_get_io_protection_key,
-//    .get_encryption_key = memory_get_encryption_key,
-//    .random_32_bytes = random_32_bytes,
-//};
+static const securechip_interface_functions_t _securechip_interface_functions = {
+    .get_auth_key = memory_get_authorization_key,
+    .get_io_protection_key = memory_get_io_protection_key,
+    .get_encryption_key = memory_get_encryption_key,
+    .random_32_bytes = random_32_bytes,
+};
 
 static void _wally_patched_bzero(void* ptr, size_t len)
 {
@@ -89,24 +89,21 @@ void common_main(void)
     // securechip_setup must come after memory_setup, so the io/auth keys to be
     // used are already initialized.
     traceln("%s", "Setting up optiga");
+    if(!securechip_init()) {
+        Abort("Failed to determine securechip");
+    }
     pal_timer_init();
-    int32_t res = optiga_setup(NULL);
+    int res = optiga_setup(&_securechip_interface_functions);
 
     //for(;;){}
 
-    for(int i=0; i<2; ++i) {
-        uint8_t msg[32] = {0};
-        securityfunctions_random(msg);
-        char msg_ascii[sizeof(msg)*2+1] = {0};
-        util_uint8_to_hex(msg, sizeof(msg), msg_ascii);
-        traceln("Random bytes: %s", msg_ascii);
-    }
-
-    uint8_t msg[2] = {'h', 'i'};
-
-    uint8_t kdf_out[32] = {0};
-
-    securityfunctions_hmac(msg, sizeof(msg), kdf_out);
+    //for(int i=0; i<2; ++i) {
+    //    uint8_t msg[32] = {0};
+    //    optiga_random(msg);
+    //    char msg_ascii[sizeof(msg)*2+1] = {0};
+    //    util_uint8_to_hex(msg, sizeof(msg), msg_ascii);
+    //    traceln("Random bytes: %s", msg_ascii);
+    //}
 
     //int securechip_result = securechip_setup(&_securechip_interface_functions);
     if (res) {
@@ -114,8 +111,16 @@ void common_main(void)
         snprintf(
             errmsg,
             sizeof(errmsg),
-            "Securechip setup failed.\nError code: %li\nPlease contact support.",
+            "Securechip setup failed.\nError code: %i\nPlease contact support.",
             res);
         //AbortAutoenter(errmsg);
+        Abort(errmsg);
     }
+
+    uint8_t msg[] = {'h', 'i'};
+
+    uint8_t kdf_out[32] = {0};
+
+    optiga_hmac(0, msg, sizeof(msg), kdf_out);
+    traceln("mac_out: %s", util_uint8_to_hex_alloc(kdf_out, sizeof(kdf_out)));
 }
