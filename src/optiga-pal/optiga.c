@@ -269,14 +269,14 @@ int optiga_setup(const securechip_interface_functions_t* ifs)
         return 1;
     }
 
-    optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
-    res = _wait_check(optiga_util_close_application(util, 0), "close_application");
-    if (res != OPTIGA_LIB_SUCCESS) {
-        traceln("Failed to close application %d", res);
-        return 1;
-    }
-    traceln("%s", "Application closed");
+    //optiga_lib_status = OPTIGA_LIB_BUSY;
+    //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    //res = _wait_check(optiga_util_close_application(util, 0), "close_application");
+    //if (res != OPTIGA_LIB_SUCCESS) {
+    //    traceln("Failed to close application %d", res);
+    //    return 1;
+    //}
+    //traceln("%s", "Application closed");
 
     return 0;
 }
@@ -288,14 +288,16 @@ static bool _update_hmac_key(void) {
 
     traceln("new hmac key: %s", util_uint8_to_hex_alloc(new_key, sizeof(new_key)));
 
-    optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
-    optiga_lib_status_t res = _wait_check(optiga_util_open_application(util, 0), "open_application");
-    if (res != OPTIGA_LIB_SUCCESS) {
-        traceln("Failed to open application %d", res);
-        return 1;
-    }
-    traceln("%s", "Application open");
+    optiga_lib_status_t res;
+
+    //optiga_lib_status = OPTIGA_LIB_BUSY;
+    //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    //res = _wait_check(optiga_util_open_application(util, 0), "open_application");
+    //if (res != OPTIGA_LIB_SUCCESS) {
+    //    traceln("Failed to open application %d", res);
+    //    return 1;
+    //}
+    //traceln("%s", "Application open");
 
     optiga_lib_status = OPTIGA_LIB_BUSY;
     res = _wait_check(optiga_util_write_data(util,
@@ -308,14 +310,14 @@ static bool _update_hmac_key(void) {
         return false;
     }
 
-    optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
-    res = _wait_check(optiga_util_close_application(util, 0), "close_application");
-    if (res != OPTIGA_LIB_SUCCESS) {
-        traceln("Failed to close application %d", res);
-        return 1;
-    }
-    traceln("%s", "Application closed");
+    //optiga_lib_status = OPTIGA_LIB_BUSY;
+    //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    //res = _wait_check(optiga_util_close_application(util, 0), "close_application");
+    //if (res != OPTIGA_LIB_SUCCESS) {
+    //    traceln("Failed to close application %d", res);
+    //    return 1;
+    //}
+    //traceln("%s", "Application closed");
     return true;
 }
 
@@ -348,7 +350,7 @@ int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t*
     }
     traceln("%s", "Application open");
 
-    OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_FULL_PROTECTION);
+    //OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_FULL_PROTECTION);
     optiga_lib_status = OPTIGA_LIB_BUSY;
     optiga_lib_status_t return_status = _wait_check(optiga_crypt_hmac(crypt,
             OPTIGA_HMAC_SHA_256,
@@ -362,13 +364,13 @@ int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t*
     }
     traceln("mac_out: %s", util_uint8_to_hex_alloc(mac_out, mac_out_len));
 
-    optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
-    res = _wait_check(optiga_util_close_application(util, 0), "close_application");
-    if (res != OPTIGA_LIB_SUCCESS) {
-        traceln("Failed to close application %d", res);
-        return 1;
-    }
+    //optiga_lib_status = OPTIGA_LIB_BUSY;
+    //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    //res = _wait_check(optiga_util_close_application(util, 0), "close_application");
+    //if (res != OPTIGA_LIB_SUCCESS) {
+    //    traceln("Failed to close application %d", res);
+    //    return 1;
+    //}
 
     return return_status;
 }
