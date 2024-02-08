@@ -104,16 +104,12 @@ static optiga_lib_status_t read_and_print_secret(void) {
         _wait_check(return_status, "read_data");
 
         if(len < sizeof(platform_binding_secret)) {
-            traceln("%s", "read too few bytes");
+            traceln("%s", "expected more bytes");
         }
 
         char msg[sizeof(platform_binding_secret)*2+1] = {0};
         util_uint8_to_hex(platform_binding_secret, sizeof(platform_binding_secret), msg);
-        trace("%s", "secret: ");
-        for (unsigned int i = 0; i < sizeof(platform_binding_secret); ++i) {
-            printf("%c%c ", msg[i*2], msg[i*2+1]);
-        }
-        printf("\n");
+        traceln("secret on chip (%u) %s", len, msg);
     } while(0);
     return return_status;
 }
@@ -158,7 +154,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 
         char msg[sizeof(platform_binding_secret_metadata)*2+1] = {0};
         util_uint8_to_hex(platform_binding_secret_metadata, bytes_to_read, msg);
-        traceln("metadata: %s", msg);
+        traceln("metadata: (%u) %s", bytes_to_read, msg);
 
         if (platform_binding_secret_metadata[4] >= LCSO_STATE_OPERATIONAL)
         {
@@ -179,7 +175,7 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 
         char msg2[sizeof(platform_binding_secret)*2+1] = {0};
         util_uint8_to_hex(platform_binding_secret, sizeof(platform_binding_secret), msg2);
-        traceln("secret stored in host: %s", msg2);
+        traceln("secret stored in host (%u): %s", len, msg2);
 
         /**
          * 7. Write random(secret) to OPTIGA platform Binding shared secret data object (0xE140)
@@ -206,13 +202,10 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
                                                    platform_binding_shared_secret_metadata_final,
                                                    sizeof(platform_binding_shared_secret_metadata_final)), "write_metadata");
 
-        // READ AND CHECK
-        read_and_print_secret();
-        
         return_status = OPTIGA_LIB_SUCCESS;
 
     } while(FALSE);
-    traceln("%s %d", __func__, return_status);
+    traceln("%s end %d", __func__, return_status);
     return return_status;
 }
 
@@ -266,11 +259,23 @@ int optiga_setup(const securechip_interface_functions_t* ifs)
     // Use data object OPTIGA_DATA_OBJECT_ID_HMAC for HMAC
     optiga_lib_status = OPTIGA_LIB_BUSY;
     //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_RESPONSE_PROTECTION);
-    optiga_lib_status_t return_status = _wait_check(optiga_util_write_metadata(util,
+    res = _wait_check(optiga_util_write_metadata(util,
             OPTIGA_DATA_OBJECT_ID_HMAC,
             hmac_metadata,
             sizeof(hmac_metadata)), "write_metadata");
-    (void) return_status;
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to configure HMAC object %d", res);
+        return 1;
+    }
+
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    res = _wait_check(optiga_util_close_application(util, 0), "close_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to close application %d", res);
+        return 1;
+    }
+    traceln("%s", "Application closed");
 
     return 0;
 }
@@ -283,15 +288,33 @@ static bool _update_hmac_key(void) {
     traceln("new hmac key: %s", util_uint8_to_hex_alloc(new_key, sizeof(new_key)));
 
     optiga_lib_status = OPTIGA_LIB_BUSY;
-    optiga_lib_status_t return_status = _wait_check(optiga_util_write_data(util,
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    optiga_lib_status_t res = _wait_check(optiga_util_open_application(util, 0), "open_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to open application %d", res);
+        return 1;
+    }
+    traceln("%s", "Application open");
+
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    res = _wait_check(optiga_util_write_data(util,
             OPTIGA_DATA_OBJECT_ID_HMAC,
             OPTIGA_UTIL_ERASE_AND_WRITE,
             0x00,
             new_key,
             sizeof(new_key)), "util_write");
-    if (return_status != OPTIGA_LIB_SUCCESS) {
+    if (res != OPTIGA_LIB_SUCCESS) {
         return false;
     }
+
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    res = _wait_check(optiga_util_close_application(util, 0), "close_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to close application %d", res);
+        return 1;
+    }
+    traceln("%s", "Application closed");
     return true;
 }
 
@@ -302,6 +325,27 @@ int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t*
     _update_hmac_key();
 
     uint32_t mac_out_len = 32;
+
+    util = optiga_util_create(OPTIGA_INSTANCE_ID_0, optiga_lib_callback, NULL);
+    if(NULL == util) {
+        traceln("%s", "util_create returned null");
+        return 1;
+    }
+
+    crypt = optiga_crypt_create(OPTIGA_INSTANCE_ID_0, optiga_lib_callback, NULL);
+    if (NULL == crypt) {
+        traceln("%s", "crypt_create returned null");
+        return 1;
+    }
+
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    optiga_lib_status_t res = _wait_check(optiga_util_open_application(util, 0), "open_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to open application %d", res);
+        return 1;
+    }
+    traceln("%s", "Application open");
 
     OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_FULL_PROTECTION);
     optiga_lib_status = OPTIGA_LIB_BUSY;
@@ -317,19 +361,46 @@ int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t*
     }
     traceln("mac_out: %s", util_uint8_to_hex_alloc(mac_out, mac_out_len));
 
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    res = _wait_check(optiga_util_close_application(util, 0), "close_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to close application %d", res);
+        return 1;
+    }
+
     return return_status;
 }
 
 // rand_out must be 32 bytes
 bool optiga_random(uint8_t* rand_out) {
+
     optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_FULL_PROTECTION);
-    optiga_lib_status_t res = _wait_check(
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    optiga_lib_status_t res = _wait_check(optiga_util_open_application(util, 0), "open_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to open application %d", res);
+        return 1;
+    }
+    traceln("%s", "Application open");
+
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_NO_PROTECTION);
+    res = _wait_check(
         optiga_crypt_random(crypt, OPTIGA_RNG_TYPE_TRNG, rand_out, 32),
         "crypt_random");
     if(res != OPTIGA_LIB_SUCCESS) {
         return false;
     }
+
+    optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
+    res = _wait_check(optiga_util_close_application(util, 0), "close_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to close application %d", res);
+        return 1;
+    }
+    traceln("%s", "Application closed");
     return true;
 }
 

@@ -80,7 +80,7 @@ pal_status_t pal_os_datastore_read(uint16_t datastore_id,
                 break;
             }
             memory_get_io_protection_key(p_buffer);
-            memset(p_buffer+32, 0x00, 32);
+            memset(p_buffer+32, 0x55, 32);
             *p_buffer_length = 64;
             return_status = PAL_STATUS_SUCCESS;
             break;
