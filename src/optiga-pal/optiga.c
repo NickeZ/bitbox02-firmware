@@ -89,7 +89,7 @@ const uint8_t platform_binding_shared_secret_metadata_final [] = {
 };
 
 static optiga_lib_status_t read_and_print_secret(void) {
-    uint8_t platform_binding_secret[64];
+    uint8_t platform_binding_secret[32];
     uint16_t len = sizeof(platform_binding_secret);
     optiga_lib_status_t return_status;
     do {
@@ -116,7 +116,7 @@ static optiga_lib_status_t read_and_print_secret(void) {
 
 static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 {
-    uint8_t platform_binding_secret[64];
+    uint8_t platform_binding_secret[32];
     uint8_t platform_binding_secret_metadata[44];
     uint16_t bytes_to_read = sizeof(platform_binding_secret_metadata);
     optiga_lib_status_t return_status = !OPTIGA_LIB_SUCCESS;
@@ -124,6 +124,8 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
 
     do
     {
+        read_and_print_secret();
+
         /**
          * 2. Initialize the protection level and protocol version for the instances
          */
@@ -133,7 +135,6 @@ static optiga_lib_status_t pair_host_and_optiga_using_pre_shared_secret(void)
         OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt,OPTIGA_COMMS_NO_PROTECTION);
         OPTIGA_CRYPT_SET_COMMS_PROTOCOL_VERSION(crypt,OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET);
 
-        read_and_print_secret();
 
         /**
          * 3. Read Platform Binding Shared secret (0xE140) data object metadata from OPTIGA

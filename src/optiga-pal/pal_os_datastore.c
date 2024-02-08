@@ -75,13 +75,13 @@ pal_status_t pal_os_datastore_read(uint16_t datastore_id,
     {
         case OPTIGA_PLATFORM_BINDING_SHARED_SECRET_ID:
         {
-            if(*p_buffer_length < 64) {
+            if(*p_buffer_length < 32) {
                 return_status = PAL_STATUS_FAILURE;
                 break;
             }
             memory_get_io_protection_key(p_buffer);
-            memset(p_buffer+32, 0x55, 32);
-            *p_buffer_length = 64;
+            //memset(p_buffer+32, 0x55, 32);
+            *p_buffer_length = 32;
             return_status = PAL_STATUS_SUCCESS;
             break;
         }
