@@ -69,7 +69,9 @@ pal_status_t pal_os_datastore_write(uint16_t datastore_id,
                                     uint16_t length)
 {
     pal_status_t return_status = PAL_STATUS_FAILURE;
-    uint8_t offset = 0;
+    //uint8_t offset = 0;
+    (void)p_buffer;
+    (void)length;
 
     switch(datastore_id)
     {
@@ -79,32 +81,32 @@ pal_status_t pal_os_datastore_write(uint16_t datastore_id,
             return_status = PAL_STATUS_FAILURE;
             break;
         }
-        case OPTIGA_COMMS_MANAGE_CONTEXT_ID:
-        {
-            // !!!OPTIGA_LIB_PORTING_REQUIRED
-            // This has to be enhanced by user only, in case of storing 
-            // the manage context information in non-volatile memory 
-            // to reuse for later during hard reset scenarios where the 
-            // RAM gets flushed out.
-            data_store_manage_context_buffer[offset++] = (uint8_t)(length>>8);
-            data_store_manage_context_buffer[offset++] = (uint8_t)(length);
-            memcpy(&data_store_manage_context_buffer[offset],p_buffer,length);
-            return_status = PAL_STATUS_SUCCESS;
-            break;
-        }
-        case OPTIGA_HIBERNATE_CONTEXT_ID:
-        {
-            // !!!OPTIGA_LIB_PORTING_REQUIRED
-            // This has to be enhanced by user only, in case of storing 
-            // the application context information in non-volatile memory 
-            // to reuse for later during hard reset scenarios where the 
-            // RAM gets flushed out.
-            data_store_app_context_buffer[offset++] = (uint8_t)(length>>8);
-            data_store_app_context_buffer[offset++] = (uint8_t)(length);
-            memcpy(&data_store_app_context_buffer[offset],p_buffer,length);
-            return_status = PAL_STATUS_SUCCESS;
-            break;
-        }
+        //case OPTIGA_COMMS_MANAGE_CONTEXT_ID:
+        //{
+        //    // !!!OPTIGA_LIB_PORTING_REQUIRED
+        //    // This has to be enhanced by user only, in case of storing 
+        //    // the manage context information in non-volatile memory 
+        //    // to reuse for later during hard reset scenarios where the 
+        //    // RAM gets flushed out.
+        //    data_store_manage_context_buffer[offset++] = (uint8_t)(length>>8);
+        //    data_store_manage_context_buffer[offset++] = (uint8_t)(length);
+        //    memcpy(&data_store_manage_context_buffer[offset],p_buffer,length);
+        //    return_status = PAL_STATUS_SUCCESS;
+        //    break;
+        //}
+        //case OPTIGA_HIBERNATE_CONTEXT_ID:
+        //{
+        //    // !!!OPTIGA_LIB_PORTING_REQUIRED
+        //    // This has to be enhanced by user only, in case of storing 
+        //    // the application context information in non-volatile memory 
+        //    // to reuse for later during hard reset scenarios where the 
+        //    // RAM gets flushed out.
+        //    data_store_app_context_buffer[offset++] = (uint8_t)(length>>8);
+        //    data_store_app_context_buffer[offset++] = (uint8_t)(length);
+        //    memcpy(&data_store_app_context_buffer[offset],p_buffer,length);
+        //    return_status = PAL_STATUS_SUCCESS;
+        //    break;
+        //}
         default:
         {
             break;
@@ -119,8 +121,8 @@ pal_status_t pal_os_datastore_read(uint16_t datastore_id,
                                    uint16_t * p_buffer_length)
 {
     pal_status_t return_status = PAL_STATUS_FAILURE;
-    uint16_t data_length;
-    uint8_t offset = 0;
+    //uint16_t data_length;
+    //uint8_t offset = 0;
 
     switch(datastore_id)
     {
@@ -133,32 +135,32 @@ pal_status_t pal_os_datastore_read(uint16_t datastore_id,
             return_status = PAL_STATUS_SUCCESS;
             break;
         }
-        case OPTIGA_COMMS_MANAGE_CONTEXT_ID:
-        {
-            // !!!OPTIGA_LIB_PORTING_REQUIRED
-            // This has to be enhanced by user only,
-            // if manage context information is stored in NVM during the hibernate, 
-            // else this is not required to be enhanced.
-            data_length = (uint16_t) (data_store_manage_context_buffer[offset++] << 8);
-            data_length |= (uint16_t)(data_store_manage_context_buffer[offset++]);
-            memcpy(p_buffer, &data_store_manage_context_buffer[offset], data_length);
-            *p_buffer_length = data_length;
-            return_status = PAL_STATUS_SUCCESS;
-            break;
-        }
-        case OPTIGA_HIBERNATE_CONTEXT_ID:
-        {
-            // !!!OPTIGA_LIB_PORTING_REQUIRED
-            // This has to be enhanced by user only,
-            // if application context information is stored in NVM during the hibernate, 
-            // else this is not required to be enhanced.
-            data_length = (uint16_t) (data_store_app_context_buffer[offset++] << 8);
-            data_length |= (uint16_t)(data_store_app_context_buffer[offset++]);
-            memcpy(p_buffer, &data_store_app_context_buffer[offset], data_length);
-            *p_buffer_length = data_length;
-            return_status = PAL_STATUS_SUCCESS;
-            break;
-        }
+        //case OPTIGA_COMMS_MANAGE_CONTEXT_ID:
+        //{
+        //    // !!!OPTIGA_LIB_PORTING_REQUIRED
+        //    // This has to be enhanced by user only,
+        //    // if manage context information is stored in NVM during the hibernate, 
+        //    // else this is not required to be enhanced.
+        //    data_length = (uint16_t) (data_store_manage_context_buffer[offset++] << 8);
+        //    data_length |= (uint16_t)(data_store_manage_context_buffer[offset++]);
+        //    memcpy(p_buffer, &data_store_manage_context_buffer[offset], data_length);
+        //    *p_buffer_length = data_length;
+        //    return_status = PAL_STATUS_SUCCESS;
+        //    break;
+        //}
+        //case OPTIGA_HIBERNATE_CONTEXT_ID:
+        //{
+        //    // !!!OPTIGA_LIB_PORTING_REQUIRED
+        //    // This has to be enhanced by user only,
+        //    // if application context information is stored in NVM during the hibernate, 
+        //    // else this is not required to be enhanced.
+        //    data_length = (uint16_t) (data_store_app_context_buffer[offset++] << 8);
+        //    data_length |= (uint16_t)(data_store_app_context_buffer[offset++]);
+        //    memcpy(p_buffer, &data_store_app_context_buffer[offset], data_length);
+        //    *p_buffer_length = data_length;
+        //    return_status = PAL_STATUS_SUCCESS;
+        //    break;
+        //}
         default:
         {
             *p_buffer_length = 0;
