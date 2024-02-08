@@ -274,10 +274,10 @@ bool memory_setup(const memory_interface_functions_t* ifs)
     chunk_0_t chunk = {0};
     CLEANUP_CHUNK(chunk);
     _read_chunk(CHUNK_0_PERMANENT, chunk_bytes);
-    if (chunk.fields.factory_setup_done == sectrue_u8) {
-        // already factory installed
-        return true;
-    }
+    //if (chunk.fields.factory_setup_done == sectrue_u8) {
+    //    // already factory installed
+    //    return true;
+    //}
     // Perform factory setup.
     if (!memory_reset_hww()) {
         return false;
@@ -288,16 +288,16 @@ bool memory_setup(const memory_interface_functions_t* ifs)
     memory_read_shared_bootdata(&shared_chunk);
 
     // Sanity check: io/auth keys must not have been set before.
-    uint8_t empty[32] = {0};
-    memset(empty, 0xFF, sizeof(empty));
-    if (!MEMEQ(chunk.fields.io_protection_key, empty, 32) ||
-        !MEMEQ(chunk.fields.authorization_key, empty, 32) ||
-        !MEMEQ(chunk.fields.encryption_key, empty, 32) ||
-        !MEMEQ(shared_chunk.fields.io_protection_key_split, empty, 32) ||
-        !MEMEQ(shared_chunk.fields.authorization_key_split, empty, 32) ||
-        !MEMEQ(shared_chunk.fields.encryption_key_split, empty, 32)) {
-        Abort("io/auth/enc key already set");
-    }
+    //uint8_t empty[32] = {0};
+    //memset(empty, 0xFF, sizeof(empty));
+    //if (!MEMEQ(chunk.fields.io_protection_key, empty, 32) ||
+    //    !MEMEQ(chunk.fields.authorization_key, empty, 32) ||
+    //    !MEMEQ(chunk.fields.encryption_key, empty, 32) ||
+    //    !MEMEQ(shared_chunk.fields.io_protection_key_split, empty, 32) ||
+    //    !MEMEQ(shared_chunk.fields.authorization_key_split, empty, 32) ||
+    //    !MEMEQ(shared_chunk.fields.encryption_key_split, empty, 32)) {
+    //    Abort("io/auth/enc key already set");
+    //}
 
     _interface_functions->random_32_bytes(chunk.fields.io_protection_key);
     _interface_functions->random_32_bytes(shared_chunk.fields.io_protection_key_split);
