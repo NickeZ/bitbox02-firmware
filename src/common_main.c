@@ -78,6 +78,12 @@ void common_main(void)
         AbortAutoenter("Failed to identify securechip");
     }
 
+    securechip_model_t model;
+    bool res_model = securechip_model(&model);
+    (void)res_model;
+
+    traceln("Found %s", model == OPTIGA_TRUST_M_V3 ? "OPTIGA" : "ATECC");
+
     if (!memory_setup(&_memory_interface_functions)) {
         // If memory setup failed, this also might fail, but can't hurt to try.
         AbortAutoenter("memory_setup failed");
@@ -96,18 +102,6 @@ void common_main(void)
     traceln("%s", "Setting up optiga");
     int res = securechip_setup(&_securechip_interface_functions);
 
-    //for(int i=0; i<2; ++i) {
-    //    uint8_t msg[32] = {0};
-    //    bool res2 = securechip_random(msg);
-    //    (void)res2;
-    //    traceln("Random bytes: %s", util_uint8_to_hex_alloc(msg, sizeof(msg)));
-    //}
-
-    uint8_t msg[2] = {'h', 'i'};
-    uint8_t kdf_out[32] = {0};
-    bool res2 = securechip_kdf(SECURECHIP_SLOT_KDF, msg, sizeof(msg), kdf_out);
-    (void)res2;
-
     if (res) {
         char errmsg[100] = {0};
         snprintf(
@@ -116,5 +110,18 @@ void common_main(void)
             "Securechip setup failed.\nError code: %i\nPlease contact support.",
             res);
         //AbortAutoenter(errmsg);
+        Abort(errmsg);
     }
+
+    //for(int i=0; i<2; ++i) {
+    //    uint8_t msg[32] = {0};
+    //    bool res2 = securechip_random(msg);
+    //    (void)res2;
+    //    traceln("Random bytes: %s", util_uint8_to_hex_alloc(msg, sizeof(msg)));
+    //
+
+    uint8_t msg[2] = {'h', 'i'};
+    uint8_t kdf_out[32] = {0};
+    bool res2 = securechip_kdf(SECURECHIP_SLOT_KDF, msg, sizeof(msg), kdf_out);
+    (void)res2;
 }

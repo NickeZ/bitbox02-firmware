@@ -33,14 +33,14 @@ static const securechip_interface_functions_t* _ifs = NULL;
 // Wait until callback has updated optiga_lib_status from busy to result
 static optiga_lib_status_t _wait_check(optiga_lib_status_t return_status, const char* error_msg) {
     if(return_status != OPTIGA_UTIL_SUCCESS) {
-        printf("ERROR: %s (code: 0x%03x)\n", error_msg, return_status);
+        printf("ERROR1: %s (code: 0x%03x)\n", error_msg, return_status);
         return return_status;
     }
     while (OPTIGA_LIB_BUSY == optiga_lib_status)
     { }
     if (OPTIGA_LIB_SUCCESS != optiga_lib_status)
     {
-        printf("ERROR: %s (code: 0x%03x)\n", error_msg, optiga_lib_status);
+        printf("ERROR2: %s (code: 0x%03x)\n", error_msg, optiga_lib_status);
         return optiga_lib_status;
     }
     return optiga_lib_status;
@@ -248,6 +248,10 @@ int optiga_setup(const securechip_interface_functions_t* ifs)
     optiga_lib_status = OPTIGA_LIB_BUSY;
     OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util, OPTIGA_COMMS_NO_PROTECTION);
     res = _wait_check(optiga_util_open_application(util, 0), "open_application");
+    if (res != OPTIGA_LIB_SUCCESS) {
+        traceln("Failed to open application %d", res);
+        return 1;
+    }
     traceln("%s", "Application open");
 
     // FACTORY SETUP
@@ -261,7 +265,7 @@ int optiga_setup(const securechip_interface_functions_t* ifs)
 
     // Use data object OPTIGA_DATA_OBJECT_ID_HMAC for HMAC
     optiga_lib_status = OPTIGA_LIB_BUSY;
-    OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_RESPONSE_PROTECTION);
+    //OPTIGA_UTIL_SET_COMMS_PROTECTION_LEVEL(util,OPTIGA_COMMS_RESPONSE_PROTECTION);
     optiga_lib_status_t return_status = _wait_check(optiga_util_write_metadata(util,
             OPTIGA_DATA_OBJECT_ID_HMAC,
             hmac_metadata,
@@ -299,7 +303,7 @@ int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t*
 
     uint32_t mac_out_len = 32;
 
-    OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_NO_PROTECTION);
+    OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_FULL_PROTECTION);
     optiga_lib_status = OPTIGA_LIB_BUSY;
     optiga_lib_status_t return_status = _wait_check(optiga_crypt_hmac(crypt,
             OPTIGA_HMAC_SHA_256,
@@ -319,6 +323,7 @@ int optiga_hmac(securechip_slot_t slot, const uint8_t* msg, size_t len, uint8_t*
 // rand_out must be 32 bytes
 bool optiga_random(uint8_t* rand_out) {
     optiga_lib_status = OPTIGA_LIB_BUSY;
+    OPTIGA_CRYPT_SET_COMMS_PROTECTION_LEVEL(crypt, OPTIGA_COMMS_FULL_PROTECTION);
     optiga_lib_status_t res = _wait_check(
         optiga_crypt_random(crypt, OPTIGA_RNG_TYPE_TRNG, rand_out, 32),
         "crypt_random");
