@@ -21,6 +21,7 @@
 
 int optiga_setup(const securechip_interface_functions_t* ifs);
 bool optiga_random(uint8_t* rand_out);
+int optiga_hmac_rollkey(const uint8_t* msg, size_t len, uint8_t* mac_out);
 int optiga_hmac(const uint8_t* msg, size_t len, uint8_t* mac_out);
 bool optiga_model(securechip_model_t* model_out);
 #endif // _OPTIGA_H_

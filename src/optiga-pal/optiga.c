@@ -24,6 +24,7 @@
 #include "util.h"
 
 #define OPTIGA_DATA_OBJECT_ID_HMAC 0xF1D0
+#define OPTIGA_DATA_OBJECT_ID_HMAC_ROLLKEY 0xF1D0
 #define OPTIGA_DATA_OBJECT_ID_PLATFORM_BINDING 0xE140
 
 #define ABORT_IF_NULL(ptr)           \
@@ -421,6 +422,24 @@ static bool _update_hmac_key(void)
                0x00,
                new_key,
                sizeof(new_key)) == OPTIGA_LIB_SUCCESS;
+}
+
+int optiga_hmac(const uint8_t* msg, size_t len, uint8_t* mac_out)
+{
+    ABORT_IF_NULL(crypt);
+    // The equivalient of python `mac_out = hmac.new(key, msg[:len], hashlib.sha256).digest()`
+
+    _update_hmac_key();
+    uint32_t mac_out_len = 32;
+
+    optiga_lib_status_t res = _optiga_crypt_hmac_sync(
+        crypt, OPTIGA_HMAC_SHA_256, OPTIGA_DATA_OBJECT_ID_HMAC, msg, len, mac_out, &mac_out_len);
+
+    if (mac_out_len != 32) {
+        traceln("%s", "Unexpected MAC length");
+    }
+
+    return res == OPTIGA_LIB_SUCCESS;
 }
 
 int optiga_hmac(const uint8_t* msg, size_t len, uint8_t* mac_out)
