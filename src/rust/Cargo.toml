@@ -22,6 +22,7 @@ members = [
     "bitbox02",
     "bitbox02-sys",
     "erc20_params",
+    "firmware",
 ]
 
 resolver = "2"
