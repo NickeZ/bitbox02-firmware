@@ -7,8 +7,6 @@
 //! Cargo re-run the build script whenever `memory.x` is changed,
 //! updating `memory.x` ensures a rebuild of the application with the
 //! new memory settings.
-//!
-//! The build script also sets the linker flags to tell it which link script to use.
 
 use std::env;
 use std::fs::File;
@@ -30,11 +28,4 @@ fn main() {
     // here, we ensure the build script is only re-run when
     // `memory.x` is changed.
     println!("cargo:rerun-if-changed=memory.x");
-
-    // Specify linker arguments.
-
-    // `--nmagic` is required if memory section addresses are not aligned to 0x10000,
-    //println!("cargo:rustc-link-arg=-Wl,--nmagic");
-
-    //println!("cargo:rustc-link-arg=-Tlink.x");
 }

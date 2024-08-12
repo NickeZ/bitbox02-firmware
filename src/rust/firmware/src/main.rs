@@ -8,7 +8,6 @@ use panic_halt as _; // you can put a breakpoint on `rust_begin_unwind` to catch
 // use panic_semihosting as _; // logs messages to the host stderr; requires a debugger
 
 use cortex_m_rt::entry;
-use cortex_m::asm;
 
 extern "C" {
     pub fn init_mcu();
@@ -28,19 +27,19 @@ extern "C" {
 #[entry]
 fn main() -> ! {
     unsafe {
-    init_mcu();
-    system_init();
-    platform_init();
-    //__stack_chk_guard = common_stack_chk_guard();
-    screen_init();
-    screen_splash();
-    qtouch_init();
-    common_main();
-    bitbox02_smarteeprom_init();
-    //traceln("%s", "Device initialized");
-    orientation_screen_blocking();
-    idle_workflow_blocking();
-    firmware_main_loop();
+        init_mcu();
+        system_init();
+        platform_init();
+        //__stack_chk_guard = common_stack_chk_guard();
+        screen_init();
+        screen_splash();
+        qtouch_init();
+        common_main();
+        bitbox02_smarteeprom_init();
+        //traceln("%s", "Device initialized");
+        orientation_screen_blocking();
+        idle_workflow_blocking();
+        firmware_main_loop();
     }
     loop {}
 }
