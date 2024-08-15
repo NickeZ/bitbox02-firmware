@@ -1,0 +1,62 @@
+# Copyright 2019 Shift Cryptosecurity AG
+# Copyright 2020 Shift Crypto AG
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Latest Ubuntu LTS
+FROM ubuntu:22.04@sha256:0eb0f877e1c869a300c442c41120e778db7161419244ee5cbc6fa5f134e74736
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y \
+    wget \
+    curl \
+    gnupg2 \
+    && rm -r /var/lib/apt/lists/*
+
+# for clang-*-18, see https://apt.llvm.org/
+RUN echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" >> /etc/apt/sources.list && \
+    echo "deb-src http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" >> /etc/apt/sources.list && \
+    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
+    rm /root/.wget-hsts
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y \
+    make \
+    git \
+    pkg-config \
+    nano \
+    jq \
+    unzip \
+    python3 \
+    python3-pip \
+    binutils \
+    valgrind \
+    cmake \
+    autotools-dev \
+    automake \
+    autoconf \
+    libtool \
+    libcmocka-dev \
+    bzip2 \
+    llvm-18 \
+    gcc-10 \
+    libc6-i386 \
+    lib32stdc++6 \
+    lib32z1 \
+    libusb-1.0-0-dev \
+    libudev-dev \
+    libhidapi-dev \
+    doxygen \
+    graphviz \
+    clang-format-18 \
+    clang-tidy-18 \
+    bash-completion \
+    && rm -r /var/lib/apt/lists/*

@@ -14,6 +14,10 @@
 
 # This makefile is used as a command runner and not for tracking dependencies between recipies
 
+# This is the current version of the development container. If you make changes to the Dockerfile,
+# bump this number to release a new version.
+CONTAINER_VERSION := 41
+
 .DEFAULT_GOAL := firmware
 SANITIZE ?= ON
 simulator: SANITIZE = OFF
@@ -129,15 +133,15 @@ jlink-flash-factory-setup: | build
 jlink-flash-firmware-semihosting: | build-semihosting
 	JLinkExe -if SWD -device ATSAMD51J20 -speed 4000 -autoconnect 1 -CommanderScript ./build-semihosting/scripts/firmware.jlink
 dockerinit:
-	./scripts/container.sh build --pull --platform linux/amd64 --force-rm --no-cache -t shiftcrypto/firmware_v2 .
+	./scripts/container.sh pull shiftcrypto/firmware_v2:${CONTAINER_VERSION}
 dockerdev:
-	./scripts/dockerenv.sh
+	./scripts/dockerenv.sh ${CONTAINER_VERSION}
 dockerrel:
-	./scripts/dockerenv.sh release
+	./scripts/dockerenv.sh release ${CONTAINER_VERSION}
 generate-atecc608-config:
 	cd tools/atecc608 && go run main.go
 ci:
-	./.ci/ci
+	./.ci/ci ${CONTAINER_VERSION}
 prepare-tidy: | build build-build
 	make -C build rust-cbindgen
 	make -C build-build rust-cbindgen

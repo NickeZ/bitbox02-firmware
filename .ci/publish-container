@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+
+CONTAINER_REPO=shiftcrypto/firmware_v2
+CONTAINER_VERSION=$(grep ^CONTAINER_VERSION Makefile | cut -d ' ' -f3)
+
+if docker manifest inspect $CONTAINER_REPO:$CONTAINER_VERSION; then
+	echo $CONTAINER_VERSION already exists, will not publish
+	exit 1
+fi
+
+docker build --no-cache -t $CONTAINER_REPO:latest -t $CONTAINER_REPO:$CONTAINER_VERSION .
+docker push $CONTAINER_REPO:latest $CONTAINER_REPO:$CONTAINER_VERSION

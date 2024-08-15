@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker build --pull --no-cache -t shiftcrypto/firmware_v2 .
+docker pull shiftcrypto/firmware_v2:41
+
+# Print out the differences but ignore them. We don't require reproducible builds right now.
+ocidiff shiftcrypto/firmware_v2:latest shiftcrypto/firmware_v2:41 || true

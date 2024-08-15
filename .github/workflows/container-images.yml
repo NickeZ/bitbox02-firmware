@@ -1,0 +1,26 @@
+name: Container nightly check
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+  env:
+    DIFFOCI_URL: https://github.com/reproducible-containers/diffoci/releases/download/v0.1.4/diffoci-v0.1.4.linux-amd64
+
+jobs:
+  check-base-image:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch diffoci
+        run: curl -L $DIFFOCI_URL -o /usr/local/bin/diffoci
+      - name: Check that base container builds
+        run: ./.ci/build-base-container
+
+  check-dev-image:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch diffoci
+        run: curl -L $DIFFOCI_URL -o /usr/local/bin/diffoci
+      - name: Check that dev container builds
+        run: ./.ci/build-dev-container
