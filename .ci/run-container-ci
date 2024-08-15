@@ -45,7 +45,7 @@ fi
 
 # Fetch origin/master so that we can diff when checking coding style.
 git remote set-branches --add origin ${TARGET_BRANCH}
-git fetch origin
+git fetch origin ${TARGET_BRANCH} --no-recurse-submodules --tags
 
 TARGET_BRANCH=origin/${TARGET_BRANCH}
 
