@@ -37,5 +37,5 @@ jobs:
 
       - name: Run CI in container
         env:
-          COMPARE_REV: ${{ github.base_ref != null && "origin/${{ github.base_ref }}" || github.event.before }}
+          COMPARE_REV: ${{ github.base_ref != null && format('origin/{}', github.base_ref) }} || github.event.before }}
         run: ./.ci/run-container-ci ${{github.workspace}}
