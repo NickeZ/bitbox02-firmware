@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
 
       - name: Pull container image
-        run: ./.ci/run-container-ci pull
+        run: ./.ci/pull-container
 
       - name: Run CI in container
         env:
@@ -67,7 +67,7 @@ jobs:
           git log -1 --format="Head %H, Parents %P"
 
       - name: Pull container image
-        run: ./.ci/run-container-ci pull
+        run: ./.ci/pull-container
 
       - name: Run CI in container
         env:

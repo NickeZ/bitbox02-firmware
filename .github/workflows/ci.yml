@@ -18,7 +18,7 @@ jobs:
           fetch-tags: true
           submodules: recursive
       - name: Pull CI container image
-        run: ./.ci/run-container-ci pull
+        run: ./.ci/pull-container
       - name: Run CI in container
         env:
           COMPARE_REV: ${{ github.event.before }}
