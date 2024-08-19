@@ -22,7 +22,18 @@ jobs:
         id: checks
         run: ./.ci/check-container-version-published >> $GITHUB_OUTPUT
 
+      - name: Set up QEMU for Docker
+        if: steps.checks.outputs.container-published == 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: docker-image
+        if: steps.checks.outputs.container-published == 'false'
+        uses: docker/setup-buildx-action@v3
+
       - name: Build container
+        env:
+          BUILDX_BUILDER: ${{ steps.docker-image.outputs.name }}
         if: steps.checks.outputs.container-published == 'false'
         run: ./.ci/build-container
 

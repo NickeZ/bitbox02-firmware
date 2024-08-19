@@ -13,9 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Latest Ubuntu LTS
+# If you are building for a foreign target and you get segfaults, try the latest version of qemu
+# $ docker pull tonistiigi/binfmt:latest
+# $ docker run --privileged --rm tonistiigi/binfmt --uninstall qemu-*
+# $ docker run --privileged --rm tonistiigi/binfmt --install arm64
+
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND noninteractive
+
+# These are automatically provided by docker (no need for --build-arg)
+ARG TARGETPLATFORM
+ARG TARGETARCH
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y wget nano rsync curl gnupg2 jq unzip bzip2
 
@@ -25,18 +33,21 @@ RUN echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-18 main" >> /etc/a
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
 
 # Install gcc8-arm-none-eabi
-RUN mkdir ~/Downloads &&\
-    cd ~/Downloads &&\
-    wget -O gcc.tar.bz2 https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2018q4/gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2?revision=d830f9dd-cd4f-406d-8672-cca9210dd220?product=GNU%20Arm%20Embedded%20Toolchain,64-bit,,Linux,8-2018-q4-major &&\
-    echo "fb31fbdfe08406ece43eef5df623c0b2deb8b53e405e2c878300f7a1f303ee52 gcc.tar.bz2" | sha256sum -c &&\
-    cd ~/Downloads &&\
-    tar -xjvf gcc.tar.bz2 &&\
-    rm -f gcc.tar.bz2 &&\
-    cd ~/Downloads && rsync -a gcc-arm-none-eabi-8-2018-q4-major/ /usr/local/
+RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
+      GNU_TOOLCHAIN=https://developer.arm.com/-/media/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-aarch64-linux.tar.bz2 \
+      GNU_TOOLCHAIN_HASH=f605b5f23ca898e9b8b665be208510a54a6e9fdd0fa5bfc9592002f6e7431208; \
+    else \
+      GNU_TOOLCHAIN=https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2018q4/gcc-arm-none-eabi-8-2018-q4-major-linux.tar.bz2 \
+      GNU_TOOLCHAIN_HASH=fb31fbdfe08406ece43eef5df623c0b2deb8b53e405e2c878300f7a1f303ee52; \
+    fi; \
+    wget -O gcc.tar.bz2 ${GNU_TOOLCHAIN} &&\
+    echo "$GNU_TOOLCHAIN_HASH gcc.tar.bz2" | sha256sum -c &&\
+    tar -xvf gcc.tar.bz2 -C /usr/local --strip-components=1 &&\
+    rm -f gcc.tar.bz2
 
 # Tools for building
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    make \
     llvm-18 \
     gcc-10 \
     binutils \
@@ -49,9 +60,6 @@ RUN apt-get update && apt-get install -y \
     libtool \
     pkg-config \
     libcmocka-dev \
-    libc6-i386 \
-    lib32stdc++6 \
-    lib32z1 \
     libusb-1.0-0-dev \
     libudev-dev \
     libhidapi-dev
@@ -96,9 +104,15 @@ RUN python3 -m pip install --upgrade \
     twine==1.15.0
 
 #Install protoc from release, because the version available on the repo is too old
-RUN mkdir -p /opt/protoc && \
-    curl -L0 https://github.com/protocolbuffers/protobuf/releases/download/v21.2/protoc-21.2-linux-x86_64.zip -o /tmp/protoc-21.2-linux-x86_64.zip && \
-    unzip /tmp/protoc-21.2-linux-x86_64.zip -d /opt/protoc
+RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
+      PROTOC_URL=https://github.com/protocolbuffers/protobuf/releases/download/v21.2/protoc-21.2-linux-aarch_64.zip; \
+    else \
+      PROTOC_URL=https://github.com/protocolbuffers/protobuf/releases/download/v21.2/protoc-21.2-linux-x86_64.zip; \
+    fi; \
+    mkdir -p /opt/protoc && \
+    curl -L0 ${PROTOC_URL} -o /tmp/protoc-21.2.zip && \
+    unzip /tmp/protoc-21.2.zip -d /opt/protoc && \
+    rm /tmp/protoc-21.2.zip
 ENV PATH /opt/protoc/bin:$PATH
 
 # Make Python3 the default
@@ -115,7 +129,7 @@ ENV GOPATH /opt/go
 ENV GOROOT /opt/go_dist/go
 ENV PATH $GOROOT/bin:$GOPATH/bin:$PATH
 RUN mkdir -p /opt/go_dist && \
-    curl https://dl.google.com/go/go1.19.3.linux-amd64.tar.gz | tar -xz -C /opt/go_dist
+    curl https://dl.google.com/go/go1.19.3.linux-${TARGETARCH}.tar.gz | tar -xz -C /opt/go_dist
 
 # Install lcov from release (the one from the repos is too old).
 RUN cd /opt && wget https://github.com/linux-test-project/lcov/releases/download/v1.14/lcov-1.14.tar.gz && tar -xf lcov-1.14.tar.gz

@@ -5,4 +5,4 @@ set -e
 CONTAINER_REPO=shiftcrypto/firmware_v2
 CONTAINER_VERSION=$(cat .containerversion)
 
-docker build --no-cache -t $CONTAINER_REPO:latest -t $CONTAINER_REPO:$CONTAINER_VERSION .
+docker build --no-cache --platform linux/amd64,linux/arm64 -t $CONTAINER_REPO:latest -t $CONTAINER_REPO:$CONTAINER_VERSION .

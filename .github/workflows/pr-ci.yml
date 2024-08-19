@@ -20,8 +20,19 @@ jobs:
           ./.ci/check-container-sources-modified >> "$GITHUB_OUTPUT"
           ./.ci/check-container-version-published >> "$GITHUB_OUTPUT"
 
+      - name: Set up QEMU for Docker
+        if: steps.checks.outputs.modified == 'true'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: docker-image
+        if: steps.checks.outputs.modified == 'true'
+        uses: docker/setup-buildx-action@v3
+
       - name: Build container image
         if: steps.checks.outputs.modified == 'true'
+        env:
+          BUILDX_BUILDER: ${{ steps.docker-image.outputs.name }}
         run: |
           if "${{ steps.checks.outputs.container-published }}" == "true"; then
             echo "::error::Container modified but version $(cat .containerversion) already published"
@@ -87,8 +98,19 @@ jobs:
           ./.ci/check-container-sources-modified >> "$GITHUB_OUTPUT"
           ./.ci/check-container-version-published >> "$GITHUB_OUTPUT"
 
+      - name: Set up QEMU for Docker
+        if: steps.checks.outputs.modified == 'true'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        id: docker-image
+        if: steps.checks.outputs.modified == 'true'
+        uses: docker/setup-buildx-action@v3
+
       - name: Build container image
         if: steps.checks.outputs.modified == 'true'
+        env:
+          BUILDX_BUILDER: ${{ steps.docker-image.outputs.name }}
         run: |
           if "${{ steps.checks.outputs.container-published }}" == "true"; then
             echo "::error::Container modified but version $(cat .containerversion) already published"
