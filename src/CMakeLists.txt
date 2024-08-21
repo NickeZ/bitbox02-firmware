@@ -201,18 +201,20 @@ find_program(CBINDGEN cbindgen)
 # cargo is the rust build system and dependency manager
 find_program(CARGO cargo)
 
+execute_process(COMMAND bash "-c" "rustc -v --version | grep host | cut -d ' ' -f2" OUTPUT_VARIABLE RUST_COMPILER_HOST OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 if(CMAKE_BUILD_TYPE STREQUAL "DEBUG")
   set(RUST_PROFILE "debug")
 else()
   set(RUST_PROFILE "release")
-  set(RUST_CARGO_FLAGS "--release")
+  set(RUST_CARGO_FLAGS --release -v)
   # For binary reproducibility, strip path prefixes that can be different depending on environment (e.g. /home/<user>, etc.).
-  set(RUSTFLAGS "--remap-path-prefix=${CMAKE_CURRENT_SOURCE_DIR}/rust=src --remap-path-prefix=$ENV{HOME}=")
+  set(RUSTFLAGS "--remap-path-prefix=${CMAKE_CURRENT_SOURCE_DIR}/rust=src --remap-path-prefix=$ENV{HOME}= --remap-path-prefix=/opt/rustup/toolchains/${RUST_COMPILER_HOST}=")
 endif()
 
 # Use libsecp256k1 that we link ourselves (included via external/libwally-core).
 # See https://github.com/rust-bitcoin/rust-secp256k1/tree/7c8270a8506e31731e540fab7ee1abde1f48314e/secp256k1-sys#linking-to-external-symbols
-set(RUSTFLAGS "${RUSTFLAGS} --cfg=rust_secp_no_symbol_renaming")
+set(RUSTFLAGS "${RUSTFLAGS} --cfg=rust_secp_no_symbol_renaming -Csymbol-mangling-version=v0")
 
 # Apply workaround for a potential miscompilation bug:
 # See
