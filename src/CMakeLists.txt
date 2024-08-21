@@ -209,7 +209,7 @@ else()
   set(RUST_PROFILE "release")
   set(RUST_CARGO_FLAGS --release -v)
   # For binary reproducibility, strip path prefixes that can be different depending on environment (e.g. /home/<user>, etc.).
-  set(RUSTFLAGS "--remap-path-prefix=${CMAKE_CURRENT_SOURCE_DIR}/rust=src --remap-path-prefix=$ENV{HOME}= --remap-path-prefix=/opt/rustup/toolchains/${RUST_COMPILER_HOST}=")
+  set(RUSTFLAGS "--remap-path-prefix=${CMAKE_CURRENT_SOURCE_DIR}/rust=src --remap-path-prefix=$ENV{HOME}= --remap-path-prefix=/opt/rustup/toolchains/beta-${RUST_COMPILER_HOST}=")
 endif()
 
 # Use libsecp256k1 that we link ourselves (included via external/libwally-core).
