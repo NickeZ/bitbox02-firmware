@@ -154,8 +154,8 @@ RUN CARGO_HOME=/opt/cargo cargo install bindgen-cli --version 0.69.4 --locked
 # writable so that invocations of `cargo vendor` can update it. Below is the
 # tracking issue for `cargo vendor` to support rust std libs.
 # https://github.com/rust-lang/wg-cargo-std-aware/issues/23
-RUN cp "$(rustc --print=sysroot)/lib/rustlib/src/rust/Cargo.lock" "$(rustc --print=sysroot)/lib/rustlib/src/rust/library/test/"
-RUN chmod 777 $(rustc --print=sysroot)/lib/rustlib/src/rust/library/test/Cargo.lock
+#RUN cp "$(rustc --print=sysroot)/lib/rustlib/src/rust/Cargo.lock" "$(rustc --print=sysroot)/lib/rustlib/src/rust/library/test/"
+#RUN chmod 777 $(rustc --print=sysroot)/lib/rustlib/src/rust/library/test/Cargo.lock
 
 COPY tools/prost-build-proto prost-build-proto
 RUN CARGO_HOME=/opt/cargo cargo install --path prost-build-proto --locked
