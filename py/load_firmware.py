@@ -49,7 +49,7 @@ def _get_bitbox_and_reboot(use_cache: bool) -> devices.DeviceInfo:
             super().__init__("shift/load_firmware")
 
         def show_pairing(self, code: str, device_response: Callable[[], bool]) -> bool:
-            print('Please compare and confirm the pairing code on your BitBox02:')
+            print("Please compare and confirm the pairing code on your BitBox02:")
             print(code)
             return device_response()
 
