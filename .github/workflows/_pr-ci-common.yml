@@ -1,0 +1,62 @@
+name: Pull request CI common
+on:
+  workflow_call:
+    inputs:
+      base-sha:
+        required: true
+        type: string
+      pr-head:
+        required: true
+        type: boolean
+jobs:
+  pr-ci:
+    steps:
+      - name: Clone the repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          # In case we want to run for the pr head, github has already prepared a merge commit
+          ref: ${{ inputs.pr-head && github.event.pull_request.merge_commit_sha || github.event.pull_request.base.sha }}
+
+      - name: Create merge commit
+        # In case we want to run for the pr head, github has already prepared a merge commit
+        if: ${{ ! inputs.pr-head }}
+        env:
+          GIT_AUTHOR_NAME: Bot
+          GIT_AUTHOR_EMAIL: bot@bitbox.swiss
+          GIT_COMMITTER_NAME: Bot
+          GIT_COMMITTER_EMAIL: bot@bitbox.swiss
+        run: |
+          git fetch origin ${{ matrix.commit }} ${{ github.event.pull_request.merge_commit_sha }}
+          git merge --no-ff --no-edit ${{ matrix.commit }}
+          git log -1 --format="Head %H, Parents %P"
+          # Since the workflow definition is taken from the pull request merge commit, we need to
+          # get the .ci scripts from there as well.
+          git checkout -f ${{ github.event.pull_request.merge_commit_sha }} -- .ci .github
+
+      - name: Check if container files was modified and if container version already exists
+        id: checks
+        shell: bash
+        run: |
+          echo modified=$(./.ci/check-container-sources-modified) >> "$GITHUB_OUTPUT"
+          echo container-published=$(./.ci/check-container-version-published) >> "$GITHUB_OUTPUT"
+
+      - name: Build container image
+        if: steps.checks.outputs.modified == 'true'
+        shell: bash
+        run: |
+          if "${{ steps.checks.outputs.container-published }}" == "true"; then
+            echo "::error::Container modified but version $(cat .containerversion) already published"
+            exit 1
+          fi
+          ./.ci/build-container
+
+      - name: Pull container image
+        if: steps.checks.outputs.modified == 'false'
+        shell: bash
+        run: ./.ci/pull-container
+
+      - name: Run CI in container
+        shell: bash
+        run: ./.ci/run-container-ci ${{github.workspace}} ${{ inputs.base-sha }}
