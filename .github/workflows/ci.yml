@@ -42,3 +42,9 @@ jobs:
 
       - name: Run CI in container
         run: ./.ci/run-container-ci ${{github.workspace}} ${{ github.event.before }}
+
+      - name: Print size and sha
+        run: |
+          echo "::notice::SHA256 digest: $(sha256sum build/bin/firmware.bin | cut -d ' ' -f1)"
+          echo "::notice::binary size: $(arm-none-eabi-size build/bin/firmware.bin | tr -s ' ' | cut -d ' ' -f5)"
+
