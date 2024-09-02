@@ -49,6 +49,7 @@
 #include <wally_bip39.h>
 #include <wally_core.h>
 #include <wally_crypto.h>
+#include <salt.h>
 
 #if defined(TESTING)
 #include <mock_memory.h>

@@ -224,6 +224,7 @@ pub fn main() -> Result<(), &'static str> {
         .args(["--allowlist-function", "wally_hash160"])
         .args(["--allowlist-function", "wally_sha512"])
         .args(["--allowlist-function", "printf"])
+        .args(["--allowlist-function", "salt_hash_data"])
         .arg("wrapper.h")
         .arg("--")
         .arg("-DPB_NO_PACKED_STRUCTS=1")
@@ -236,6 +237,34 @@ pub fn main() -> Result<(), &'static str> {
     if ! res.status.success() {
         println!("bindgen-out:\n{}\n\nbindgen-err:\n{}", std::str::from_utf8(&res.stdout).unwrap(), std::str::from_utf8(&res.stderr).unwrap());
         return Err("Bindgen failed");
+    }
+
+    #[cfg(not(target_os = "none"))]
+    {
+        if let Ok(cmake_dir) = std::env::var("CMAKE_CURRENT_BINARY_DIR") {
+            println!("cargo::rustc-link-search={}/../lib", cmake_dir);
+            // c and rust code merged :O
+            println!("cargo::rustc-link-lib=bitbox_merged");
+            println!(
+                "cargo::rerun-if-changed={}/../lib/libbitbox_merged.a",
+                cmake_dir
+            );
+            println!("cargo::rerun-if-changed=build.rs");
+
+            // external libs
+            println!("cargo::rustc-link-lib=wallycore");
+            println!("cargo::rustc-link-lib=secp256k1");
+            println!("cargo::rustc-link-lib=ctaes");
+            println!("cargo::rustc-link-lib=fatfs");
+            println!("cargo::rustc-link-lib=sd-mock");
+
+            // system libs
+            println!("cargo::rustc-link-lib=cmocka");
+        } else {
+            // This is useful in case project is built by tool that doesn't need to link the final
+            // target, like rust-analyzer and clippy.
+            println!("cargo::warning=Missing env variable CMAKE_CURRENT_BINARY_DIR, linking will fail");
+        }
     }
     Ok(())
 }

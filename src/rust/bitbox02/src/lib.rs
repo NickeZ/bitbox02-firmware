@@ -43,6 +43,7 @@ pub mod sd;
 pub mod secp256k1;
 pub mod securechip;
 pub mod ui;
+pub mod salt;
 
 use ::util::c_types::c_int;
 use core::time::Duration;
