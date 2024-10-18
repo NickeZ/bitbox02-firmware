@@ -18,6 +18,7 @@
 #include <string.h>
 
 #ifndef TESTING
+#include "sd_mmc/sd_mmc_start.h"
 #include "driver_init.h"
 #include "sd_mmc.h"
 #endif
@@ -107,7 +108,12 @@ static bool _mount(void)
     sd_mmc_resume_clock();
 #endif
     memset(&fs, 0, sizeof(FATFS));
-    if (f_mount(&fs, "SD", 1) == FR_INVALID_DRIVE) {
+    int res = f_mount(&fs, "", 1);
+    if (res == FR_DISK_ERR) {
+        sd_mmc_start();
+        res = f_mount(&fs, "", 1);
+    }
+    if (res == FR_INVALID_DRIVE) {
 #ifndef TESTING
         sd_mmc_pause_clock();
 #endif
@@ -121,7 +127,8 @@ static bool _mount(void)
  */
 static void _unmount(void)
 {
-    f_mount(NULL, "SD", 1);
+    f_unmount("");
+
 #ifndef TESTING
     sd_mmc_pause_clock();
 #endif
