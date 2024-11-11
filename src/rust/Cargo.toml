@@ -48,3 +48,5 @@ lto = true
 
 [profile.dev]
 opt-level = 'z'
+# Right now lto="thin" takes to much space, we have to have "fat"/true
+lto = true
