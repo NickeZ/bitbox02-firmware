@@ -32,6 +32,8 @@ hex = { workspace = true }
 sha2 = { workspace = true, optional = true }
 sha3 = { workspace = true, optional = true }
 bitcoin = { workspace = true, optional = true }
+rtt-target = { version = "0.5.0" }
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
 
 [features]
 # Only one of the "target-" should be activated, which in turn defines/activates the dependent features.
