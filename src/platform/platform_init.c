@@ -18,11 +18,15 @@
 #if !defined(BOOTLOADER)
 #include "sd_mmc/sd_mmc_start.h"
 #endif
+#include "rust/rust.h"
 
 void platform_init(void)
 {
     oled_init();
 #if !defined(BOOTLOADER)
+#if !defined(FACTORYSETUP)
+    rust_rtt_init();
+#endif
     sd_mmc_start();
 #endif
 }

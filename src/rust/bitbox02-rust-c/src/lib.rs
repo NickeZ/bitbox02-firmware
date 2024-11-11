@@ -18,6 +18,13 @@
 #[macro_use]
 extern crate std;
 
+// include critical section implementation, needed by rtt-target
+#[cfg(feature = "rtt")]
+extern crate cortex_m;
+
+#[cfg(feature = "rtt")]
+use rtt_target::{debug_rprintln, debug_rtt_init_print};
+
 // Since util_c defines an "alloc_error_handler" we get conflicts with std when testing
 #[cfg(not(test))]
 // for `format!`
@@ -36,14 +43,21 @@ mod sha2;
 mod workflow;
 
 // Whenever execution reaches somewhere it isn't supposed to rust code will "panic". Our panic
-// handler will print the available information on the screen. If we compile with `panic=abort`
+// handler will print the available information over RTT. If we compile with `panic=abort`
 // this code will never get executed.
 #[cfg(not(test))]
 #[cfg(not(feature = "testing"))]
 #[cfg_attr(feature = "bootloader", allow(unused_variables))]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    #[cfg(feature = "firmware")]
-    bitbox02_rust::print_debug!(0, "Error: {}", info);
+    #[cfg(feature = "rtt")]
+    debug_rprintln!("{}", info);
     loop {}
+}
+
+#[no_mangle]
+#[cfg(feature = "rtt")]
+pub extern "C" fn rust_rtt_init() {
+    debug_rtt_init_print!();
+    debug_rprintln!("rtt_init_print");
 }
