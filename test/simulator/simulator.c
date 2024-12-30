@@ -33,6 +33,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <sys/socket.h>
 
 static const char* _simulator_version = "1.0.0";
@@ -40,7 +41,8 @@ static const char* _simulator_version = "1.0.0";
 #define BUFFER_SIZE 1024
 
 int data_len;
-int commfd;
+int commfd = -1;
+bool shutdown_signal = false;
 
 static int sockfd;
 
@@ -73,7 +75,11 @@ void simulate_firmware_execution(const uint8_t* input)
 static void _int_handler(int _signum)
 {
     printf("\n\nGot Ctrl-C, exiting\n\n");
-    close(sockfd);
+    shutdown_signal = true;
+    if (commfd > -1) {
+        // Close commfd to return from `read()` in main loop
+        shutdown(commfd, SHUT_RDWR);
+    }
 }
 
 int main(int argc, char* argv[])
@@ -168,7 +174,15 @@ int main(int argc, char* argv[])
         int temp_len;
         while (1) {
             // Simulator polls for USB messages from client and then processes them
-            if (!get_usb_message_socket(input)) break;
+            int res = get_usb_message_socket(input);
+            if (res == 0) {
+                printf("Client disconnected\n");
+                break;
+            } else if (res < 0) {
+                printf("Communication broke\n");
+                break;
+            }
+            printf("Got request %d bytes\n", res);
             simulate_firmware_execution(input);
 
             // If the USB message to be sent from firmware is bigger than one packet,
@@ -183,9 +197,15 @@ int main(int argc, char* argv[])
                 temp_len -= (USB_HID_REPORT_OUT_SIZE - 5);
             }
         }
-        close(commfd);
         printf("Socket connection closed\n");
+        if (shutdown_signal == true) {
+            // Stop accepting more connections
+            close(sockfd);
+            break;
+        }
         printf("Waiting for new clients, CTRL+C to shut down the simulator\n");
     }
+    close(commfd);
+    commfd = -1;
     return 0;
 }

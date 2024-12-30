@@ -1622,6 +1622,9 @@ def connect_to_simulator_bitbox(debug: bool, port: int) -> int:
                 print("Connected to the simulator")
 
         def write(self, data: bytes) -> None:
+            # TODO(nd): data should be 64 bytes here. The reason it is 65 is
+            #           USB specific, so adding the prefix should be done in
+            #           the USB-specific extension.
             self.client_socket.send(data[1:])
             if debug:
                 print(f"Written to the simulator:\n{data.hex()[2:]}")
