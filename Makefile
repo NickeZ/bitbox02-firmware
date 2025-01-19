@@ -154,3 +154,7 @@ prepare-tidy: | build build-build
 	$(MAKE) -C build-build rust-cbindgen
 clean:
 	rm -rf build build-build build-debug build-build-rust-unit-tests
+
+objectify-bt-firmware:
+	arm-none-eabi-objcopy -I binary -O elf32-littlearm --rename-section .data=.rodata,alloc,load,readonly,data,contents firmware.bin bt-firmware.o
+

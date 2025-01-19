@@ -230,6 +230,22 @@ set_property(TARGET asf4-drivers PROPERTY INTERFACE_LINK_LIBRARIES "")
     -Wno-pedantic -Wno-incompatible-pointer-types -Wno-unused-parameter -Wno-unused-variable -Wno-cast-qual
     -Wno-switch-default -Wno-format-nonliteral -Wno-missing-prototypes -Wno-missing-declarations
   )
+  add_library(embedded-swd
+    embedded-swd/dap.c
+    embedded-swd/dap_target.c
+  )
+  target_include_directories(embedded-swd SYSTEM PUBLIC
+    embedded-swd
+  )
+  target_link_libraries(embedded-swd
+    PRIVATE
+      CMSIS
+  )
+  target_link_libraries(embedded-swd
+    PUBLIC
+      samd51a-ds
+  )
+
 endif() # CMAKE_CROSSCOMPILING
 
 # fatfs must to be linked together with a diskio middleware:
