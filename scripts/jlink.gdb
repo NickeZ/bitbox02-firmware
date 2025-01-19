@@ -13,4 +13,4 @@ monitor reset
 #break MemManage_Handler
 
 # start running
-stepi
+continue

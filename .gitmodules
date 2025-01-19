@@ -10,3 +10,9 @@
 [submodule "tools/ttf2ugui"]
 	path = tools/ttf2ugui
 	url = https://github.com/BitBoxSwiss/ttf2ugui
+[submodule "external/embedded-swd"]
+	path = external/embedded-swd
+	url = https://github.com/BitBoxSwiss/embedded-swd
+[submodule "external/CMSIS-DAP"]
+	path = external/CMSIS-DAP
+	url = https://github.com/ARM-software/CMSIS-DAP
