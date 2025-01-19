@@ -974,18 +974,19 @@ void bootloader_jump(void)
 #endif
 
     UG_FontSelect(&font_font_a_9X9);
+    _binary_exec();
 
-    if (shared_data.fields.auto_enter != sectrue_u8) {
+    // if (shared_data.fields.auto_enter != sectrue_u8) {
 #ifdef BOOTLOADER_DEVDEVICE
-        if (!_devdevice_enter(_firmware_verified_jump(&bootdata, secfalse_u32))) {
-            _binary_exec();
-            /* no return */
-        }
-#else
-        _firmware_verified_jump(&bootdata, sectrue_u32); // no return if firmware is valid
-        _render_message("Firmware\ninvalid\n \nEntering bootloader", 3000);
-#endif
+    if (!_devdevice_enter(_firmware_verified_jump(&bootdata, secfalse_u32))) {
+        _binary_exec();
+        /* no return */
     }
+#else
+    //_firmware_verified_jump(&bootdata, secfalse_u32); // no return if firmware is valid
+    _render_message("Firmware\ninvalid\n \nEntering bootloader", 3000);
+#endif
+    //}
 
     // App not entered. Start USB API to receive boot commands
     _compute_is_app_flash_empty();
