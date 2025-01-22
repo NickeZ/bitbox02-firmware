@@ -62,38 +62,46 @@ int main(void)
     usart_async_register_callback(&USART_0, USART_ASYNC_RXC_CB, rx_cb);
     usart_async_enable(&USART_0);
 
-    dap_init();
-    dap_connect();
-    dap_reset_link();
-    dap_target_prepare();
-    dap_target_select();
-    // status();
-    for(int i =0; i<0x54/2; i++) {
-        unsigned int addr = 0x50000000+i*2;
-        unsigned int res = (unsigned int)dap_read_word(addr);
-        //if (addr & 0x3) {
-        //    res = res >> 16;
-        //} else {
-        //    //res &= 0xffff;
-        //}
-
-        util_log("reg %d, %08x: 0x%08x", i, addr, res);
+    struct io_descriptor* io;
+    usart_async_get_io_descriptor(&USART_0, &io);
+    uint8_t buf[10] = {0};
+    for (int i = 0; i < 10; ++i) {
+        io_read(io, &buf[i], 1);
+        util_log("read %d: %x", i, buf[i]);
     }
 
-    uint32_t id = dap_read_idcode();
-    if (id != 0xbc11477) {
-        util_log("Read invalid idcode: %" PRIu32, id);
-    } else {
-        util_log("Connected to BT chip");
-    }
+    // dap_init();
+    // dap_connect();
+    // dap_reset_link();
+    // dap_target_prepare();
+    // dap_target_select();
+    //// status();
+    // for(int i =0; i<0x54/2; i++) {
+    //     unsigned int addr = 0x50000000+i*2;
+    //     unsigned int res = (unsigned int)dap_read_word(addr);
+    //     //if (addr & 0x3) {
+    //     //    res = res >> 16;
+    //     //} else {
+    //     //    //res &= 0xffff;
+    //     //}
 
-    util_log(
-        "start %p end %p, len %u, size %u",
-        bt_firmware_start,
-        bt_firmware_end,
-        (unsigned int)(bt_firmware_end - bt_firmware_start),
-        bt_firmware_size);
-    // util_log("src %x dst %x", src, dst);
+    //    util_log("reg %d, %08x: 0x%08x", i, addr, res);
+    //}
+
+    // uint32_t id = dap_read_idcode();
+    // if (id != 0xbc11477) {
+    //     util_log("Read invalid idcode: %" PRIu32, id);
+    // } else {
+    //     util_log("Connected to BT chip");
+    // }
+
+    // util_log(
+    //     "start %p end %p, len %u, size %u",
+    //     bt_firmware_start,
+    //     bt_firmware_end,
+    //     (unsigned int)(bt_firmware_end - bt_firmware_start),
+    //     bt_firmware_size);
+    //  util_log("src %x dst %x", src, dst);
 
     // for (int i = 0; i < 64; i++) {
     //     util_log("%p 0x%02x", bt_firmware_start + i, *(bt_firmware_start + i));
@@ -107,33 +115,35 @@ int main(void)
     // util_log("0x%08x", *((const unsigned int*)bt_firmware_start + 2));
     // util_log("0x%08x", *((const unsigned int*)bt_firmware_start + 3));
 
-    const uint8_t* src;
-    uint32_t dst;
-    for (src = bt_firmware_start, dst = 0x07fc0000; src < bt_firmware_end; src += 4, dst += 4) {
-        dap_write_word(dst, *(const uint32_t*)src);
-        if(*(const uint32_t*)src != dap_read_word(dst)) {
-            util_log("Failed to write to ram: %x, %x", (unsigned)*(const uint32_t*)src, (unsigned)dap_read_word(dst));
-        }
-        //if (src < bt_firmware_start + 20) {
-        //    util_log("%x: %x, %x", (unsigned int)dst, (unsigned int)*(const uint32_t*)src, (unsigned int)dap_read_word(dst));
-        //}
-    }
-    util_log("flashed");
-    status();
-    util_log("%p", bt_firmware_start);
-    uint32_t pc = *(((const uint32_t*)bt_firmware_start) + 1);
-    uint32_t msp = *(const uint32_t*)bt_firmware_start;
-    if (dap_target_write_pc(pc) == DAP_ERROR_TIMEOUT) {
-        util_log("Failed to write to PC");
-    }
-    if (dap_target_write_msp(msp) == DAP_ERROR_TIMEOUT) {
-        util_log("Failed to write to MSP");
-    }
-    util_log("Set pc (%x) and msp (%x)", (unsigned int)pc, (unsigned int)msp);
+    // const uint8_t* src;
+    // uint32_t dst;
+    // for (src = bt_firmware_start, dst = 0x07fc0000; src < bt_firmware_end; src += 4, dst += 4) {
+    //     dap_write_word(dst, *(const uint32_t*)src);
+    //     if(*(const uint32_t*)src != dap_read_word(dst)) {
+    //         util_log("Failed to write to ram: %x, %x", (unsigned)*(const uint32_t*)src,
+    //         (unsigned)dap_read_word(dst));
+    //     }
+    //     //if (src < bt_firmware_start + 20) {
+    //     //    util_log("%x: %x, %x", (unsigned int)dst, (unsigned int)*(const uint32_t*)src,
+    //     (unsigned int)dap_read_word(dst));
+    //     //}
+    // }
+    // util_log("flashed");
     // status();
+    // util_log("%p", bt_firmware_start);
+    // uint32_t pc = *(((const uint32_t*)bt_firmware_start) + 1);
+    // uint32_t msp = *(const uint32_t*)bt_firmware_start;
+    // if (dap_target_write_pc(pc) == DAP_ERROR_TIMEOUT) {
+    //     util_log("Failed to write to PC");
+    // }
+    // if (dap_target_write_msp(msp) == DAP_ERROR_TIMEOUT) {
+    //     util_log("Failed to write to MSP");
+    // }
+    // util_log("Set pc (%x) and msp (%x)", (unsigned int)pc, (unsigned int)msp);
+    // // status();
 
-    dap_target_deselect();
-    dap_disconnect();
+    // dap_target_deselect();
+    // dap_disconnect();
     // util_log("dhcsr %08x", (unsigned int)dap_read_word(0xE000EDF0));
     // util_log("dhcsr %08x", (unsigned int)dap_read_word(0xE000EDF0));
     util_log("running");
