@@ -37,19 +37,19 @@ static void rx_cb(const struct usart_async_descriptor* const descr)
     util_log("got message over uart");
 }
 
-static void status(void)
-{
-    unsigned int res = dap_target_status();
-    const char* y = "yes";
-    const char* n = "no";
-    util_log(
-        "halted: %s, bkpt: %s, dwttrap: %s, vcatch: %s, external: %s",
-        res & 1 ? y : n,
-        res & 2 ? y : n,
-        res & 4 ? y : n,
-        res & 8 ? y : n,
-        res & 16 ? y : n);
-}
+// static void status(void)
+//{
+//     unsigned int res = dap_target_status();
+//     const char* y = "yes";
+//     const char* n = "no";
+//     util_log(
+//         "halted: %s, bkpt: %s, dwttrap: %s, vcatch: %s, external: %s",
+//         res & 1 ? y : n,
+//         res & 2 ? y : n,
+//         res & 4 ? y : n,
+//         res & 8 ? y : n,
+//         res & 16 ? y : n);
+// }
 
 int main(void)
 {
@@ -60,14 +60,20 @@ int main(void)
 
     uart_init();
     usart_async_register_callback(&USART_0, USART_ASYNC_RXC_CB, rx_cb);
+    usart_async_set_baud_rate(&USART_0, 115200);
     usart_async_enable(&USART_0);
+
+    while (!usart_async_is_rx_not_empty(&USART_0)) {
+    }
 
     struct io_descriptor* io;
     usart_async_get_io_descriptor(&USART_0, &io);
-    uint8_t buf[10] = {0};
-    for (int i = 0; i < 10; ++i) {
-        io_read(io, &buf[i], 1);
-        util_log("read %d: %x", i, buf[i]);
+    uint8_t buf = 0;
+    int read = io_read(io, &buf, 1);
+    if (read != 0) {
+        util_log("data! read: %d, %x", read, buf);
+    } else {
+        util_log("no data");
     }
 
     // dap_init();

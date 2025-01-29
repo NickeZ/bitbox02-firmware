@@ -37,3 +37,9 @@ pub fn rtt_flush() {
     #[cfg(feature = "rtt")]
     rtt_target::with_terminal_channel(|c| c.flush());
 }
+
+/// Wait until all messages have been read by host
+pub fn rtt_flush() {
+    #[cfg(feature = "rtt")]
+    rtt_target::with_terminal_channel(|c| c.flush());
+}

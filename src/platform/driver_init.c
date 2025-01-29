@@ -298,6 +298,24 @@ static void _uart_init(void)
     gpio_set_pin_function(PIN_UART_RX, PINMUX_PA04D_SERCOM0_PAD0);
 }
 
+static void _da14531_rst(void)
+{
+    gpio_set_pin_level(PIN_UART_RX, false); // low
+
+    // Set pin direction to output
+    gpio_set_pin_direction(PIN_UART_RX, GPIO_DIRECTION_OUT);
+
+    gpio_set_pin_function(PIN_UART_RX, GPIO_PIN_FUNCTION_OFF);
+    gpio_set_pin_level(PIN_UART_RX, true); // high
+    delay_ms(1000);
+    gpio_set_pin_level(PIN_UART_RX, false); // low
+    // PORT->Group[0].DIRSET.reg = (1 << 21); // Set PA21 to output
+    // PORT->Group[0].OUTCLR.reg = (1 << 21); // Set PA21 low
+    // PORT->Group[0].OUTSET.reg = (1 << 21); // Set PA21 high
+    // delay_ms(1000);
+    // PORT->Group[0].OUTCLR.reg = (1 << 21); // Set PA21 low
+}
+
 void system_init(void)
 {
     _oled_set_pins();
@@ -323,6 +341,7 @@ void system_init(void)
     _usb_init();
 
     // UART
+    _da14531_rst();
     _uart_init();
     _is_initialized = true;
 }
