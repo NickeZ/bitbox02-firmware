@@ -28,6 +28,7 @@ struct mci_sync_desc MCI_0;
 struct rand_sync_desc RAND_0;
 PPUKCL_PARAM pvPUKCLParam;
 PUKCL_PARAM PUKCLParam;
+struct usart_async_descriptor USART_0;
 
 bool _is_initialized = false;
 
@@ -276,6 +277,45 @@ static void _oled_set_pins(void)
     gpio_set_pin_function(PIN_OLED_CMD, GPIO_PIN_FUNCTION_OFF);
 }
 
+#define USART_0_BUFFER_SIZE 16
+
+static uint8_t USART_0_buffer[USART_0_BUFFER_SIZE];
+
+static void _uart_init(void)
+{
+    // Clock init
+    hri_gclk_write_PCHCTRL_reg(
+        GCLK, SERCOM0_GCLK_ID_CORE, CONF_GCLK_SERCOM0_CORE_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+    hri_gclk_write_PCHCTRL_reg(
+        GCLK, SERCOM0_GCLK_ID_SLOW, CONF_GCLK_SERCOM0_SLOW_SRC | (1 << GCLK_PCHCTRL_CHEN_Pos));
+
+    hri_mclk_set_APBAMASK_SERCOM0_bit(MCLK);
+
+    usart_async_init(&USART_0, SERCOM0, USART_0_buffer, USART_0_BUFFER_SIZE, (void*)NULL);
+
+    // Port init
+    gpio_set_pin_function(PIN_UART_TX, PINMUX_PA05D_SERCOM0_PAD1);
+    gpio_set_pin_function(PIN_UART_RX, PINMUX_PA04D_SERCOM0_PAD0);
+}
+
+static void _da14531_rst(void)
+{
+    gpio_set_pin_level(PIN_UART_RX, false); // low
+
+    // Set pin direction to output
+    gpio_set_pin_direction(PIN_UART_RX, GPIO_DIRECTION_OUT);
+
+    gpio_set_pin_function(PIN_UART_RX, GPIO_PIN_FUNCTION_OFF);
+    gpio_set_pin_level(PIN_UART_RX, true); // high
+    delay_ms(1000);
+    gpio_set_pin_level(PIN_UART_RX, false); // low
+    // PORT->Group[0].DIRSET.reg = (1 << 21); // Set PA21 to output
+    // PORT->Group[0].OUTCLR.reg = (1 << 21); // Set PA21 low
+    // PORT->Group[0].OUTSET.reg = (1 << 21); // Set PA21 high
+    // delay_ms(1000);
+    // PORT->Group[0].OUTCLR.reg = (1 << 21); // Set PA21 low
+}
+
 void system_init(void)
 {
     _oled_set_pins();
@@ -299,6 +339,10 @@ void system_init(void)
     _flash_memory_init();
     // USB
     _usb_init();
+
+    // UART
+    _da14531_rst();
+    _uart_init();
     _is_initialized = true;
 }
 

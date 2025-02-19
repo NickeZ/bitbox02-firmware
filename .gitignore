@@ -29,3 +29,5 @@ bitbox02.egg-info
 *_LOCAL_*
 *_REMOTE_*
 *.orig
+
+bitbox-da14531-firmware.o

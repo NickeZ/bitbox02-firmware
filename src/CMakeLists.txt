@@ -21,6 +21,7 @@ set(DBB-FIRMWARE-SOURCES
   ${CMAKE_SOURCE_DIR}/src/random.c
   ${CMAKE_SOURCE_DIR}/src/hardfault.c
   ${CMAKE_SOURCE_DIR}/src/util.c
+  ${CMAKE_SOURCE_DIR}/src/uart.c
   ${CMAKE_SOURCE_DIR}/src/sd.c
   ${CMAKE_SOURCE_DIR}/src/system.c
   ${CMAKE_SOURCE_DIR}/src/hww.c
@@ -478,6 +479,7 @@ if(CMAKE_CROSSCOMPILING)
     target_link_libraries(${elf}
       PRIVATE
         optiga
+        ${CMAKE_SOURCE_DIR}/bitbox-da14531-firmware.o
         cryptoauthlib
         fatfs
         ctaes
