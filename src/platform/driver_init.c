@@ -294,8 +294,8 @@ static void _uart_init(void)
     usart_async_init(&USART_0, SERCOM0, USART_0_buffer, USART_0_BUFFER_SIZE, (void*)NULL);
 
     // Port init
-    gpio_set_pin_function(PIN_UART_TX, PINMUX_PA05D_SERCOM0_PAD1);
-    gpio_set_pin_function(PIN_UART_RX, PINMUX_PA04D_SERCOM0_PAD0);
+    gpio_set_pin_function(PIN_UART_TX, PINMUX_PA04D_SERCOM0_PAD0);
+    gpio_set_pin_function(PIN_UART_RX, PINMUX_PA05D_SERCOM0_PAD1);
 }
 
 static void _da14531_rst(void)
