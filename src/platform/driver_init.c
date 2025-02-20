@@ -304,17 +304,21 @@ void da14531_rst(void)
     gpio_set_pin_level(PIN_UART_RX, PIN_LOW); // low
 
     // Set pin direction to output
+    gpio_set_pin_function(PIN_UART_RX, GPIO_PIN_FUNCTION_OFF);
     gpio_set_pin_direction(PIN_UART_RX, GPIO_DIRECTION_OUT);
     gpio_set_pin_level(PIN_UART_RX, PIN_HIGH); // high
 
-    gpio_set_pin_function(PIN_UART_RX, GPIO_PIN_FUNCTION_OFF);
     delay_ms(1000);
     gpio_set_pin_level(PIN_UART_RX, PIN_LOW); // low
-    gpio_set_pin_direction(PIN_UART_RX, GPIO_DIRECTION_OFF);
+    gpio_set_pin_direction(PIN_UART_RX, GPIO_DIRECTION_IN);
 }
 
 void system_init(void)
 {
+    // UART
+    da14531_rst();
+    _uart_init();
+
     _oled_set_pins();
     _ptc_clock_init();
 
@@ -337,9 +341,6 @@ void system_init(void)
     // USB
     _usb_init();
 
-    // UART
-    da14531_rst();
-    _uart_init();
     _is_initialized = true;
 }
 

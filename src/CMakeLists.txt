@@ -399,6 +399,8 @@ foreach(type ${RUST_LIBS})
     #DEPFILE ${RUST_BINARY_DIR}/feature-${type}/${RUST_TARGET_ARCH_DIR}/${RUST_PROFILE}/libbitbox02_rust_c.d
     WORKING_DIRECTORY ${LIBBITBOX02_RUST_SOURCE_DIR}
     COMMENT "Building Rust library lib${type}_rust_c.a"
+    # JOB_SERVER_AWARE requires cmake 3.28 and makes cargo use makes jobserver
+    JOB_SERVER_AWARE TRUE
   )
   add_custom_target(${type}-rust-target DEPENDS ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib${type}_rust_c.a)
   add_library(${type}_rust_c STATIC IMPORTED GLOBAL)

@@ -46,9 +46,9 @@ int main(void)
     usart_async_register_callback(&USART_0, USART_ASYNC_RXC_CB, rx_cb);
     usart_async_enable(&USART_0);
 
-    // util_log("waiting for data");
-    //  while (!usart_async_is_rx_not_empty(&USART_0)) {
-    //  }
+    util_log("waiting for data");
+    while (!usart_async_is_rx_not_empty(&USART_0)) {
+    }
 
     struct io_descriptor* io;
     usart_async_get_io_descriptor(&USART_0, &io);
