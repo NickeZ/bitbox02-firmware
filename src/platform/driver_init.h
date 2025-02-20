@@ -33,6 +33,7 @@
 #include <hal_usart_async.h>
 #include <hal_usb_device.h>
 #include <hpl_rtc_base.h>
+#include <hpl_sercom_config.h>
 #include <sd_mmc.h>
 #include <spi_lite.h>
 #include <utils.h>
@@ -75,5 +76,7 @@ void bootloader_close_interfaces(void);
  * peripherals
  */
 void bootloader_init(void);
+
+void da14531_rst(void);
 
 #endif

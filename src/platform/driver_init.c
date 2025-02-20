@@ -292,28 +292,25 @@ static void _uart_init(void)
     hri_mclk_set_APBAMASK_SERCOM0_bit(MCLK);
 
     usart_async_init(&USART_0, SERCOM0, USART_0_buffer, USART_0_BUFFER_SIZE, (void*)NULL);
+    usart_async_set_baud_rate(&USART_0, CONF_SERCOM_0_USART_BAUD_RATE);
 
     // Port init
     gpio_set_pin_function(PIN_UART_TX, PINMUX_PA04D_SERCOM0_PAD0);
     gpio_set_pin_function(PIN_UART_RX, PINMUX_PA05D_SERCOM0_PAD1);
 }
 
-static void _da14531_rst(void)
+void da14531_rst(void)
 {
-    gpio_set_pin_level(PIN_UART_RX, false); // low
+    gpio_set_pin_level(PIN_UART_RX, PIN_LOW); // low
 
     // Set pin direction to output
     gpio_set_pin_direction(PIN_UART_RX, GPIO_DIRECTION_OUT);
+    gpio_set_pin_level(PIN_UART_RX, PIN_HIGH); // high
 
     gpio_set_pin_function(PIN_UART_RX, GPIO_PIN_FUNCTION_OFF);
-    gpio_set_pin_level(PIN_UART_RX, true); // high
     delay_ms(1000);
-    gpio_set_pin_level(PIN_UART_RX, false); // low
-    // PORT->Group[0].DIRSET.reg = (1 << 21); // Set PA21 to output
-    // PORT->Group[0].OUTCLR.reg = (1 << 21); // Set PA21 low
-    // PORT->Group[0].OUTSET.reg = (1 << 21); // Set PA21 high
-    // delay_ms(1000);
-    // PORT->Group[0].OUTCLR.reg = (1 << 21); // Set PA21 low
+    gpio_set_pin_level(PIN_UART_RX, PIN_LOW); // low
+    gpio_set_pin_direction(PIN_UART_RX, GPIO_DIRECTION_OFF);
 }
 
 void system_init(void)
@@ -341,7 +338,7 @@ void system_init(void)
     _usb_init();
 
     // UART
-    _da14531_rst();
+    da14531_rst();
     _uart_init();
     _is_initialized = true;
 }

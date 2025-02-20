@@ -570,7 +570,7 @@
 // <i> Indicates whether Divide Selection is enabled or not
 //<id> gclk_gen_7_div_sel
 #ifndef CONF_GCLK_GEN_7_DIVSEL
-#define CONF_GCLK_GEN_7_DIVSEL 1
+#define CONF_GCLK_GEN_7_DIVSEL 0
 #endif
 
 // <q> Output Enable
