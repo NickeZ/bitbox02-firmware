@@ -15,6 +15,7 @@
 #include "hid_hww.h"
 #include "usb/usb_processing.h"
 #include "usb_desc.h"
+#include "util.h"
 #include <queue.h>
 #include <string.h>
 #include <usb/usb_packet.h>
@@ -115,6 +116,40 @@ static void _sent_done(void)
     _send_next();
 }
 
+static void _state_change_handler(enum usbdc_change_type change, uint32_t value)
+{
+    switch (change) {
+    case USBDC_C_STATE:
+        switch (value) {
+        case USBD_S_OFF:
+            util_log("usb: state off");
+            break;
+        case USBD_S_POWER:
+            util_log("usb: state power");
+            break;
+        case USBD_S_DEFAULT:
+            util_log("usb: state default");
+            break;
+        case USBD_S_ADDRESS:
+            util_log("usb: state address");
+            break;
+        case USBD_S_CONFIG:
+            util_log("usb: state config");
+            break;
+        case USBD_S_SUSPEND:
+            util_log("usb: state suspend");
+            break;
+        default:
+            util_log("usb: state %x", (unsigned)value);
+            break;
+        }
+        break;
+    default:
+        util_log("usb: change %x", (unsigned)change);
+        break;
+    }
+}
+
 /**
  * Initializes a HWW HID interface.
  * @param[in] callback The callback that is called upon status update (enabling/disabling or the
@@ -126,6 +161,10 @@ int32_t hid_hww_init(void (*callback)(void))
     _func_data.report_desc = _report_descriptor;
     _func_data.report_desc_len = USB_DESC_HWW_REPORT_LEN;
     _func_driver.func_data = &_func_data;
+
+    static struct usbdc_handler handler = {NULL, (FUNC_PTR)&_state_change_handler};
+
+    usbdc_register_handler(USBDC_HDL_CHANGE, &handler);
 
     return hid_init(&_func_driver, &_request_handler);
 }
