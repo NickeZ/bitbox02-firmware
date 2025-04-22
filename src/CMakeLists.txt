@@ -39,6 +39,8 @@ set(DBB-FIRMWARE-SOURCES
   ${CMAKE_SOURCE_DIR}/src/workflow/orientation_screen.c
   ${CMAKE_SOURCE_DIR}/src/queue.c
   ${CMAKE_SOURCE_DIR}/src/usb/usb_processing.c
+  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/gcc/startup_samd51.c
+  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/system_samd51.c
 )
 set(DBB-FIRMWARE-SOURCES ${DBB-FIRMWARE-SOURCES} PARENT_SCOPE)
 
@@ -429,7 +431,7 @@ if(CMAKE_CROSSCOMPILING)
   foreach(bootloader ${BOOTLOADERS})
     set(elf ${bootloader}.elf)
     add_executable(${elf} ${BOOTLOADER-SOURCES})
-    target_link_libraries(${elf} PRIVATE c asf4-drivers-min samd51a-ds -Wl,-u,exception_table)
+    target_link_libraries(${elf} PRIVATE c asf4-drivers-min -Wl,-u,exception_table)
     target_include_directories(${elf} PRIVATE ${INCLUDES})
     target_compile_definitions(${elf} PRIVATE BOOTLOADER "APP_BTC=0" "APP_LTC=0" "APP_ETH=0" "APP_U2F=0")
     # needed to find version.h
@@ -483,7 +485,6 @@ if(CMAKE_CROSSCOMPILING)
         fatfs
         ctaes
         c
-        samd51a-ds
         asf4-drivers-min
         asf4-drivers
         -Wl,-u,exception_table)

@@ -82,6 +82,8 @@ endif()
 if(CMAKE_CROSSCOMPILING)
   include(CMakeFindBinUtils)
   find_program(CMAKE_SIZE "${TOOLCHAIN_PREFIX}size")
+  set(CMAKE_AR "/usr/local/bin/${TOOLCHAIN_PREFIX}gcc-ar")
+  set(CMAKE_LINKER "/usr/local/bin/${TOOLCHAIN_PREFIX}gcc")
   message(STATUS "size: ${CMAKE_SIZE} ${TOOLCHAIN_PREFIX}size")
 endif()
 
@@ -224,9 +226,9 @@ if(CMAKE_CROSSCOMPILING)
     "
   )
   # Allow gc-sections at linking stage. (TODO: move to targets that use that linking option)
-  string(APPEND CMAKE_C_FLAGS " -ffunction-sections -fdata-sections")
+  string(APPEND CMAKE_C_FLAGS " -flto")
   set(CMAKE_C_LINK_FLAGS "\
-    ${CMAKE_C_LINK_FLAGS} -mcpu=cortex-m4 -mthumb  -Wl,--gc-sections \
+    ${CMAKE_C_LINK_FLAGS} -mcpu=cortex-m4 -mthumb -flto  -Wl,--gc-sections \
     "
   )
 endif()
