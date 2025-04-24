@@ -13,11 +13,10 @@
 // limitations under the License.
 
 #include "system.h"
+#include "utils_assert.h"
+#include <driver_init.h>
 #include <memory/memory.h>
 #include <screen.h>
-#ifndef TESTING
-#include <driver_init.h>
-#endif
 
 void reboot(void)
 {
@@ -35,3 +34,24 @@ void reboot(void)
     _reset_mcu();
 #endif
 }
+
+// extern int _isatty(int file);
+//
+// int _isatty(int file)
+//{
+//     (void)file;
+//     ASSERT(false);
+//     return -1;
+// }
+//
+// struct stat;
+//
+// extern int _fstat(int file, struct stat* st);
+//
+// int _fstat(int file, struct stat* st)
+//{
+//     (void)file;
+//     (void)st;
+//     ASSERT(false);
+//     return -1;
+// }

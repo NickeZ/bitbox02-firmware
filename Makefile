@@ -64,7 +64,7 @@ firmware-btc: | build
 firmware-debug: | build-debug
 	$(MAKE) -C build-debug firmware.elf
 bootloader: | build
-	$(MAKE) -C build bootloader.elf
+	$(MAKE) -C build bootloader.elf VERBOSE=ON
 bootloader-development: | build
 	$(MAKE) -C build bootloader-development.elf
 bootloader-development-locked: | build

@@ -15,6 +15,8 @@
 # limitations under the License.
 
 set(DBB-FIRMWARE-SOURCES
+  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/gcc/startup_samd51.c
+  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/system_samd51.c
   ${CMAKE_SOURCE_DIR}/src/bip32.c
   ${CMAKE_SOURCE_DIR}/src/firmware_main_loop.c
   ${CMAKE_SOURCE_DIR}/src/keystore.c
@@ -39,8 +41,6 @@ set(DBB-FIRMWARE-SOURCES
   ${CMAKE_SOURCE_DIR}/src/workflow/orientation_screen.c
   ${CMAKE_SOURCE_DIR}/src/queue.c
   ${CMAKE_SOURCE_DIR}/src/usb/usb_processing.c
-  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/gcc/startup_samd51.c
-  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/system_samd51.c
 )
 set(DBB-FIRMWARE-SOURCES ${DBB-FIRMWARE-SOURCES} PARENT_SCOPE)
 
@@ -102,6 +102,8 @@ set(DBB-FIRMWARE-UI-SOURCES
 set(DBB-FIRMWARE-UI-SOURCES ${DBB-FIRMWARE-UI-SOURCES} PARENT_SCOPE)
 
 set(DBB-BOOTLOADER-SOURCES
+  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/gcc/startup_samd51.c
+  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/gcc/system_samd51.c
   ${CMAKE_SOURCE_DIR}/src/util.c
   ${CMAKE_SOURCE_DIR}/src/pukcc/curve_p256.c
   ${CMAKE_SOURCE_DIR}/src/pukcc/pukcc.c
@@ -119,6 +121,7 @@ set(DBB-BOOTLOADER-SOURCES
   ${CMAKE_SOURCE_DIR}/src/ui/fonts/font_a_11X10.c
   ${CMAKE_SOURCE_DIR}/src/ui/fonts/monogram_5X9.c
   ${CMAKE_SOURCE_DIR}/src/screen.c
+  ${CMAKE_SOURCE_DIR}/src/system.c
   ${CMAKE_SOURCE_DIR}/src/hardfault.c
   ${CMAKE_SOURCE_DIR}/src/ui/components/ui_images.c
 )
@@ -187,6 +190,8 @@ set(INCLUDES
   ${CMAKE_SOURCE_DIR}/src/usb/class/hid
   ${CMAKE_SOURCE_DIR}/src/usb/class/hid/hww
   ${CMAKE_SOURCE_DIR}/src/usb/class/hid/u2f
+  ${CMAKE_SOURCE_DIR}/external/samd51a-ds/include
+  ${CMAKE_SOURCE_DIR}/external/CMSIS/Include
 )
 set(INCLUDES ${INCLUDES} PARENT_SCOPE)
 
@@ -431,7 +436,7 @@ if(CMAKE_CROSSCOMPILING)
   foreach(bootloader ${BOOTLOADERS})
     set(elf ${bootloader}.elf)
     add_executable(${elf} ${BOOTLOADER-SOURCES})
-    target_link_libraries(${elf} PRIVATE c asf4-drivers-min -Wl,-u,exception_table)
+    target_link_libraries(${elf} PRIVATE asf4-drivers-min c asf4-drivers-min c  -Wl,-u,exception_table)
     target_include_directories(${elf} PRIVATE ${INCLUDES})
     target_compile_definitions(${elf} PRIVATE BOOTLOADER "APP_BTC=0" "APP_LTC=0" "APP_ETH=0" "APP_U2F=0")
     # needed to find version.h
@@ -484,9 +489,9 @@ if(CMAKE_CROSSCOMPILING)
         cryptoauthlib
         fatfs
         ctaes
-        c
         asf4-drivers-min
         asf4-drivers
+        c
         -Wl,-u,exception_table)
     target_include_directories(${elf} PRIVATE ${INCLUDES})
 
