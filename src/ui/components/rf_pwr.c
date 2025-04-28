@@ -54,30 +54,30 @@
 static const char* pwr_lvl_str(uint8_t lvl)
 {
     switch (lvl) {
+    case 0:
+        return "-19.5 dBm";
     case 1:
-        return "-19.5 dBm (MIN)";
-    case 2:
         return "-13.5 dBm";
-    case 3:
+    case 2:
         return "-10 dBm";
-    case 4:
+    case 3:
         return "-7 dBm";
-    case 5:
+    case 4:
         return "-5 dBm";
-    case 6:
+    case 5:
         return "-3.5 dBm";
-    case 7:
+    case 6:
         return "-2 dBm";
-    case 8:
+    case 7:
         return "-1 dBm";
-    case 9:
+    case 8:
         return "0 dBm";
-    case 10:
+    case 9:
         return "+1 dBm";
-    case 11:
+    case 10:
         return "+1.5 dBm";
-    case 12:
-        return "+2.5 dBm (MAX)";
+    case 11:
+        return "+2.5 dBm";
     default:
         return "unknown";
     }
@@ -91,25 +91,14 @@ typedef struct {
     struct ringbuffer* queue;
 } rf_pwr_data_t;
 
-static void _render(component_t* component)
-{
-    rf_pwr_data_t* data = (rf_pwr_data_t*)component->data;
-
-    UG_PutStringCentered(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 10, pwr_lvl_str(data->pwr + 1), false);
-
-    // Render subcomponent
-    component_t* button = (component_t*)component->sub_components.sub_components[0];
-    button->f->render(button);
-}
-
 static void _next(component_t* button)
 {
     rf_pwr_data_t* data = (rf_pwr_data_t*)(button->parent->data);
 
-    data->pwr = (data->pwr + 1) % 12;
+    data->pwr = (data->pwr + 11) % 12;
     uint8_t payload[2] = {0};
     payload[0] = 13; // 13 - rf power level
-    payload[1] = data->pwr + 1;
+    payload[1] = data->pwr + 1; // Always send power level + 1 (0 is invalid)
 
     uint8_t tmp[32];
     uint16_t len = da14531_protocol_format(
@@ -119,6 +108,26 @@ static void _next(component_t* button)
     for (int i = 0; i < len; i++) {
         ringbuffer_put(data->queue, tmp[i]);
     }
+}
+
+static void _render(component_t* component)
+{
+    rf_pwr_data_t* data = (rf_pwr_data_t*)component->data;
+
+    UG_PutStringCentered(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT - 20, pwr_lvl_str(data->pwr), false);
+    if (data->pwr == 0) {
+        UG_PutStringCentered(0, 30, SCREEN_WIDTH, 10, "(MIN)", false);
+    } else if (data->pwr == 11) {
+        UG_PutStringCentered(0, 30, SCREEN_WIDTH, 10, "(MAX)", false);
+    }
+
+    uint8_t str[30] = {0};
+    snprintf((char*)str, sizeof(str), "Next (%s)", pwr_lvl_str((data->pwr + 11) % 12));
+
+    // Render subcomponent
+    component_t* button = (component_t*)component->sub_components.sub_components[0];
+    button_update(button, (char*)str, _next);
+    button->f->render(button);
 }
 
 /********************************** Component Functions **********************************/
@@ -148,6 +157,7 @@ component_t* rf_pwr_create(struct ringbuffer* uart_out)
     memset(rf_pwr, 0, sizeof(component_t));
 
     data->queue = uart_out;
+    data->pwr = 11;
 
     rf_pwr->data = data;
     rf_pwr->f = &_component_functions;
@@ -156,15 +166,14 @@ component_t* rf_pwr_create(struct ringbuffer* uart_out)
     rf_pwr->position.top = 0;
     rf_pwr->position.left = 0;
 
-    component_t* button = button_create_wide("Next RF power", bottom_slider, _next, rf_pwr);
+    component_t* button = button_create_wide("Next (xxx dBm)", bottom_slider, _next, rf_pwr);
 
     ui_util_add_sub_component(rf_pwr, button);
 
     // on create. set it to the current value
-    uint8_t pwr = 0;
     uint8_t payload[2] = {0};
     payload[0] = 13; // 13 - rf power level
-    payload[1] = pwr + 1;
+    payload[1] = data->pwr + 1;
     uint8_t tmp[32];
     uint16_t len = da14531_protocol_format(
         &tmp[0], sizeof(tmp), DA14531_PROTOCOL_PACKET_TYPE_CTRL_DATA, payload, sizeof(payload));
