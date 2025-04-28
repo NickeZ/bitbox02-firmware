@@ -40,6 +40,7 @@
 #include "u2f/u2f_packet.h"
 #include "usb/class/hid/u2f/hid_u2f.h"
 #endif
+#include "ui/components/rf_pwr.h"
 
 // Must be power of 2
 #define UART_OUT_BUF_LEN 2048
@@ -48,9 +49,6 @@ static bool _usb_hww_request_seen = false;
 
 void firmware_main_loop(void)
 {
-    // This starts the async orientation screen workflow, which is processed by the loop below.
-    orientation_screen();
-
     bool has_ble = memory_get_platform() == MEMORY_PLATFORM_BITBOX02_PLUS;
 
     // TODO: Send out new BLE product string, so app sees that we are booted
@@ -70,6 +68,7 @@ void firmware_main_loop(void)
     const uint8_t* u2f_data = NULL;
     uint8_t u2f_frame[USB_REPORT_SIZE] = {0};
 #endif
+    ui_screen_stack_push(rf_pwr_create(&uart_write_queue));
 
     while (1) {
         // Do UART I/O

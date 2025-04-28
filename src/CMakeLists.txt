@@ -90,6 +90,7 @@ set(DBB-FIRMWARE-UI-SOURCES
     ${CMAKE_SOURCE_DIR}/src/ui/components/confirm_button.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/keyboard_switch.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/orientation_arrows.c
+    ${CMAKE_SOURCE_DIR}/src/ui/components/rf_pwr.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/info_centered.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/lockscreen.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/menu.c

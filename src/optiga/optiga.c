@@ -33,7 +33,7 @@
 // Factory setup will be performed in the normal firmware, which makes it easier to tinker with the
 // chip setup and config.
 // Must be 0 for the production firmware releases.
-#define FACTORY_DURING_PROD 0
+#define FACTORY_DURING_PROD 1
 
 // Number of times the first kdf slot can be used over the lifetime of the device.
 // The maxmimum does not seem to be specified, so we use something a little below the endurance
