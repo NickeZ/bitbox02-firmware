@@ -26,6 +26,7 @@ import base64
 import binascii
 import textwrap
 import json
+from pathlib import Path
 
 import requests  # type: ignore
 import hid
@@ -1447,10 +1448,10 @@ class SendMessage:
                 eprint("Aborted by user")
 
     def _bluetooth_upgrade(self) -> None:
-        from pathlib import Path
-        fw = Path("bitbox_da14531_firmware.bin").read_bytes()
+        filename = input("Enter path to the firmware: ")
+        firmware = Path(filename).read_bytes()
         try:
-            self._device.bluetooth_upgrade(fw)
+            self._device.bluetooth_upgrade(firmware)
         except UserAbortException:
             print("Aborted by user")
 

@@ -1239,6 +1239,10 @@ class BitBox02(BitBoxCommonAPI):
         return bluetooth_response
 
     def bluetooth_upgrade(self, firmware: bytes) -> None:
+        """
+        Install the given Bluetooth firmware.
+        """
+        # pylint: disable=no-member
         request = bluetooth.BluetoothRequest()
         request.upgrade_init.CopyFrom(
             bluetooth.BluetoothUpgradeInitRequest(firmware_length=len(firmware))
