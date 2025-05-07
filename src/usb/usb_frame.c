@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utils_assert.h>
 
 #define ERR_NONE 0
 
@@ -103,6 +104,7 @@ static int32_t _cmd_continue(const USB_FRAME* frame, State* state)
     }
 
     if (state->seq != FRAME_SEQ(*frame)) {
+        ASSERT(state->seq == FRAME_SEQ(*frame));
         return FRAME_ERR_INVALID_SEQ;
     }
 
