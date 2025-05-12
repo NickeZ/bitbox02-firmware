@@ -29,6 +29,7 @@
 #include <ui/screen_stack.h>
 #include <usb/usb.h>
 #include <utils_ringbuffer.h>
+#include <version.h>
 
 #if APP_U2F
 #include <u2f.h>
@@ -37,7 +38,22 @@
 #ifndef TESTING
 #define IDLE_PERIOD_MS 1300
 
-#define DEVICE_MODE "{\"p\":\"bb02p-multi\",\"v\":\"9.22.0\"}"
+// Currently we have one firmware for both BB02 and BB02_PLUS, and only the
+// PRODUCT_BITBOX_MULTI/BTCONLY definitions apply. The PRODUCT_BITBOX_PLUS_MULTI/BTCONLY defs
+// currently only apply in the bootloader, which we don't need here.
+#if PRODUCT_BITBOX_MULTI == 1
+#define PRODUCT_STRING_SUFFIX "multi"
+#elif PRODUCT_BITBOX_BTCONLY == 1
+#define PRODUCT_STRING_SUFFIX "btconly"
+#elif PRODUCT_BITBOX02_FACTORYSETUP == 1
+// Dummy, not actually needed, but this file is currently needlessly compiled for factorysetup.
+#define PRODUCT_STRING_SUFFIX "factory"
+#else
+#error "unknown edition"
+#endif
+
+#define DEVICE_MODE \
+    "{\"p\":\"bb02p-" PRODUCT_STRING_SUFFIX "\",\"v\":\"" DIGITAL_BITBOX_VERSION "\"}"
 
 static struct timer_task _idle_timer_task = {0};
 
