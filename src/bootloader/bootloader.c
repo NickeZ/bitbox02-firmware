@@ -317,20 +317,20 @@ void bootloader_render_ble_confirm_screen(bool confirmed)
 {
     bootloader_pairing_request = true;
     uint32_t pairing_code_int = (*(uint32_t*)&bootloader_pairing_code_bytes[0]) % 1000000;
-    unsigned int part0 = pairing_code_int / 10000;
-    unsigned int part1 = (pairing_code_int / 100) % 100;
-    unsigned int part2 = pairing_code_int % 100;
     char code_str[10] = {0};
-    snprintf(code_str, sizeof(code_str), "%02u %02u %02u", part0, part1, part2);
+    snprintf(code_str, sizeof(code_str), "%06u", (unsigned)pairing_code_int);
     UG_ClearBuffer();
+    uint16_t check_width = IMAGE_DEFAULT_CHECKMARK_HEIGHT + IMAGE_DEFAULT_CHECKMARK_HEIGHT / 2 - 1;
+    UG_FontSelect(&font_font_a_11X10);
     if (confirmed) {
         UG_PutString(15, 0, "Confirm on app", false);
     } else {
-        image_cross(0, 0, IMAGE_DEFAULT_CROSS_HEIGHT);
-        image_checkmark(SCREEN_WIDTH - 20, 0, IMAGE_DEFAULT_CHECKMARK_HEIGHT);
+        UG_PutString(30, 0, "Pairing code", false);
+        image_cross(SCREEN_WIDTH / 16, 0, IMAGE_DEFAULT_CROSS_HEIGHT);
+        image_checkmark(SCREEN_WIDTH * 15 / 16 - check_width, 0, IMAGE_DEFAULT_CHECKMARK_HEIGHT);
     }
     UG_FontSelect(&font_monogram_5X9);
-    UG_PutString(35, SCREEN_HEIGHT / 2 - 9, code_str, false);
+    UG_PutString(45, SCREEN_HEIGHT / 2 - 9, code_str, false);
     UG_SendBuffer();
 }
 
