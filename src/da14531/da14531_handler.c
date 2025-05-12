@@ -25,6 +25,9 @@
 #include <ui/components/ui_images.h>
 #include <ui/fonts/monogram_5X9.h>
 
+uint8_t da14531_handler_ble_connected_mode = 0;
+bool da14531_handler_pairing_successful = false;
+
 struct da14531_ctrl_frame {
     enum da14531_protocol_packet_type type;
     uint16_t payload_length; // includes length of cmd
@@ -159,6 +162,7 @@ static void _ctrl_handler(struct da14531_ctrl_frame* frame, struct ringbuffer* q
     } break;
     case CTRL_CMD_BLE_STATUS:
         // util_log("da14531: BLE status update");
+        da14531_handler_ble_connected_mode = frame->cmd_data[0];
 #if defined(BOOTLOADER)
         bootloader_pairing_request = false;
         bootloader_render_default_screen();
@@ -233,6 +237,11 @@ static void _ctrl_handler(struct da14531_ctrl_frame* frame, struct ringbuffer* q
     } break;
     case CTRL_CMD_PAIRING_SUCCESSFUL:
         // util_log("da14531: pairing successful");
+        da14531_handler_pairing_successful = true;
+#if defined(BOOTLOADER)
+        bootloader_pairing_request = false;
+        bootloader_render_default_screen();
+#endif
         break;
     case CTRL_CMD_DEBUG:
         util_log(

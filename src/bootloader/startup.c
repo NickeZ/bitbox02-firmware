@@ -159,7 +159,9 @@ int main(void)
                     bootloader_render_default_screen();
                     ok = false;
                 } else {
-                    bootloader_render_ble_confirm_screen(true);
+                    if (!da14531_handler_pairing_successful) {
+                        bootloader_render_ble_confirm_screen(true);
+                    }
                     ok = true;
                 }
                 uint8_t payload[18] = {0};
