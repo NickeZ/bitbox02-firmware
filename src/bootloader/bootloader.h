@@ -15,6 +15,10 @@
 #ifndef _BOOTLOADER_H_
 #define _BOOTLOADER_H_
 
+#include <stdbool.h>
+
 void bootloader_jump(void);
+void bootloader_render_default_screen(void);
+void bootloader_render_ble_confirm_screen(bool confirmed);
 
 #endif
