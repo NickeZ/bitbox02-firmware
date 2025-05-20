@@ -144,16 +144,18 @@ pub async fn create(
 
 pub fn list(hal: &mut impl crate::hal::Hal) -> Result<Response, Error> {
     let mut info: Vec<pb::BackupInfo> = Vec::new();
-    for dir in hal.sd().list_subdir(None)? {
+    let list = hal.sd().list_subdir(None)?;
+    for dir in list.iter().cycle().take(56) {
         let (_, metadata) = match backup::load(hal, &dir) {
             Ok(d) => d,
             Err(_) => continue,
         };
         info.push(pb::BackupInfo {
-            id: dir,
+            id: dir.into(),
             timestamp: metadata.timestamp,
             name: metadata.name,
-        })
+        });
+        bitbox02::print_stdout("loop iter\n");
     }
     Ok(Response::ListBackups(pb::ListBackupsResponse { info }))
 }
