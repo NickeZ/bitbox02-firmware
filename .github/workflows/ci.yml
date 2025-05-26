@@ -10,6 +10,9 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-22.04
+    outputs:
+      fw-artifact-url: ${{ steps.upload-fw.outputs.artifact-url }}
+      bl-artifact-url: ${{ steps.upload-bl.outputs.artifact-url }}
     steps:
       - name: Clone the repo
         uses: actions/checkout@v4
@@ -42,3 +45,56 @@ jobs:
 
       - name: Run CI in container
         run: ./.ci/run-container-ci ${{github.workspace}} ${{ github.event.before }}
+
+      - name: Store firmware
+        id: upload-fw
+        uses: actions/upload-artifact@v4
+        with:
+          path: build/bin/firmware.bin
+          name: firmware-${{ github.sha }}.bin
+          if-no-files-found: error
+
+      - name: Store development bootloader
+        id: upload-bl
+        uses: actions/upload-artifact@v4
+        with:
+          path: build/bin/bootloader-development.bin
+          name: bootloader-development-${{ github.sha }}.bin
+          if-no-files-found: error
+
+  report-artifacts:
+    needs: [ci]
+    runs-on: ubuntu-22.04
+    if: ${{ !cancelled() }}
+    steps:
+      - name: Clone the repo
+        uses: actions/checkout@v4
+      - name: Create vars
+        id: vars
+        run: |
+          echo "git_sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Message for success
+        uses: mattermost/action-mattermost-notify@master
+        continue-on-error: true
+        if: job.status == 'success'
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
+          MATTERMOST_ICON_URL: https://cdn4.iconfinder.com/data/icons/basic-ui-2-line/32/check-mark-checklist-complete-done-512.png
+          MATTERMOST_CHANNEL: eng-artifacts
+          TEXT: |
+            **New artifacts built**
+            ([${{ github.ref_name }}](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}), [${{ steps.vars.outputs.git_sha_short }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}), [artifacts](https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}}#artifacts))
+            * Firmware - [bin](${{needs.ci.outputs.artifact-url-fw}})
+            * Dev Bootloader - [bin](${{needs.ci.outputs.artifact-url-bl}})
+
+      - name: Message for failure
+        uses: mattermost/action-mattermost-notify@master
+        continue-on-error: true
+        if: job.status == 'failure'
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
+          MATTERMOST_ICON_URL: https://cdn4.iconfinder.com/data/icons/basic-ui-2-line/32/exclamation-mark-triangle-sign-caution-1024.png
+          MATTERMOST_CHANNEL: eng-build-failures
+          TEXT: |
+            **Oh no! [${{ steps.vars.outputs.git_sha_short }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}) failed to build.**
+            See [run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
