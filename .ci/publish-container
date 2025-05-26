@@ -2,7 +2,7 @@
 
 set -e
 
-CONTAINER_REPO=shiftcrypto/firmware_v2
+CONTAINER_REPO=$(echo $1 | tr '[:upper:]' '[:lower:]')
 CONTAINER_VERSION=$(cat .containerversion)
 
 docker push $CONTAINER_REPO:latest

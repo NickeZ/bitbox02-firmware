@@ -1,0 +1,62 @@
+# See reference docs at
+# https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions
+name: Development container
+on:
+  workflow_call:
+    inputs:
+      publish-container:
+        default: false
+        required: false
+        type: boolean
+    outputs:
+      container-version:
+        value: ${{ jobs.dev-container.outputs.container-version }}
+
+jobs:
+  dev-container:
+    runs-on: ubuntu-22.04
+    outputs:
+      container-version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Clone the repo
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: echo version=$(cat .containerversion) >> $GITHUB_OUTPUT
+
+      - name: Check if container should be published
+        id: checks
+        run: echo container-published=$(./.ci/check-container-version-published) >> $GITHUB_OUTPUT
+
+      # On PR builds we will build an image and tag it with `pr-<PR-NUMBER>` if a new image should be tested
+      - name: Build container
+        if: steps.checks.outputs.container-published == 'false'
+        run: ./.ci/build-container ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }} ghcr.io/${{ github.repository }}
+
+      - name: Login to Github Container Registry
+        if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Login to Docker Hub
+        if: github.event_name == 'push' && steps.checks.outputs.container-published == 'false'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      # Replace the container version with the PR built
+      - name: Publish container to GHCR
+        if:  github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
+        run: |
+          ./.ci/publish-container ghcr.io/${{github.repository}}
+          echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
+
+      - name: Publish container to Docker Hub
+        if:  github.event_name == 'push' && steps.checks.outputs.container-published == 'false'
+        run: ./.ci/publish-container shiftcrypto/firmware_v2
