@@ -30,11 +30,11 @@ jobs:
         if: steps.checks.outputs.container-published == 'false'
         run: ./.ci/build-container
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+        #- name: Login to Docker Hub
+        #  uses: docker/login-action@v3
+        #  with:
+        #    username: ${{ secrets.DOCKER_USERNAME }}
+        #    password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Publish container
         if: steps.checks.outputs.container-published == 'false'
