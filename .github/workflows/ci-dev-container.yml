@@ -32,7 +32,12 @@ jobs:
       # On PR builds we will build an image and tag it with `pr-<PR-NUMBER>` if a new image should be tested
       - name: Build container
         if: steps.checks.outputs.container-published == 'false'
-        run: ./.ci/build-container ghcr.io/${{ github.repository }} ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }}
+        env:
+          REPO: ${{ github.event_name == 'pull_request' && format('ghcr.io/{0}', github.repository) || 'shiftcrypto/firmware_v2' }}
+          VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || steps.version.outputs.version }}
+        run: |
+          repo=$(echo $REPO | tr '[:upper:]' '[:lower:]')
+          docker build -t $repo:latest $repo:$VERSION
 
       - name: Login to Github Container Registry
         if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
@@ -42,7 +47,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-
       - name: Login to Docker Hub
         if: github.event_name == 'push' && steps.checks.outputs.container-published == 'false'
         uses: docker/login-action@v3
@@ -50,13 +54,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      # Replace the container version with the PR built
-      - name: Publish container to GHCR
-        if:  github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
+      - name: Publish container
+          REPO: ${{ github.event_name == 'pull_request' && format('ghcr.io/{0}', github.repository) || 'shiftcrypto/firmware_v2' }}
+          VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || steps.version.outputs.version }}
+        if: steps.checks.outputs.container-published == 'false'
         run: |
-          ./.ci/publish-container ghcr.io/${{github.repository}} ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }}
+          repo=$(echo $REPO | tr '[:upper:]' '[:lower:]')
+          docker push $repo:latest
+          docker push $repo:$VERSION
           echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
 
-      - name: Publish container to Docker Hub
-        if:  github.event_name == 'push' && steps.checks.outputs.container-published == 'false'
-        run: ./.ci/publish-container shiftcrypto/firmware_v2
+      - name: PR container version
+        env:
+          VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }}
+        if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
+        run: echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT

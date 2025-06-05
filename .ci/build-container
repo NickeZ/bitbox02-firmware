@@ -2,11 +2,8 @@
 
 set -e
 
-CONTAINER_REPO=shiftcrypto/firmware_v2
-CONTAINER_VERSION=$(cat .containerversion)
-
 if [[ $# -gt 0 ]]; then
-    CONTAINER_REPO=$(echo $1 | tr '[:upper:]' '[:lower:]')
+    CONTAINER_REPO=$1
 fi
 
 if [[ $# -gt 1 ]]; then
