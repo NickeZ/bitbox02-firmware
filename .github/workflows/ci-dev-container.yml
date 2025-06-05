@@ -3,11 +3,6 @@
 name: Development container
 on:
   workflow_call:
-    inputs:
-      publish-container:
-        default: false
-        required: false
-        type: boolean
     outputs:
       container-version:
         value: ${{ jobs.dev-container.outputs.container-version }}
@@ -21,15 +16,20 @@ jobs:
       - name: Clone the repo
         uses: actions/checkout@v4
 
-      - name: Get version
-        id: version
-        env:
-          VERSION: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || '$(cat .containerversion)' }}
-        run: echo version=${{ env.VERSION }} >> $GITHUB_OUTPUT
-
       - name: Check if container should be published
         id: checks
-        run: echo container-published=$(./.ci/check-container-version-published) >> $GITHUB_OUTPUT
+        run: |
+          echo modified=$(./.ci/check-container-sources-modified) >> "$GITHUB_OUTPUT"
+          echo published=$(./.ci/check-container-version-published) >> $GITHUB_OUTPUT
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "true" == "${{ steps.checks.modified && github.event_name == 'pull_request'}}" ]; then
+            echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
+          else
+            echo version=$(cat .containerversion) >> $GITHUB_OUTPUT
+          fi
 
       # On PR builds we will build an image and tag it with `pr-<PR-NUMBER>` if a new image should be tested
       - name: Build container
@@ -65,4 +65,3 @@ jobs:
           repo=$(echo $REPO | tr '[:upper:]' '[:lower:]')
           docker push $repo:latest
           docker push $repo:$VERSION
-          echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
