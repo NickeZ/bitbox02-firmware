@@ -23,7 +23,9 @@ jobs:
 
       - name: Get version
         id: version
-        run: echo version=$(cat .containerversion) >> $GITHUB_OUTPUT
+        env:
+          VERSION: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || '$(cat .containerversion)' }}
+        run: echo version=${{ env.VERSION }} >> $GITHUB_OUTPUT
 
       - name: Check if container should be published
         id: checks
@@ -34,7 +36,7 @@ jobs:
         if: steps.checks.outputs.container-published == 'false'
         env:
           REPO: ${{ github.event_name == 'pull_request' && format('ghcr.io/{0}', github.repository) || 'shiftcrypto/firmware_v2' }}
-          VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || steps.version.outputs.version }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           repo=$(echo $REPO | tr '[:upper:]' '[:lower:]')
           docker build -t $repo:latest -t $repo:$VERSION .
@@ -58,15 +60,9 @@ jobs:
         if: steps.checks.outputs.container-published == 'false'
         env:
           REPO: ${{ github.event_name == 'pull_request' && format('ghcr.io/{0}', github.repository) || 'shiftcrypto/firmware_v2' }}
-          VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || steps.version.outputs.version }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           repo=$(echo $REPO | tr '[:upper:]' '[:lower:]')
           docker push $repo:latest
           docker push $repo:$VERSION
           echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
-
-      - name: PR container version
-        if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
-        env:
-          VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }}
-        run: echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
