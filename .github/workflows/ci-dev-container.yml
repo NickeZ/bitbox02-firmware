@@ -55,9 +55,10 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Publish container
+        if: steps.checks.outputs.container-published == 'false'
+        env:
           REPO: ${{ github.event_name == 'pull_request' && format('ghcr.io/{0}', github.repository) || 'shiftcrypto/firmware_v2' }}
           VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || steps.version.outputs.version }}
-        if: steps.checks.outputs.container-published == 'false'
         run: |
           repo=$(echo $REPO | tr '[:upper:]' '[:lower:]')
           docker push $repo:latest
@@ -65,7 +66,7 @@ jobs:
           echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
 
       - name: PR container version
+        if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
         env:
           VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }}
-        if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
         run: echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
