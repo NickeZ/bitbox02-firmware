@@ -37,7 +37,7 @@ jobs:
           VERSION:  ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || steps.version.outputs.version }}
         run: |
           repo=$(echo $REPO | tr '[:upper:]' '[:lower:]')
-          docker build -t $repo:latest $repo:$VERSION
+          docker build -t $repo:latest -t $repo:$VERSION .
 
       - name: Login to Github Container Registry
         if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
