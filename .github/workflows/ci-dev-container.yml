@@ -32,7 +32,7 @@ jobs:
       # On PR builds we will build an image and tag it with `pr-<PR-NUMBER>` if a new image should be tested
       - name: Build container
         if: steps.checks.outputs.container-published == 'false'
-        run: ./.ci/build-container ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }} ghcr.io/${{ github.repository }}
+        run: ./.ci/build-container ghcr.io/${{ github.repository }} ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }}
 
       - name: Login to Github Container Registry
         if: github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
@@ -54,7 +54,7 @@ jobs:
       - name: Publish container to GHCR
         if:  github.event_name == 'pull_request' && steps.checks.outputs.container-published == 'false'
         run: |
-          ./.ci/publish-container ghcr.io/${{github.repository}}
+          ./.ci/publish-container ghcr.io/${{github.repository}} ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) }}
           echo version=pr-${{ github.event.number }} >> $GITHUB_OUTPUT
 
       - name: Publish container to Docker Hub

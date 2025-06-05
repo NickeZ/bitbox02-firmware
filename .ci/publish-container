@@ -5,5 +5,10 @@ set -e
 CONTAINER_REPO=$(echo $1 | tr '[:upper:]' '[:lower:]')
 CONTAINER_VERSION=$(cat .containerversion)
 
+if [[ $# -gt 1 ]]; then
+    CONTAINER_VERSION=$2
+fi
+
+
 docker push $CONTAINER_REPO:latest
 docker push $CONTAINER_REPO:$CONTAINER_VERSION
