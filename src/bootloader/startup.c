@@ -71,7 +71,7 @@ uint8_t uart_write_buf[UART_OUT_BUF_LEN];
 int main(void)
 {
     // When in bootloader mode, the vector table should be 0. If not, halt.
-    if (SCB->VTOR) {
+    if (SCB->VTOR != 0x2000) {
         while (1) {
         };
     }
