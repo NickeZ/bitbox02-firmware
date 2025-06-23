@@ -53,7 +53,6 @@ const ALLOWLIST_TYPES: &[&str] = &[
 ];
 
 const ALLOWLIST_FNS: &[&str] = &[
-    "UG_ClearBuffer",
     "UG_FontSelect",
     "UG_PutString",
     "UG_SendBuffer",
@@ -130,6 +129,7 @@ const ALLOWLIST_FNS: &[&str] = &[
     "reboot_to_bootloader",
     "reset_reset",
     "reset_ble",
+    "screen_clear",
     "screen_print_debug",
     "screen_process",
     "screen_saver_disable",

@@ -12,8 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_net.h>
+#include <SDL_rwops.h>
+
+#include "../build-build/src/version.h"
 #include "hww.h"
 #include "memory/bitbox02_smarteeprom.h"
+#include "touch/gestures.h"
 #include "usb/usb_packet.h"
 #include "usb/usb_processing.h"
 #include <fcntl.h>
@@ -22,10 +29,11 @@
 #include <queue.h>
 #include <random.h>
 #include <rust/rust.h>
+#include <screen.h>
 #include <sd.h>
 #include <stdio.h>
+#include <ui/ugui/ugui.h>
 #include <unistd.h>
-#include <version.h>
 
 #include <getopt.h>
 #include <netdb.h>
@@ -34,27 +42,90 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 
-static const char* _simulator_version = "1.0.0";
-
 #define BUFFER_SIZE 1024
 
-int data_len;
-int commfd;
+static const char* _simulator_version = "1.0.0";
 
 static volatile sig_atomic_t sigint_called = false;
-static int sockfd;
+static TCPsocket servsock = NULL;
+static SDLNet_SocketSet socketset = NULL;
+static TCPsocket clientsock = NULL;
 
-int get_usb_message_socket(uint8_t* input)
+struct options {
+    uint16_t port;
+};
+
+#ifdef __MACH__
+extern int _binary_bg_png_start __asm("section$start$__DATA_CONST$__bg_png");
+extern int _binary_bg_png_end __asm("section$end$__DATA_CONST$__bg_png");
+#else
+extern int _binary_bg_png_start;
+extern int _binary_bg_png_end;
+#endif
+
+static uint8_t* bg_data = (uint8_t*)&_binary_bg_png_start;
+static size_t bg_offset = 0;
+
+static size_t bg_data_len(void)
 {
-    return read(commfd, input, USB_HID_REPORT_OUT_SIZE);
+    return ((uint8_t*)&_binary_bg_png_end) - ((uint8_t*)&_binary_bg_png_start);
 }
+
+static Sint64 bg_size(struct SDL_RWops* context)
+{
+    return bg_data_len();
+}
+
+static Sint64 bg_seek(struct SDL_RWops* context, Sint64 offset, int whence)
+{
+    switch (whence) {
+    case RW_SEEK_SET:
+        bg_offset = offset;
+        return bg_offset;
+    case RW_SEEK_CUR:
+        bg_offset += offset;
+        return bg_offset;
+    case RW_SEEK_END:
+        bg_offset = bg_data_len();
+        return bg_offset;
+    default:
+        return -1;
+    }
+}
+
+static size_t bg_read(struct SDL_RWops* context, void* ptr, size_t size, size_t maxnum)
+{
+    size_t left = bg_data_len() - bg_offset;
+    size_t numleft = MIN(left / size, maxnum);
+    memcpy(ptr, bg_data + bg_offset, numleft * size);
+    bg_offset += numleft * size;
+    return numleft;
+}
+
+static size_t bg_write(struct SDL_RWops* context, const void* ptr, size_t size, size_t num)
+{
+    return -1;
+}
+
+static int bg_close(struct SDL_RWops* context)
+{
+    return 0;
+}
+
+SDL_RWops embedded_bg = {
+    .size = bg_size,
+    .seek = bg_seek,
+    .read = bg_read,
+    .write = bg_write,
+    .close = bg_close,
+};
 
 void send_usb_message_socket(void)
 {
     const uint8_t* data = queue_pull(queue_hww_queue());
     while (data) {
-        data_len = 256 * (int)data[5] + (int)data[6];
-        if (!write(commfd, data, USB_HID_REPORT_OUT_SIZE)) {
+        printf("TX: %s\n", util_dbg_hex(data, 64));
+        if (!SDLNet_TCP_Send(clientsock, data, USB_HID_REPORT_OUT_SIZE)) {
             perror("ERROR, could not write to socket");
             exit(1);
         }
@@ -62,46 +133,121 @@ void send_usb_message_socket(void)
     }
 }
 
-void simulate_firmware_execution(const uint8_t* input)
-{
-    usb_packet_process((const USB_FRAME*)input);
-    rust_workflow_spin();
-    rust_async_usb_spin();
-    usb_processing_process(usb_processing_hww());
-}
-
 static void _int_handler(int _signum)
 {
     sigint_called = true;
-    close(sockfd);
+    SDLNet_TCP_Close(servsock);
 }
 
-int main(int argc, char* argv[])
+static SDL_Window* window;
+static SDL_Renderer* renderer;
+static SDL_Texture* texture;
+static SDL_Texture* texture_bg;
+
+static uint32_t _display_buf[SCREEN_WIDTH * SCREEN_HEIGHT];
+
+static void PixelFunc(UG_S16 x, UG_S16 y, UG_COLOR c)
 {
-    signal(SIGINT, _int_handler);
-    // Default port number
-    int portno = 15423;
-
-    struct option long_options[] = {
-        {"port", required_argument, 0, 'p'}, {"version", no_argument, 0, 'v'}, {0, 0, 0, 0}};
-
-    int opt;
-    while ((opt = getopt_long(argc, argv, "", long_options, NULL)) != -1) {
-        switch (opt) {
-        case 'p':
-            portno = atoi(optarg);
-            break;
-        case 'v':
-            printf(
-                "bitbox02-multi-%s-simulator%s-linux-amd64\n",
-                DIGITAL_BITBOX_VERSION_SHORT,
-                _simulator_version);
-            return 0;
-        default:
-            fprintf(stderr, "Usage: %s --port <port number>\n", argv[0]);
-            return 1;
-        }
+    // White pixels are OPAQUE, Black pixels are completely transparent. This is blended on top
+    // of the
+    if (c) {
+        _display_buf[(y * SCREEN_WIDTH) + x] = (c << 8) | (c << 16) | (c << 24) | 0xff;
+    } else {
+        _display_buf[(y * SCREEN_WIDTH) + x] = 0;
     }
+}
+
+static void MirrorFunc(bool mirror) {}
+
+#define MARGIN 10
+#define PADDING_TOP_BOTTOM 22
+#define PADDING_LEFT 60
+#define PADDING_RIGHT 35
+
+static SDL_Rect content_area = {
+    .x = MARGIN + PADDING_LEFT,
+    .y = MARGIN + PADDING_TOP_BOTTOM,
+    .w = SCREEN_WIDTH,
+    .h = SCREEN_HEIGHT};
+static SDL_Rect bg_area = {
+    .x = MARGIN,
+    .y = MARGIN,
+    .w = SCREEN_WIDTH + PADDING_LEFT + PADDING_RIGHT,
+    .h = SCREEN_HEIGHT + 2 * PADDING_TOP_BOTTOM};
+static SDL_Rect slider_top_bg = {
+    .x = MARGIN + PADDING_LEFT,
+    .y = MARGIN / 2,
+    .w = SCREEN_WIDTH,
+    .h = MARGIN / 2};
+static SDL_Rect slider_bottom_bg = {
+    .x = MARGIN + PADDING_LEFT,
+    .y = MARGIN + 2 * PADDING_TOP_BOTTOM + SCREEN_HEIGHT,
+    .w = SCREEN_WIDTH,
+    .h = MARGIN / 2};
+
+static void _init_sdl(void)
+{
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+        fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    window = SDL_CreateWindow(
+        "BitBox simulator",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        SCREEN_WIDTH + 2 * MARGIN + PADDING_LEFT + PADDING_RIGHT,
+        SCREEN_HEIGHT + 2 * MARGIN + 2 * PADDING_TOP_BOTTOM,
+        0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    texture = SDL_CreateTexture(
+        renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // SDL_SetTextureBlendMode(texture_bg, SDL_BLENDMODE_ADD);
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+
+    // Set draw color to white. (clear will fill with the latest selected color)
+    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
+}
+
+static void _init_sdl_img(void)
+{
+    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+        fprintf(stderr, "Failed to initialize image loader");
+    }
+    texture_bg = IMG_LoadTexture_RW(renderer, &embedded_bg, 0);
+    if (!texture_bg) {
+        SDL_Log("Couldn't load simulator background: %s\n", SDL_GetError());
+    }
+}
+
+static void _init_sdl_net(struct options* options)
+{
+    if (SDLNet_Init() < 0) {
+        exit(1);
+    }
+
+    // We can only handle 1 client at a time. Need space for 1 server socket and 1 client socket
+    socketset = SDLNet_AllocSocketSet(1 + 1);
+
+    // IPaddress addr = {.host = INADDR_ANY, .port = options->port};
+    IPaddress addr;
+    SDLNet_ResolveHost(&addr, NULL, options->port);
+    servsock = SDLNet_TCP_Open(&addr);
+    SDLNet_TCP_AddSocket(socketset, servsock);
+
+    printf("Listening on %x, %d\n", addr.host, addr.port);
+}
+
+void ClearFunc(void)
+{
+    memset(_display_buf, 0, sizeof(_display_buf));
+}
+
+static void _init_hww(void)
+{
+    screen_init(PixelFunc, MirrorFunc, ClearFunc);
+    screen_splash();
 
     // BitBox02 simulation initialization
     usb_processing_init();
@@ -114,7 +260,7 @@ int main(int argc, char* argv[])
     printf("Sd card setup %s\n", sd_success ? "success" : "failed");
     if (!sd_success) {
         perror("ERROR, sd card setup failed");
-        return 1;
+        exit(1);
     }
 
     mock_memory_factoryreset();
@@ -125,70 +271,181 @@ int main(int argc, char* argv[])
     printf("Memory setup %s\n", memory_success ? "success" : "failed");
     if (!memory_success) {
         perror("ERROR, memory setup failed");
-        return 1;
+        exit(1);
     }
 
     smarteeprom_bb02_config();
     bitbox02_smarteeprom_init();
+}
 
-    // Establish socket connection with client
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("ERROR opening socket");
-        return 1;
-    }
-    struct sockaddr_in serv_addr;
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
-    int serv_addr_len = sizeof(serv_addr);
-    if (bind(sockfd, (struct sockaddr*)&serv_addr, serv_addr_len) < 0) {
-        perror("ERROR binding socket");
-        return 1;
-    }
-    if (listen(sockfd, 50) < 0) {
-        perror("ERROR listening on socket");
-        return 1;
-    }
+static void _parse_args(int argc, char* argv[], struct options* options)
+{
+    // Default port number
+    options->port = 15423;
 
-    printf("Listening on port %d\n", portno);
+    struct option long_options[] = {
+        {"port", required_argument, 0, 'p'}, {"version", no_argument, 0, 'v'}, {0, 0, 0, 0}};
 
-    while (1) {
-        if ((commfd = accept(sockfd, (struct sockaddr*)&serv_addr, (socklen_t*)&serv_addr_len)) <
-            0) {
-            if (sigint_called) {
-                printf("\nGot Ctrl-C, exiting\n");
-            }
-            perror("accept");
-            return 1;
+    int opt;
+    while ((opt = getopt_long(argc, argv, "", long_options, NULL)) != -1) {
+        switch (opt) {
+        case 'p':
+            options->port = atoi(optarg);
+            break;
+        case 'v':
+            printf(
+                "bitbox02-multi-%s-simulator%s-linux-amd64\n",
+                DIGITAL_BITBOX_VERSION_SHORT,
+                _simulator_version);
+            exit(0);
+        default:
+            fprintf(stderr, "Usage: %s --port <port number>\n", argv[0]);
+            exit(1);
         }
-        printf("Socket connection setup success\n");
-
-        // BitBox02 firmware loop
-        uint8_t input[BUFFER_SIZE];
-        int temp_len;
-        while (1) {
-            // Simulator polls for USB messages from client and then processes them
-            if (!get_usb_message_socket(input)) break;
-            simulate_firmware_execution(input);
-
-            // If the USB message to be sent from firmware is bigger than one packet,
-            // then the simulator sends the message in multiple packets. Packets use
-            // HID format, just like the real USB messages.
-            temp_len = data_len - (USB_HID_REPORT_OUT_SIZE - 7);
-            while (temp_len > 0) {
-                // When USB message processing function is called without a new
-                // input, then it does not consume any packets but it still calls
-                // the send function to send further USB messages
-                usb_processing_process(usb_processing_hww());
-                send_usb_message_socket();
-                temp_len -= (USB_HID_REPORT_OUT_SIZE - 5);
-            }
-            send_usb_message_socket();
-        }
-        close(commfd);
-        printf("Socket connection closed\n");
-        printf("Waiting for new clients, CTRL+C to shut down the simulator\n");
     }
+}
+
+static void _handle_client(void)
+{
+    // BitBox02 firmware loop
+    uint8_t input[BUFFER_SIZE];
+    int temp_len;
+    if (SDLNet_TCP_Recv(clientsock, input, USB_HID_REPORT_OUT_SIZE) <= 0) {
+        // conection closed
+        SDLNet_TCP_DelSocket(socketset, clientsock);
+        SDLNet_TCP_Close(clientsock);
+        clientsock = NULL;
+        printf("client disconnected\n");
+        return;
+    }
+    printf("RX: %s\n", util_dbg_hex(input, 64));
+
+    usb_packet_process((const USB_FRAME*)input);
+}
+
+static void _handle_server(void)
+{
+    TCPsocket newsock;
+
+    newsock = SDLNet_TCP_Accept(servsock);
+    if (newsock == NULL) {
+        return;
+    }
+
+    if (clientsock != NULL) {
+        fprintf(stderr, "Already connected\n");
+        return;
+    }
+
+    clientsock = newsock;
+    SDLNet_TCP_AddSocket(socketset, clientsock);
+    printf("Socket connection setup success\n");
+}
+
+struct Slider {
+    bool active;
+    uint16_t position;
+};
+
+int main(int argc, char* argv[])
+{
+    signal(SIGINT, _int_handler);
+
+    struct options options;
+    _parse_args(argc, argv, &options);
+    _init_sdl();
+    _init_sdl_img();
+    _init_sdl_net(&options);
+    _init_hww();
+
+    SDL_Event e;
+    bool quit = false;
+    int last_ticks = 0;
+    struct Slider slider_top = {0};
+    struct Slider slider_bottom = {0};
+
+    while (!quit) {
+        /* Check input events */
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT) {
+                quit = true;
+                break;
+            }
+            gestures_slider_data_t slider_data = {
+                .diff = e.motion.xrel,
+                .position = (e.motion.x - MARGIN - PADDING_LEFT) * 2,
+                .velocity = 0,
+            };
+            if (e.type == SDL_MOUSEMOTION) {
+                if (e.motion.y < MARGIN / 2) {
+                    if (slider_top.active) {
+                        printf("top tap\n");
+                        slider_top.active = false;
+                        event_t event = {.data = &slider_data, .id = EVENT_TOP_SHORT_TAP};
+                        emit_event(&event);
+                    }
+                } else if (e.motion.y < MARGIN) {
+                    slider_top.active = true;
+                } else if (e.motion.y > MARGIN + 2 * PADDING_TOP_BOTTOM + 64 + MARGIN / 2) {
+                    if (slider_bottom.active) {
+                        printf("bottom tap\n");
+                        slider_bottom.active = false;
+                        event_t event = {.data = &slider_data, .id = EVENT_BOTTOM_SHORT_TAP};
+                        emit_event(&event);
+                    }
+                } else if (e.motion.y > MARGIN + 2 * PADDING_TOP_BOTTOM + 64) {
+                    slider_bottom.active = true;
+                }
+            }
+        }
+
+        SDLNet_CheckSockets(socketset, 0);
+
+        /* Check for data from connected client */
+        if (SDLNet_SocketReady(clientsock)) {
+            _handle_client();
+        }
+
+        /* Send data if we have any */
+        send_usb_message_socket();
+
+        /* Check for new connections */
+        if (SDLNet_SocketReady(servsock)) {
+            _handle_server();
+        }
+
+        // Only refresh screen with 60hz
+        if (SDL_GetTicks() - last_ticks > 1000 / 100) {
+            // All logic depends on the screen rate right now...
+            screen_process();
+            rust_workflow_spin();
+            rust_async_usb_spin();
+            usb_processing_process(usb_processing_hww());
+
+            /* Update simulated screen */
+            last_ticks = SDL_GetTicks();
+            SDL_RenderClear(renderer);
+            SDL_RenderCopy(renderer, texture_bg, NULL, &bg_area);
+            // SDL_RenderFillRect(renderer, NULL);
+            SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0x00, SDL_ALPHA_OPAQUE);
+            SDL_RenderFillRect(renderer, &slider_top_bg);
+            SDL_RenderFillRect(renderer, &slider_bottom_bg);
+            SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
+            SDL_UpdateTexture(texture, NULL, _display_buf, SCREEN_WIDTH * sizeof(uint32_t));
+            SDL_RenderCopy(renderer, texture, NULL, &content_area);
+            SDL_RenderPresent(renderer);
+        }
+
+        if (sigint_called) {
+            printf("\nGot Ctrl-C, exiting\n");
+            break;
+        }
+    }
+
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
     return 0;
 }

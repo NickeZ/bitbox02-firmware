@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# We use FindPkgConfig instead of FindPackage because it finds libraries in
+# both linux and macos
+find_package(PkgConfig REQUIRED)
+
+# Unit testing uses CMocka
+pkg_check_modules(SDL2 REQUIRED sdl2 SDL2_image SDL2_net)
 
 #-----------------------------------------------------------------------------
 # Build bitbox lib to use in tests
@@ -28,7 +34,6 @@ set(DBB-FILTERED-SOURCES
   )
 
 set(IGNORE_SOURCES
-    "src/screen.c"
     "src/firmware_main_loop.c"
     "src/memory/nvmctrl.c"
     "src/memory/smarteeprom.c"
@@ -66,7 +71,6 @@ add_library(bitbox_objects-simulator
   framework/mock_cipher.c
   framework/mock_memory.c
   framework/mock_spi_mem.c
-  framework/mock_screen.c
   framework/mock_smarteeprom.c
   framework/mock_securechip.c
 )
@@ -185,6 +189,13 @@ target_link_libraries(simulator PRIVATE
   bitbox-simulator
   $<$<NOT:$<PLATFORM_ID:Darwin>>:-Wl,--end-group>
   ""
+  ${SDL2_LDFLAGS}
+)
+
+target_include_directories(
+  simulator
+  SYSTEM PRIVATE
+  ${SDL2_INCLUDE_DIRS}
 )
 
 add_custom_command(
@@ -193,3 +204,22 @@ add_custom_command(
   WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
   COMMENT "\nStripping simulator binary"
 )
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_link_libraries(simulator PRIVATE "-sectcreate __DATA_CONST __bg_png ${CMAKE_CURRENT_SOURCE_DIR}/bg.png")
+else()
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bg.o
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/bg.png ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_OBJCOPY} -Ibinary -Odefault --rename-section .data=.rodata,alloc,load,readonly,data,contents bg.png bg.o
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bg.png
+  COMMENT "Convert bg to object file using ${CMAKE_OBJCOPY}")
+
+add_custom_target(
+  simulator-bg
+  DEPENDS bg.o
+)
+add_dependencies(simulator simulator-bg)
+
+target_link_libraries(simulator PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/bg.o)
+endif()

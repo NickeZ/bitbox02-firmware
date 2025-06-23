@@ -62,7 +62,9 @@ RUN apt-get update && apt-get install -y \
     libcmocka-dev \
     libusb-1.0-0-dev \
     libudev-dev \
-    libhidapi-dev
+    libhidapi-dev \
+    libsdl2-image-dev\
+    libsdl2-net-dev
 
 RUN apt-get update && apt-get install -y \
     doxygen \
