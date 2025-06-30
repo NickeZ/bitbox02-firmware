@@ -64,61 +64,11 @@ extern int _binary_bg_png_end;
 #endif
 
 static uint8_t* bg_data = (uint8_t*)&_binary_bg_png_start;
-static size_t bg_offset = 0;
 
 static size_t bg_data_len(void)
 {
     return ((uint8_t*)&_binary_bg_png_end) - ((uint8_t*)&_binary_bg_png_start);
 }
-
-static Sint64 bg_size(struct SDL_RWops* context)
-{
-    return bg_data_len();
-}
-
-static Sint64 bg_seek(struct SDL_RWops* context, Sint64 offset, int whence)
-{
-    switch (whence) {
-    case RW_SEEK_SET:
-        bg_offset = offset;
-        return bg_offset;
-    case RW_SEEK_CUR:
-        bg_offset += offset;
-        return bg_offset;
-    case RW_SEEK_END:
-        bg_offset = bg_data_len();
-        return bg_offset;
-    default:
-        return -1;
-    }
-}
-
-static size_t bg_read(struct SDL_RWops* context, void* ptr, size_t size, size_t maxnum)
-{
-    size_t left = bg_data_len() - bg_offset;
-    size_t numleft = MIN(left / size, maxnum);
-    memcpy(ptr, bg_data + bg_offset, numleft * size);
-    bg_offset += numleft * size;
-    return numleft;
-}
-
-static size_t bg_write(struct SDL_RWops* context, const void* ptr, size_t size, size_t num)
-{
-    return -1;
-}
-
-static int bg_close(struct SDL_RWops* context)
-{
-    return 0;
-}
-
-SDL_RWops embedded_bg = {
-    .size = bg_size,
-    .seek = bg_seek,
-    .read = bg_read,
-    .write = bg_write,
-    .close = bg_close,
-};
 
 void send_usb_message_socket(void)
 {
@@ -184,6 +134,11 @@ static SDL_Rect slider_bottom_bg = {
     .y = MARGIN + 2 * PADDING_TOP_BOTTOM + SCREEN_HEIGHT,
     .w = SCREEN_WIDTH,
     .h = MARGIN / 2};
+static SDL_Rect pinch_bg = {
+    .x = MARGIN + PADDING_LEFT + 128 + PADDING_RIGHT,
+    .y = MARGIN + PADDING_TOP_BOTTOM + SCREEN_HEIGHT / 3,
+    .w = MARGIN / 2,
+    .h = SCREEN_HEIGHT / 3};
 
 static void _init_sdl(void)
 {
@@ -215,7 +170,8 @@ static void _init_sdl_img(void)
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
         fprintf(stderr, "Failed to initialize image loader");
     }
-    texture_bg = IMG_LoadTexture_RW(renderer, &embedded_bg, 0);
+    SDL_RWops* bg = SDL_RWFromConstMem(bg_data, bg_data_len());
+    texture_bg = IMG_LoadTexture_RW(renderer, bg, 0);
     if (!texture_bg) {
         SDL_Log("Couldn't load simulator background: %s\n", SDL_GetError());
     }
@@ -345,6 +301,7 @@ static void _handle_server(void)
 struct Slider {
     bool active;
     uint16_t position;
+    bool pinch;
 };
 
 int main(int argc, char* argv[])
@@ -364,6 +321,8 @@ int main(int argc, char* argv[])
     struct Slider slider_top = {0};
     struct Slider slider_bottom = {0};
 
+    gestures_slider_data_t slider_data;
+
     while (!quit) {
         /* Check input events */
         while (SDL_PollEvent(&e)) {
@@ -371,35 +330,42 @@ int main(int argc, char* argv[])
                 quit = true;
                 break;
             }
-            gestures_slider_data_t slider_data = {
-                .diff = e.motion.xrel,
-                .position = (e.motion.x - MARGIN - PADDING_LEFT) * 2,
-                .velocity = 0,
-            };
+
             if (e.type == SDL_MOUSEMOTION) {
+                slider_data.diff = e.motion.xrel;
+                slider_data.position = (e.motion.x - MARGIN - PADDING_LEFT) * 2;
+                slider_data.velocity = 0;
                 if (e.motion.y < MARGIN / 2) {
                     if (slider_top.active) {
-                        printf("top tap\n");
+                        // printf("top tap\n");
                         slider_top.active = false;
                         event_t event = {.data = &slider_data, .id = EVENT_TOP_SHORT_TAP};
                         emit_event(&event);
                     }
                 } else if (e.motion.y < MARGIN) {
                     slider_top.active = true;
+                } else if (
+                    e.motion.y > MARGIN + PADDING_TOP_BOTTOM + SCREEN_HEIGHT / 3 &&
+                    e.motion.y < MARGIN + PADDING_TOP_BOTTOM + SCREEN_HEIGHT * 2 / 3) {
+                    if (e.motion.x > MARGIN + PADDING_LEFT + SCREEN_WIDTH + PADDING_RIGHT) {
+                        slider_top.pinch = true;
+                    }
                 } else if (e.motion.y > MARGIN + 2 * PADDING_TOP_BOTTOM + 64 + MARGIN / 2) {
                     if (slider_bottom.active) {
-                        printf("bottom tap\n");
+                        // printf("bottom tap\n");
                         slider_bottom.active = false;
                         event_t event = {.data = &slider_data, .id = EVENT_BOTTOM_SHORT_TAP};
                         emit_event(&event);
                     }
                 } else if (e.motion.y > MARGIN + 2 * PADDING_TOP_BOTTOM + 64) {
                     slider_bottom.active = true;
+                } else {
+                    slider_top.pinch = false;
                 }
             }
         }
 
-        SDLNet_CheckSockets(socketset, 0);
+        SDLNet_CheckSockets(socketset, 10);
 
         /* Check for data from connected client */
         if (SDLNet_SocketReady(clientsock)) {
@@ -414,13 +380,22 @@ int main(int argc, char* argv[])
             _handle_server();
         }
 
+        rust_workflow_spin();
+        rust_async_usb_spin();
+        usb_processing_process(usb_processing_hww());
+
         // Only refresh screen with 60hz
-        if (SDL_GetTicks() - last_ticks > 1000 / 100) {
+        uint32_t ticks = SDL_GetTicks();
+        if (ticks - last_ticks >= 1000 / 60) {
+            if (slider_top.pinch) {
+                slider_data.position = SLIDER_POSITION_TWO_THIRD + 1;
+                event_t event = {.data = &slider_data, .id = EVENT_TOP_CONTINUOUS_TAP};
+                emit_event(&event);
+                event.id = EVENT_BOTTOM_CONTINUOUS_TAP;
+                emit_event(&event);
+            }
             // All logic depends on the screen rate right now...
             screen_process();
-            rust_workflow_spin();
-            rust_async_usb_spin();
-            usb_processing_process(usb_processing_hww());
 
             /* Update simulated screen */
             last_ticks = SDL_GetTicks();
@@ -430,6 +405,7 @@ int main(int argc, char* argv[])
             SDL_SetRenderDrawColor(renderer, 0xff, 0x00, 0x00, SDL_ALPHA_OPAQUE);
             SDL_RenderFillRect(renderer, &slider_top_bg);
             SDL_RenderFillRect(renderer, &slider_bottom_bg);
+            SDL_RenderFillRect(renderer, &pinch_bg);
             SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
             SDL_UpdateTexture(texture, NULL, _display_buf, SCREEN_WIDTH * sizeof(uint32_t));
             SDL_RenderCopy(renderer, texture, NULL, &content_area);
