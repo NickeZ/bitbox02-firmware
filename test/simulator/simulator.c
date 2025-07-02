@@ -53,6 +53,7 @@ static TCPsocket clientsock = NULL;
 
 struct options {
     uint16_t port;
+    bool headless;
 };
 
 #ifdef __MACH__
@@ -236,11 +237,15 @@ static void _init_hww(void)
 
 static void _parse_args(int argc, char* argv[], struct options* options)
 {
-    // Default port number
+    // Default options
     options->port = 15423;
+    options->headless = true;
 
     struct option long_options[] = {
-        {"port", required_argument, 0, 'p'}, {"version", no_argument, 0, 'v'}, {0, 0, 0, 0}};
+        {"port", required_argument, 0, 'p'},
+        {"version", no_argument, 0, 'v'},
+        {"gui", no_argument, 0, 'g'},
+        {0, 0, 0, 0}};
 
     int opt;
     while ((opt = getopt_long(argc, argv, "", long_options, NULL)) != -1) {
@@ -254,6 +259,9 @@ static void _parse_args(int argc, char* argv[], struct options* options)
                 DIGITAL_BITBOX_VERSION_SHORT,
                 _simulator_version);
             exit(0);
+        case 'g':
+            options->headless = false;
+            break;
         default:
             fprintf(stderr, "Usage: %s --port <port number>\n", argv[0]);
             exit(1);

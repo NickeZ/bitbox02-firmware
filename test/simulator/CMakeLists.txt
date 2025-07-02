@@ -198,12 +198,12 @@ target_include_directories(
   ${SDL2_INCLUDE_DIRS}
 )
 
-add_custom_command(
-  TARGET simulator POST_BUILD
-  COMMAND ${CMAKE_STRIP} simulator
-  WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-  COMMENT "\nStripping simulator binary"
-)
+#add_custom_command(
+#  TARGET simulator POST_BUILD
+#  COMMAND ${CMAKE_STRIP} simulator
+#  WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+#  COMMENT "\nStripping simulator binary"
+#)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_link_libraries(simulator PRIVATE "-sectcreate __DATA_CONST __bg_png ${CMAKE_CURRENT_SOURCE_DIR}/bg.png")
