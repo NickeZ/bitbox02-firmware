@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 sdl2 = {version="0.37.0", default-features=false, features=["static-link", "use-pkgconfig", "image"]}
+bitbox02-rust = {version="*", path="../../src/rust/bitbox02-rust"}

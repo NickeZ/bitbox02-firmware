@@ -96,7 +96,7 @@ pub fn main() {
     let tc = canvas.texture_creator();
     let bg = tc.load_texture_bytes(BG).unwrap();
 
-    let content_area = Rect::new(
+    let _content_area = Rect::new(
         (MARGIN + PADDING_LEFT) as i32,
         (MARGIN + PADDING_TOP_BOTTOM) as i32,
         SCREEN_WIDTH,
@@ -108,19 +108,19 @@ pub fn main() {
         SCREEN_WIDTH + PADDING_LEFT + PADDING_RIGHT,
         SCREEN_HEIGHT + 2 * PADDING_TOP_BOTTOM,
     );
-    let slider_top_bg = Rect::new(
+    let _slider_top_bg = Rect::new(
         (MARGIN + PADDING_LEFT) as i32,
         (MARGIN / 2) as i32,
         SCREEN_WIDTH,
         MARGIN / 2,
     );
-    let slider_bottom_bg = Rect::new(
+    let _slider_bottom_bg = Rect::new(
         (MARGIN + PADDING_LEFT) as i32,
         (MARGIN + 2 * PADDING_TOP_BOTTOM + SCREEN_HEIGHT) as i32,
         SCREEN_WIDTH,
         MARGIN / 2,
     );
-    let pinch_bg = Rect::new(
+    let _pinch_bg = Rect::new(
         (MARGIN + PADDING_LEFT + 128 + PADDING_RIGHT) as i32,
         (MARGIN + PADDING_TOP_BOTTOM + SCREEN_HEIGHT / 3) as i32,
         MARGIN / 2,
@@ -155,7 +155,9 @@ pub fn main() {
             }
         }
         // The rest of the game loop goes here...
-        canvas.copy(&bg, None, bg_area);
+        canvas
+            .copy(&bg, None, bg_area)
+            .expect("Couldn't copy to canvas");
 
         canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
