@@ -42,6 +42,9 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 
+void rust_eh_personality(void);
+void rust_eh_personality(void) {}
+
 #define BUFFER_SIZE 1024
 
 static const char* _simulator_version = "1.0.0";

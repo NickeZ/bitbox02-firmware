@@ -47,18 +47,6 @@ foreach(SOURCEFILE ${IGNORE_SOURCES})
     list(FILTER DBB-FILTERED-SOURCES EXCLUDE REGEX ".*/${SOURCEFILE}$")
 endforeach()
 
-message("FILTERED SOURCES: ${DBB-FILTERED-SOURCES}")
-
-add_library(sd-mock-simulator
-  STATIC
-  framework/mock_diskio.c
-)
-target_include_directories(
-  sd-mock-simulator
-  PUBLIC
-  $<TARGET_PROPERTY:fatfs,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
 
 # We create a CMake "object library" to track all the compiled sources so that
 # they can be reused between a normal library and the manually crafted "merged"
@@ -68,16 +56,12 @@ add_library(bitbox_objects-simulator
   OBJECT
   ${DBB-FILTERED-SOURCES}
   ${ETHEREUM-SOURCES}
-  framework/mock_cipher.c
-  framework/mock_memory.c
-  framework/mock_spi_mem.c
-  framework/mock_smarteeprom.c
-  framework/mock_securechip.c
 )
 
 add_library(bitbox-simulator
   STATIC
   $<TARGET_OBJECTS:bitbox_objects-simulator>
+  $<TARGET_OBJECTS:hardware-fakes-objects>
 )
 
 # Here we create the "merged" library, which starts with the c-lib created by
@@ -143,7 +127,6 @@ add_dependencies(bitbox_objects-simulator
   wallycore
   secp256k1
   fatfs
-  sd-mock-simulator
 )
 target_link_libraries(bitbox-simulator PRIVATE ${LIBBITBOX02_RUST} "-lm")
 
@@ -164,7 +147,6 @@ target_link_libraries(bitbox-simulator
   PRIVATE
     wallycore
     fatfs
-    sd-mock-simulator
 )
 
 if(SANITIZE_ADDRESS)
@@ -179,7 +161,7 @@ endif()
 #-----------------------------------------------------------------------------
 # Simulator
 
-add_executable(simulator simulator.c framework/eh_personality.c)
+add_executable(simulator simulator.c)
 # asan must be first library in linking order
 target_link_libraries(simulator PRIVATE
   $<$<BOOL:${SANITIZE_ADDRESS}>:asan>

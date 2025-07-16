@@ -42,3 +42,6 @@ app-ethereum = []
 app-bitcoin = []
 app-litecoin = []
 app-u2f = []
+
+# Expose raw C bindings as bitbox02::bindings module
+bindings = []

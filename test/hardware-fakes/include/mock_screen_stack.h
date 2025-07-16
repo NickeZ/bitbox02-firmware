@@ -1,4 +1,4 @@
-// Copyright 2020 Shift Cryptos AG
+// Copyright 2019 Shift Cryptosecurity AG
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::env;
+#ifndef _TEST_SCREEN_STACK_H
+#define _TEST_SCREEN_STACK_H
 
-fn main() -> Result<(), i32> {
-    let args: Vec<String> = env::args().collect();
-    let messages_dir = &args[1];
-    let out_dir = &args[2];
-    let mut config = prost_build::Config::new();
-    config.out_dir(out_dir);
-    if let Err(e) = config.compile_protos(&["hww.proto", "backup.proto"], &[messages_dir]) {
-        eprintln!("{e}");
-        return Err(1);
-    }
-    Ok(())
-}
+void mock_screen_stack_assert_clean(void);
+#endif

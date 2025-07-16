@@ -43,6 +43,8 @@ const ALLOWLIST_VARS: &[&str] = &[
     "MEMORY_SECURECHIP_TYPE_ATECC",
     "MEMORY_SECURECHIP_TYPE_OPTIGA",
     "MAX_UNLOCK_ATTEMPTS",
+    "SCREEN_HEIGHT",
+    "SCREEN_WIDTH",
 ];
 
 const ALLOWLIST_TYPES: &[&str] = &[
@@ -66,6 +68,7 @@ const ALLOWLIST_FNS: &[&str] = &[
     "delay_ms",
     "delay_us",
     "empty_create",
+    "hww_setup",
     "keystore_bip39_mnemonic_to_seed",
     "keystore_copy_seed",
     "keystore_copy_bip39_seed",
@@ -130,10 +133,12 @@ const ALLOWLIST_FNS: &[&str] = &[
     "reset_reset",
     "reset_ble",
     "screen_clear",
+    "screen_init",
     "screen_print_debug",
     "screen_process",
     "screen_saver_disable",
     "screen_saver_enable",
+    "screen_splash",
     "sd_card_inserted",
     "sd_erase_file_in_subdir",
     "sd_format",
@@ -157,6 +162,7 @@ const ALLOWLIST_FNS: &[&str] = &[
     "ui_screen_stack_pop",
     "ui_screen_stack_pop_all",
     "ui_screen_stack_push",
+    "usb_processing_init",
     "util_format_datetime",
     "wally_free_string",
     "wally_get_secp_context",

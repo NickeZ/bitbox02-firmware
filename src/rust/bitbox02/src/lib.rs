@@ -30,6 +30,9 @@ extern crate alloc;
 
 use alloc::string::String;
 
+#[cfg(feature = "bindings")]
+pub use bitbox02_sys as bindings;
+
 #[cfg(feature = "testing")]
 pub mod testing;
 

@@ -29,7 +29,7 @@
 #include "ui/event.h"
 #include "ui/event_handler.h"
 #include "util.h"
-#include <platform_config.h>
+#include <platform/platform_config.h>
 #include <ui/component.h>
 
 #define MAX_REGISTRATIONS 7

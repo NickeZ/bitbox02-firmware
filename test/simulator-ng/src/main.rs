@@ -21,8 +21,7 @@ struct HWWDataEvent {}
 
 static BG: &[u8; 325362] = include_bytes!("../../simulator/bg.png");
 
-const SCREEN_HEIGHT: u32 = 64;
-const SCREEN_WIDTH: u32 = 128;
+use bitbox02::bindings::{SCREEN_HEIGHT, SCREEN_WIDTH, UG_COLOR};
 
 const MARGIN: u32 = 10;
 const PADDING_TOP_BOTTOM: u32 = 22;
@@ -69,8 +68,72 @@ pub fn network_task(es: EventSender, evs: mpsc::Receiver<EventSender>) {
     }
 }
 
-pub fn main() {
+static mut DISPLAY_BUF: [u32; (SCREEN_WIDTH * SCREEN_HEIGHT) as usize] =
+    [0; (SCREEN_WIDTH * SCREEN_HEIGHT) as usize];
+
+unsafe extern "C" fn pixel_fn(x: i16, y: i16, c: UG_COLOR) {
+    let ptr: *mut _ = unsafe { &raw mut DISPLAY_BUF[0] };
+    let c = c as u32;
+    let offset = ((y * SCREEN_WIDTH as i16) + x) as usize;
+
+    // White pixels are OPAQUE, Black pixels are completely transparent.
+    if c != 0 {
+        unsafe { *ptr.add(offset) = (c << 8) | (c << 16) | (c << 24) | 0xff }
+    } else {
+        unsafe { *ptr.add(offset) = 0 }
+    }
+}
+
+unsafe extern "C" fn clear_fn() {
+    let ptr: *mut _ = unsafe { &raw mut DISPLAY_BUF[0] };
+    for _ in 0..SCREEN_WIDTH * SCREEN_HEIGHT {
+        unsafe { *ptr = 0 }
+    }
+}
+
+unsafe extern "C" fn mirror_fn(_: bool) {}
+
+fn init_hww() -> bool {
+    unsafe { bitbox02::bindings::screen_init(Some(pixel_fn), Some(mirror_fn), Some(clear_fn)) };
+    unsafe { bitbox02::bindings::screen_splash() };
+
+    // BitBox02 simulation initialization
+    unsafe { bitbox02::bindings::usb_processing_init() };
+    println!("USB setup success");
+
+    unsafe { bitbox02::bindings::hww_setup() };
+    println!("HWW setup success");
+
+    let sd_success = unsafe { bitbox02::bindings::sd_format() };
+    if !sd_success {
+        eprintln!("ERROR, sd card setup failed");
+        return false;
+    }
+
+    println!("Sd card setup: success");
+
+    mock_memory_factoryreset();
+    let ifs = bitbox02::bindings::memory_interface_functions_t {
+        random_32_bytes: Some(bitbox02::bindings::random_32_bytes_mcu),
+    };
+    let memory_success = bitbox02::bindings::memory_setup(&ifs);
+    if !memory_success {
+        eprintln!("ERROR, memory setup failed");
+        return false;
+    }
+    println!("Memory setup: success");
+
+    unsafe { bitbox02::bindings::smarteeprom_bb02_config() };
+    unsafe { bitbox02::bindings::bitbox02_smarteeprom_init() };
+    true
+}
+
+pub fn main() -> Result<(), i32> {
     let sdl_context = sdl2::init().unwrap();
+
+    if !init_hww() {
+        return Err(1);
+    }
 
     let ev = sdl_context.event().unwrap();
     let (evs_sender, evs_receiver) = mpsc::channel();
@@ -162,4 +225,5 @@ pub fn main() {
         canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
     }
+    Ok(())
 }

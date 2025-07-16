@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <communication_mode.h>
+#include <hww.h>
 #include <keystore.h>
 #include <memory/bitbox02_smarteeprom.h>
 #include <memory/memory.h>
@@ -49,6 +50,7 @@
 #include <ui/screen_saver.h>
 #include <ui/screen_stack.h>
 #include <ui/ugui/ugui.h>
+#include <usb/usb_processing.h>
 #include <util.h>
 #include <wally_bip39.h>
 #include <wally_core.h>

@@ -1,4 +1,4 @@
-// Copyright 2020 Shift Cryptos AG
+// Copyright 2022 Shift Crypto AG
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::env;
-
-fn main() -> Result<(), i32> {
-    let args: Vec<String> = env::args().collect();
-    let messages_dir = &args[1];
-    let out_dir = &args[2];
-    let mut config = prost_build::Config::new();
-    config.out_dir(out_dir);
-    if let Err(e) = config.compile_protos(&["hww.proto", "backup.proto"], &[messages_dir]) {
-        eprintln!("{e}");
-        return Err(1);
-    }
-    Ok(())
-}
+// Needed to link the simulator executable in /test/simulator, which link to
+// bitbox_merged-simulator. `rust_eh_personality` is provided by Rust when building the firmware or
+// running Rust unit tests.

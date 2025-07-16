@@ -15,7 +15,7 @@
 #include "da14531/da14531_protocol.h"
 #include "crc.h"
 #include "da14531/da14531_binary.h"
-#include "platform_config.h"
+#include "platform/platform_config.h"
 #include "uart.h"
 #include "util.h"
 #include <communication_mode.h>
