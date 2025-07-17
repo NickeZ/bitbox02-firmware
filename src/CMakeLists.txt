@@ -385,11 +385,12 @@ set(FIRMWARES ${FIRMWARES} PARENT_SCOPE)
 if(CMAKE_CROSSCOMPILING)
   set(RUST_LIBS ${FIRMWARES} ${BOOTLOADERS})
 else()
-  set(RUST_LIBS c-unit-tests)
+  set(RUST_LIBS c-unit-tests simulator-ng)
 endif()
 
 #  Create static libraries from rust code. Either:
 #  *  c-unit-tests_rust_c
+#  *  simulator-ng_rust_c
 #  or
 #  *  firmware_rust_c
 #  *  firmware-btc_rust_c

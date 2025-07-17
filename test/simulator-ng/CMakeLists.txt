@@ -40,37 +40,20 @@ foreach(SOURCEFILE ${IGNORE_SOURCES})
     list(FILTER DBB-FILTERED-SOURCES EXCLUDE REGEX ".*/${SOURCEFILE}$")
 endforeach()
 
-message("FILTERED SOURCES: ${DBB-FILTERED-SOURCES}")
-
-add_library(sd-mock-simulator
-  STATIC
-  framework/mock_diskio.c
-)
-target_include_directories(
-  sd-mock-simulator
-  PUBLIC
-  $<TARGET_PROPERTY:fatfs,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-
 # We create a CMake "object library" to track all the compiled sources so that
 # they can be reused between a normal library and the manually crafted "merged"
 # library.
 # See https://cmake.org/cmake/help/v3.10/command/add_library.html#object-libraries
-add_library(bitbox_objects-simulator
+add_library(bitbox_objects-simulator-ng
   OBJECT
   ${DBB-FILTERED-SOURCES}
   ${ETHEREUM-SOURCES}
-  framework/mock_cipher.c
-  framework/mock_memory.c
-  framework/mock_spi_mem.c
-  framework/mock_smarteeprom.c
-  framework/mock_securechip.c
 )
 
-add_library(bitbox-simulator
+add_library(bitbox-simulator-ng
   STATIC
-  $<TARGET_OBJECTS:bitbox_objects-simulator>
+  $<TARGET_OBJECTS:bitbox_objects-simulator-ng>
+  $<TARGET_OBJECTS:hardware-fakes-objects>
 )
 
 # Here we create the "merged" library, which starts with the c-lib created by
@@ -82,18 +65,18 @@ add_library(bitbox-simulator
 # code. (That linkage is done by cargo using a "build.rs" script in the
 # bitbox02 rust project.)
 add_custom_command(
-  OUTPUT ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator.a
-  DEPENDS c-unit-tests_rust_c bitbox_objects-simulator $<TARGET_OBJECTS:bitbox_objects-simulator>
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PROPERTY:c-unit-tests_rust_c,IMPORTED_LOCATION> ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator.a
-  COMMAND ar q ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator.a $<TARGET_OBJECTS:bitbox_objects-simulator>
+  OUTPUT ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a
+  DEPENDS c-simulator_rust_c bitbox_objects-simulator $<TARGET_OBJECTS:bitbox_objects-simulator> $<TARGET_OBJECTS:hardware-fakes-objects>
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PROPERTY:simulator-ng_rust_c,IMPORTED_LOCATION> ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a
+  COMMAND ar q ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a $<TARGET_OBJECTS:bitbox_objects-simulator>
   VERBATIM
   COMMAND_EXPAND_LISTS
 )
 
-add_custom_target(bitbox_merged-simulator DEPENDS ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator.a)
+add_custom_target(bitbox_merged-simulator-ng DEPENDS ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a)
 
 target_include_directories(
-  bitbox_objects-simulator
+  bitbox_objects-simulator-ng
   SYSTEM PUBLIC
   ${CMAKE_SOURCE_DIR}/external
   ${CMAKE_SOURCE_DIR}/external/asf4-drivers/hal/utils/include
@@ -103,7 +86,7 @@ target_include_directories(
   $<TARGET_PROPERTY:fatfs,INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_include_directories(
-  bitbox_objects-simulator
+  bitbox_objects-simulator-ng
   PUBLIC
   ${INCLUDES}
   ${CMAKE_CURRENT_SOURCE_DIR}/../unit-test/framework/includes
@@ -112,7 +95,7 @@ target_include_directories(
 )
 
 target_include_directories(
-  bitbox-simulator
+  bitbox-simulator-ng
   SYSTEM PUBLIC
   ${CMAKE_SOURCE_DIR}/external
   ${CMAKE_SOURCE_DIR}/external/asf4-drivers/hal/utils/include
@@ -123,7 +106,7 @@ target_include_directories(
 )
 
 target_include_directories(
-  bitbox-simulator
+  bitbox-simulator-ng
   PUBLIC
   ${INCLUDES}
   ${CMAKE_CURRENT_SOURCE_DIR}/../unit-test/framework/includes
@@ -131,34 +114,34 @@ target_include_directories(
   ${CMAKE_BINARY_DIR}/src
 )
 
-add_dependencies(bitbox_objects-simulator
-  rust-cbindgen
-  wallycore
-  secp256k1
-  fatfs
-  sd-mock-simulator
-)
-target_link_libraries(bitbox-simulator PRIVATE ${LIBBITBOX02_RUST} "-lm")
+#add_dependencies(bitbox_objects-simulator
+#  rust-cbindgen
+#  wallycore
+#  secp256k1
+#  fatfs
+#  sd-mock-simulator
+#)
+#target_link_libraries(bitbox-simulator PRIVATE ${LIBBITBOX02_RUST} "-lm")
 
 # _UNIT_TEST_ is used by ASF4 to not cross compile
 
-target_compile_definitions(bitbox_objects-simulator PUBLIC "PRODUCT_BITBOX_MULTI=1" "APP_BTC=1" "APP_LTC=1" "APP_U2F=1" "APP_ETH=1")
-target_compile_definitions(bitbox_objects-simulator PUBLIC TESTING _UNIT_TEST_)
+target_compile_definitions(bitbox_objects-simulator-ng PUBLIC "PRODUCT_BITBOX_MULTI=1" "APP_BTC=1" "APP_LTC=1" "APP_U2F=1" "APP_ETH=1")
+target_compile_definitions(bitbox_objects-simulator-ng PUBLIC TESTING _UNIT_TEST_)
 
 # Since wallycore is an external projects we need to specify the dependency
-add_dependencies(bitbox_objects-simulator libwally-core)
-
-target_compile_definitions(bitbox-simulator PUBLIC "PRODUCT_BITBOX_MULTI=1" "APP_BTC=1" "APP_LTC=1" "APP_U2F=1" "APP_ETH=1")
-target_compile_definitions(bitbox-simulator PUBLIC TESTING _UNIT_TEST_)
-
-target_link_libraries(bitbox-simulator
-  PUBLIC
-    secp256k1
-  PRIVATE
-    wallycore
-    fatfs
-    sd-mock-simulator
-)
+# add_dependencies(bitbox_objects-simulator libwally-core)
+# 
+# target_compile_definitions(bitbox-simulator PUBLIC "PRODUCT_BITBOX_MULTI=1" "APP_BTC=1" "APP_LTC=1" "APP_U2F=1" "APP_ETH=1")
+# target_compile_definitions(bitbox-simulator PUBLIC TESTING _UNIT_TEST_)
+# 
+# target_link_libraries(bitbox-simulator
+#   PUBLIC
+#     secp256k1
+#   PRIVATE
+#     wallycore
+#     fatfs
+#     sd-mock-simulator
+# )
 
 #if(SANITIZE_ADDRESS)
 #  target_compile_options(bitbox_objects-simulator PUBLIC "-fsanitize=address")
@@ -172,8 +155,12 @@ target_link_libraries(bitbox-simulator
 #-----------------------------------------------------------------------------
 # Simulator
 
-add_custom_command(simulator-ng
-    cargo build
+add_custom_command(
+    OUTPUT target/release/simulator
+    COMMAND cargo build --release
+)
+add_custom_target(simulator-ng
+    DEPENDS target/release/simulator
 )
 #add_executable(simulator simulator.c framework/eh_personality.c)
 ## asan must be first library in linking order
@@ -218,4 +205,4 @@ add_custom_command(simulator-ng
 #add_dependencies(simulator simulator-bg)
 #
 #target_link_libraries(simulator PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/bg.o)
-endif()
+#endif()
