@@ -37,6 +37,7 @@
 
 #include "pal_os_event.h"
 #include "hal_timer.h"
+#include "util.h"
 
 extern struct timer_descriptor TIMER_0;
 
@@ -90,10 +91,12 @@ void pal_os_event_register_callback_oneshot(
     void* callback_args,
     uint32_t time_us)
 {
+    util_log("time_us: %d", time_us);
     p_pal_os_event->callback_registered = callback;
     p_pal_os_event->callback_ctx = callback_args;
 
-    scheduler.interval = (time_us + 99) / 100;
+    uint32_t time_ms = time_us > 5000 ? time_us / 1000 : 5;
+    scheduler.interval = time_ms;
     scheduler.cb = _timer_cb;
     scheduler.mode = TIMER_TASK_ONE_SHOT;
     timer_add_task(&TIMER_0, &scheduler);
