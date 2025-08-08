@@ -181,6 +181,129 @@ const RUSTIFIED_ENUMS: &[&str] = &[
     "trinary_choice_t",
 ];
 
+// SOURCES are only used for native builds (simulator), comment out all sources that depends on
+// hardware
+const SOURCES: &[&str] = &[
+    "keystore.c",
+    "random.c",
+    //"hardfault.c",
+    "util.c",
+    "sd.c",
+    "system.c",
+    "hww.c",
+    "memory/bitbox02_smarteeprom.c",
+    "memory/memory.c",
+    "memory/memory_shared.c",
+    //"memory/mpu.c",
+    //"memory/nvmctrl.c",
+    //"memory/spi_mem.c",
+    "memory/memory_spi.c",
+    //"memory/smarteeprom.c",
+    "salt.c",
+    "i2c_ecc.c",
+    "touch/gestures.c",
+    "reset.c",
+    "cipher/cipher.c",
+    "workflow/orientation_screen.c",
+    "queue.c",
+    "usb/usb_processing.c",
+    "usb/usb.c",
+    "usb/usb_frame.c",
+    "usb/usb_packet.c",
+    "u2f/u2f_packet.c",
+    "screen.c",
+    "ui/graphics/graphics.c",
+    "ui/graphics/lock_animation.c",
+    "ui/ugui/ugui.c",
+    "ui/fonts/font_a_9X9.c",
+    "ui/fonts/font_a_11X10.c",
+    "ui/fonts/font_a_11X12.c",
+    "ui/fonts/font_a_13X14.c",
+    "ui/fonts/font_a_15X16.c",
+    "ui/fonts/font_a_17X18.c",
+    "ui/fonts/monogram_5X9.c",
+    "ui/fonts/password_9X9.c",
+    "ui/fonts/password_11X12.c",
+    "ui/screen_saver.c",
+    "ui/screen_stack.c",
+    "ui/screen_process.c",
+    "ui/event_handler.c",
+    "ui/ui_util.c",
+    "ui/components/trinary_choice.c",
+    "ui/components/trinary_input_char.c",
+    "ui/components/trinary_input_string.c",
+    "ui/components/waiting.c",
+    "ui/components/screensaver.c",
+    "ui/components/entry_screen.c",
+    "ui/components/knight_rider.c",
+    "ui/components/right_arrow.c",
+    "ui/components/left_arrow.c",
+    "ui/components/icon_button.c",
+    "ui/components/confirm_gesture.c",
+    "ui/components/label.c",
+    "ui/components/confirm.c",
+    "ui/components/confirm_button.c",
+    "ui/components/keyboard_switch.c",
+    "ui/components/orientation_arrows.c",
+    "ui/components/info_centered.c",
+    "ui/components/lockscreen.c",
+    "ui/components/menu.c",
+    "ui/components/status.c",
+    "ui/components/image.c",
+    "ui/components/button.c",
+    "ui/components/empty.c",
+    "ui/components/progress.c",
+    "ui/components/sdcard.c",
+    "ui/components/ui_images.c",
+    "ui/components/confirm_transaction.c",
+    "util.c",
+    //"pukcc/curve_p256.c",
+    //"pukcc/pukcc.c",
+    //"bootloader/bootloader.c",
+    //"bootloader/startup.c",
+    //"bootloader/mpu_regions.c",
+    "random.c",
+    //"memory/memory_shared.c",
+    //"memory/mpu.c",
+    //"memory/nvmctrl.c",
+    //"memory/spi_mem.c",
+    //"memory/memory_spi.c",
+    "queue.c",
+    "usb/usb_processing.c",
+    "ui/ugui/ugui.c",
+    "ui/fonts/font_a_9X9.c",
+    "ui/fonts/font_a_11X10.c",
+    "ui/fonts/monogram_5X9.c",
+    "ui/graphics/graphics.c",
+    "screen.c",
+    "hardfault.c",
+    "ui/components/ui_images.c",
+    "platform/platform_init.c",
+    //"platform/driver_init.c",
+    //"ui/oled/oled.c",
+    //"ui/oled/oled_writer.c",
+    //"qtouch/qtouch.c",
+    "communication_mode.c",
+    "da14531/crc.c",
+    "da14531/da14531.c",
+    "da14531/da14531_protocol.c",
+    "da14531/da14531_handler.c",
+    //"uart.c",
+    //"sd_mmc/sd_mmc_start.c",
+    //"sd_mmc/sd_mmc_ext.c",
+    //"usb/class/hid/hid.c",
+    //"usb/class/hid/hww/hid_hww.c",
+    "ui/oled/sh1107.c",
+    "ui/oled/ssd1312.c",
+    //"atecc/atecc.c",
+    //"securechip/securechip.c",
+    //"optiga/optiga.c",
+    //"usb/class/hid/u2f/hid_u2f.c",
+    "u2f.c",
+    "u2f/u2f_app.c",
+    "../external/asf4-drivers/hal/utils/src/utils_ringbuffer.c",
+];
+
 pub fn main() -> Result<(), &'static str> {
     // We could theoretically list every header file that we end up depending on, but that is hard
     // to maintain. So instead we just listen to changes on "wrapper.h" which is good enough.
@@ -194,7 +317,7 @@ pub fn main() -> Result<(), &'static str> {
     }
 
     let target = env::var("TARGET").expect("TARGET not set");
-    let cross_compiling = target == "thumbv7em-none-eabi";
+    let cross_compiling = target.starts_with("thumb");
 
     let arm_sysroot = env::var("CMAKE_SYSROOT").unwrap_or("/usr/local/arm-none-eabi".to_string());
     let arm_sysroot = format!("--sysroot={arm_sysroot}");
@@ -209,10 +332,9 @@ pub fn main() -> Result<(), &'static str> {
             "-mthumb",
             "-mfloat-abi=soft",
             &arm_sysroot,
-            "-DAPP_U2F=1",
         ]
     } else {
-        vec!["-DTESTING=1"]
+        vec!["-DTESTING", "-D_UNIT_TEST_"]
     };
 
     let mut includes = vec![
@@ -229,7 +351,16 @@ pub fn main() -> Result<(), &'static str> {
         "../../../external/libwally-core/include",
         // $SECP256k1_INCLUDES
         "../../../external/libwally-core/src/secp256k1/include",
+        // ASF4 headers allowed in unit tests
+        "../../../external/asf4-drivers/hal/utils/include",
+        // fatfs
+        "../../../external/fatfs/source",
     ];
+
+    // rust.h is created by cbindgen in the cmake build directory
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let rust_h_dir = [&out_dir, "../../../../../../..", "src"].join("/");
+    includes.push(&rust_h_dir);
 
     if cross_compiling {
         includes.extend([
@@ -240,7 +371,6 @@ pub fn main() -> Result<(), &'static str> {
             "../../../external/asf4-drivers/Config",
             "../../../external/asf4-drivers/hal/include",
             "../../../external/asf4-drivers/hal/include",
-            "../../../external/asf4-drivers/hal/utils/include",
             "../../../external/asf4-drivers/hpl/core",
             "../../../external/asf4-drivers/hpl/gclk",
             "../../../external/asf4-drivers/hpl/pm",
@@ -268,6 +398,15 @@ pub fn main() -> Result<(), &'static str> {
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("bindings.rs");
     let out_path = out_path.into_os_string().into_string().unwrap();
+
+    let mut definitions = vec![
+        "-DPB_NO_PACKED_STRUCTS=1",
+        "-DPB_FIELD_16BIT=1",
+        "-fshort-enums",
+        "-DAPP_U2F=1",
+    ];
+    definitions.extend(&extra_flags);
+
     let res = Command::new("bindgen")
         .args(["--output", &out_path])
         .arg("--use-core")
@@ -283,10 +422,7 @@ pub fn main() -> Result<(), &'static str> {
         .args(RUSTIFIED_ENUMS.iter().flat_map(|s| ["--rustified-enum", s]))
         .arg("wrapper.h")
         .arg("--")
-        .arg("-DPB_NO_PACKED_STRUCTS=1")
-        .arg("-DPB_FIELD_16BIT=1")
-        .arg("-fshort-enums")
-        .args(&extra_flags)
+        .args(&definitions)
         .args(includes.iter().map(|s| format!("-I{s}")))
         .output()
         .expect("Failed to run bindgen");
@@ -298,5 +434,18 @@ pub fn main() -> Result<(), &'static str> {
         );
         return Err("Bindgen failed");
     }
+
+    // Build the c deps for unit tests
+    if !cross_compiling {
+        definitions.push("-DPRODUCT_BITBOX_MULTI");
+        let mdir = env::var("CARGO_MANIFEST_DIR").unwrap();
+        let mut builder = cc::Build::new();
+        builder.files(SOURCES.iter().map(|s| [&mdir, "../..", s].join("/")));
+        builder.flags(&definitions);
+        builder.includes(&includes);
+
+        builder.compile("bitbox02");
+    }
+
     Ok(())
 }

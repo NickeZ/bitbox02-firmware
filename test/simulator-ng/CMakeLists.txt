@@ -66,9 +66,9 @@ add_library(bitbox-simulator-ng
 # bitbox02 rust project.)
 add_custom_command(
   OUTPUT ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a
-  DEPENDS c-simulator_rust_c bitbox_objects-simulator $<TARGET_OBJECTS:bitbox_objects-simulator> $<TARGET_OBJECTS:hardware-fakes-objects>
+  DEPENDS c-simulator_rust_c bitbox_objects-simulator-ng $<TARGET_OBJECTS:bitbox_objects-simulator> $<TARGET_OBJECTS:hardware-fakes-objects>
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PROPERTY:simulator-ng_rust_c,IMPORTED_LOCATION> ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a
-  COMMAND ar q ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a $<TARGET_OBJECTS:bitbox_objects-simulator>
+  COMMAND ar q ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/libbitbox_merged-simulator-ng.a $<TARGET_OBJECTS:bitbox_objects-simulator-ng>
   VERBATIM
   COMMAND_EXPAND_LISTS
 )
@@ -154,13 +154,24 @@ target_compile_definitions(bitbox_objects-simulator-ng PUBLIC TESTING _UNIT_TEST
 
 #-----------------------------------------------------------------------------
 # Simulator
+set(RUST_BINARY_DIR ${CMAKE_BINARY_DIR}/src/rust)
+
+set(RUSTFLAGS "-L${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} -lstatic=simulator-ng_rust_c -lstatic=wallycore -lstatic=hardware-fakes -lstatic=fatfs")
 
 add_custom_command(
-    OUTPUT target/release/simulator
-    COMMAND cargo build --release
+    OUTPUT target/release/simulator-ng
+    COMMAND
+      ${CMAKE_COMMAND} -E env
+      MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
+      RUSTFLAGS=${RUSTFLAGS}
+      cargo build --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml --target-dir ${RUST_BINARY_DIR}/fw --release
+    COMMAND ${CMAKE_COMMAND} -E copy ${RUST_BINARY_DIR}/fw/release/simulator-ng ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/simulator-ng
+    DEPENDS rust-cbindgen simulator-ng_rust_c libwally-core hardware-fakes fatfs
+    WORKING_DIRECTORY ${RUST_BINARY_DIR}
 )
+#add_executable(simulator-ng IMPORTED GLOBAL)
 add_custom_target(simulator-ng
-    DEPENDS target/release/simulator
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/target/release/simulator-ng
 )
 #add_executable(simulator simulator.c framework/eh_personality.c)
 ## asan must be first library in linking order

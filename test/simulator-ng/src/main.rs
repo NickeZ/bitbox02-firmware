@@ -112,15 +112,7 @@ fn init_hww() -> bool {
 
     println!("Sd card setup: success");
 
-    mock_memory_factoryreset();
-    let ifs = bitbox02::bindings::memory_interface_functions_t {
-        random_32_bytes: Some(bitbox02::bindings::random_32_bytes_mcu),
-    };
-    let memory_success = bitbox02::bindings::memory_setup(&ifs);
-    if !memory_success {
-        eprintln!("ERROR, memory setup failed");
-        return false;
-    }
+    bitbox02::testing::mock_memory();
     println!("Memory setup: success");
 
     unsafe { bitbox02::bindings::smarteeprom_bb02_config() };

@@ -251,7 +251,7 @@ else()
   set(RUST_TARGET_ARCH_DIR .)
 endif()
 
-set(RUST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/rust/target)
+set(RUST_BINARY_DIR ${CMAKE_BINARY_DIR}/src/rust)
 set(LIBBITBOX02_RUST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/rust/bitbox02-rust-c)
 set(LIBBITBOX02_RUST ${LIBBITBOX02_RUST} PARENT_SCOPE)
 
@@ -409,13 +409,15 @@ foreach(type ${RUST_LIBS})
       FIRMWARE_VERSION_SHORT=${FIRMWARE_VERSION}
       $<$<BOOL:${SCCACHE_PROGRAM}>:RUSTC_WRAPPER=${SCCACHE_PROGRAM}>
       RUSTC_BOOTSTRAP=1
-      ${CARGO} build $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-vv> --offline --features target-${type}$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},DEBUG>,$<STREQUAL:${type},factory-setup>>:,rtt> --target-dir ${RUST_BINARY_DIR}/feature-${type} ${RUST_CARGO_FLAGS} ${RUST_TARGET_ARCH_ARG}
+      MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
+      ${CARGO} build $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-vv> --offline --features target-${type}$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},DEBUG>,$<STREQUAL:${type},factory-setup>>:,rtt> --target-dir ${RUST_BINARY_DIR}/feature-${type} ${RUST_CARGO_FLAGS} ${RUST_TARGET_ARCH_ARG} --manifest-path ${LIBBITBOX02_RUST_SOURCE_DIR}/Cargo.toml
     COMMAND
       ${CMAKE_COMMAND} -E copy_if_different ${lib} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib${type}_rust_c.a
     # DEPFILES are only supported with the Ninja build tool
     #DEPFILE ${RUST_BINARY_DIR}/feature-${type}/${RUST_TARGET_ARCH_DIR}/${RUST_PROFILE}/libbitbox02_rust_c.d
-    WORKING_DIRECTORY ${LIBBITBOX02_RUST_SOURCE_DIR}
+    WORKING_DIRECTORY ${RUST_BINARY_DIR}
     COMMENT "Building Rust library lib${type}_rust_c.a"
+    DEPENDS rust-cbindgen
   )
   add_custom_target(${type}-rust-target DEPENDS ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib${type}_rust_c.a)
   add_library(${type}_rust_c STATIC IMPORTED GLOBAL)
