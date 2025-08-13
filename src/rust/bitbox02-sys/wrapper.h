@@ -30,6 +30,7 @@
 #include <securechip/securechip.h>
 #include <system.h>
 #include <time.h>
+#include <touch/gestures.h>
 #include <ui/components/confirm.h>
 #include <ui/components/confirm_transaction.h>
 #include <ui/components/empty.h>
@@ -40,6 +41,8 @@
 #include <ui/components/status.h>
 #include <ui/components/trinary_choice.h>
 #include <ui/components/trinary_input_string.h>
+#include <ui/event.h>
+#include <ui/event_handler.h>
 #include <ui/fonts/font_a_11X10.h>
 #include <ui/fonts/font_a_9X9.h>
 #include <ui/fonts/monogram_5X9.h>

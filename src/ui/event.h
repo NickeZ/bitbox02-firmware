@@ -17,7 +17,7 @@
 
 #include <stdint.h>
 
-enum {
+enum event_types {
     EVENT_CONFIRM,
     EVENT_FORWARD,
     EVENT_BACKWARD,
@@ -36,7 +36,7 @@ enum {
 };
 
 typedef struct {
-    void* data;
+    const void* data;
     uint8_t id;
 } event_t;
 

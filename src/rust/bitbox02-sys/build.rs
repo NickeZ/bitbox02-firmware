@@ -45,6 +45,7 @@ const ALLOWLIST_VARS: &[&str] = &[
     "MAX_UNLOCK_ATTEMPTS",
     "SCREEN_HEIGHT",
     "SCREEN_WIDTH",
+    "SLIDER_POSITION_TWO_THIRD",
 ];
 
 const ALLOWLIST_TYPES: &[&str] = &[
@@ -52,6 +53,10 @@ const ALLOWLIST_TYPES: &[&str] = &[
     "component_t",
     "confirm_params_t",
     "trinary_input_string_params_t",
+    "USB_FRAME",
+    "gestures_slider_data_t",
+    "event_types",
+    "event_t",
 ];
 
 const ALLOWLIST_FNS: &[&str] = &[
@@ -163,11 +168,17 @@ const ALLOWLIST_FNS: &[&str] = &[
     "ui_screen_stack_pop_all",
     "ui_screen_stack_push",
     "usb_processing_init",
+    "usb_processing_process",
+    "usb_processing_hww",
+    "usb_packet_process",
     "util_format_datetime",
     "wally_free_string",
     "wally_get_secp_context",
     "wally_sha512",
     "communication_mode_ble_enabled",
+    "queue_hww_queue",
+    "queue_pull",
+    "emit_event",
 ];
 
 const RUSTIFIED_ENUMS: &[&str] = &[
@@ -179,6 +190,7 @@ const RUSTIFIED_ENUMS: &[&str] = &[
     "securechip_model_t",
     "simple_type_t",
     "trinary_choice_t",
+    "event_types",
 ];
 
 // SOURCES are only used for native builds (simulator), comment out all sources that depends on
