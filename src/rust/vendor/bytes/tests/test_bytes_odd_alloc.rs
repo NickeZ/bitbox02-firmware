@@ -1,10 +1,12 @@
 //! Test using `Bytes` with an allocator that hands out "odd" pointers for
 //! vectors (pointers where the LSB is set).
 
+#![cfg(not(miri))] // Miri does not support custom allocators (also, Miri is "odd" by default with 50% chance)
+
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::ptr;
 
-use bytes::Bytes;
+use bytes::{Bytes, BytesMut};
 
 #[global_allocator]
 static ODD: Odd = Odd;
@@ -22,8 +24,7 @@ unsafe impl GlobalAlloc for Odd {
             };
             let ptr = System.alloc(new_layout);
             if !ptr.is_null() {
-                let ptr = ptr.offset(1);
-                ptr
+                ptr.offset(1)
             } else {
                 ptr
             }
@@ -64,4 +65,83 @@ fn test_bytes_clone_drop() {
     let vec = vec![33u8; 1024];
     let b1 = Bytes::from(vec);
     let _b2 = b1.clone();
+}
+
+#[test]
+fn test_bytes_into_vec() {
+    let vec = vec![33u8; 1024];
+
+    // Test cases where kind == KIND_VEC
+    let b1 = Bytes::from(vec.clone());
+    assert_eq!(Vec::from(b1), vec);
+
+    // Test cases where kind == KIND_ARC, ref_cnt == 1
+    let b1 = Bytes::from(vec.clone());
+    drop(b1.clone());
+    assert_eq!(Vec::from(b1), vec);
+
+    // Test cases where kind == KIND_ARC, ref_cnt == 2
+    let b1 = Bytes::from(vec.clone());
+    let b2 = b1.clone();
+    assert_eq!(Vec::from(b1), vec);
+
+    // Test cases where vtable = SHARED_VTABLE, kind == KIND_ARC, ref_cnt == 1
+    assert_eq!(Vec::from(b2), vec);
+
+    // Test cases where offset != 0
+    let mut b1 = Bytes::from(vec.clone());
+    let b2 = b1.split_off(20);
+
+    assert_eq!(Vec::from(b2), vec[20..]);
+    assert_eq!(Vec::from(b1), vec[..20]);
+}
+
+#[test]
+fn test_bytesmut_from_bytes_vec() {
+    let vec = vec![33u8; 1024];
+
+    // Test case where kind == KIND_VEC
+    let b1 = Bytes::from(vec.clone());
+    let b1m = BytesMut::from(b1);
+    assert_eq!(b1m, vec);
+}
+
+#[test]
+fn test_bytesmut_from_bytes_arc_1() {
+    let vec = vec![33u8; 1024];
+
+    // Test case where kind == KIND_ARC, ref_cnt == 1
+    let b1 = Bytes::from(vec.clone());
+    drop(b1.clone());
+    let b1m = BytesMut::from(b1);
+    assert_eq!(b1m, vec);
+}
+
+#[test]
+fn test_bytesmut_from_bytes_arc_2() {
+    let vec = vec![33u8; 1024];
+
+    // Test case where kind == KIND_ARC, ref_cnt == 2
+    let b1 = Bytes::from(vec.clone());
+    let b2 = b1.clone();
+    let b1m = BytesMut::from(b1);
+    assert_eq!(b1m, vec);
+
+    // Test case where vtable = SHARED_VTABLE, kind == KIND_ARC, ref_cnt == 1
+    let b2m = BytesMut::from(b2);
+    assert_eq!(b2m, vec);
+}
+
+#[test]
+fn test_bytesmut_from_bytes_arc_offset() {
+    let vec = vec![33u8; 1024];
+
+    // Test case where offset != 0
+    let mut b1 = Bytes::from(vec.clone());
+    let b2 = b1.split_off(20);
+    let b1m = BytesMut::from(b1);
+    let b2m = BytesMut::from(b2);
+
+    assert_eq!(b2m, vec[20..]);
+    assert_eq!(b1m, vec[..20]);
 }

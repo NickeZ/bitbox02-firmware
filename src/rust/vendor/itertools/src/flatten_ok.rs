@@ -44,11 +44,11 @@ where
             if let Some(inner) = &mut self.inner_front {
                 if let Some(item) = inner.next() {
                     return Some(Ok(item));
-                } else {
-                    // This is necessary for the iterator to implement `FusedIterator`
-                    // with only the orginal iterator being fused.
-                    self.inner_front = None;
                 }
+
+                // This is necessary for the iterator to implement `FusedIterator`
+                // with only the original iterator being fused.
+                self.inner_front = None;
             }
 
             match self.iter.next() {
@@ -59,16 +59,39 @@ where
                     if let Some(inner) = &mut self.inner_back {
                         if let Some(item) = inner.next() {
                             return Some(Ok(item));
-                        } else {
-                            // This is necessary for the iterator to implement `FusedIterator`
-                            // with only the orginal iterator being fused.
-                            self.inner_back = None;
                         }
+
+                        // This is necessary for the iterator to implement `FusedIterator`
+                        // with only the original iterator being fused.
+                        self.inner_back = None;
                     } else {
                         return None;
                     }
                 }
             }
+        }
+    }
+
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        // Front
+        let mut acc = match self.inner_front {
+            Some(x) => x.fold(init, |a, o| f(a, Ok(o))),
+            None => init,
+        };
+
+        acc = self.iter.fold(acc, |acc, x| match x {
+            Ok(it) => it.into_iter().fold(acc, |a, o| f(a, Ok(o))),
+            Err(e) => f(acc, Err(e)),
+        });
+
+        // Back
+        match self.inner_back {
+            Some(x) => x.fold(acc, |a, o| f(a, Ok(o))),
+            None => acc,
         }
     }
 
@@ -103,11 +126,11 @@ where
             if let Some(inner) = &mut self.inner_back {
                 if let Some(item) = inner.next_back() {
                     return Some(Ok(item));
-                } else {
-                    // This is necessary for the iterator to implement `FusedIterator`
-                    // with only the orginal iterator being fused.
-                    self.inner_back = None;
                 }
+
+                // This is necessary for the iterator to implement `FusedIterator`
+                // with only the original iterator being fused.
+                self.inner_back = None;
             }
 
             match self.iter.next_back() {
@@ -118,16 +141,39 @@ where
                     if let Some(inner) = &mut self.inner_front {
                         if let Some(item) = inner.next_back() {
                             return Some(Ok(item));
-                        } else {
-                            // This is necessary for the iterator to implement `FusedIterator`
-                            // with only the orginal iterator being fused.
-                            self.inner_front = None;
                         }
+
+                        // This is necessary for the iterator to implement `FusedIterator`
+                        // with only the original iterator being fused.
+                        self.inner_front = None;
                     } else {
                         return None;
                     }
                 }
             }
+        }
+    }
+
+    fn rfold<B, F>(self, init: B, mut f: F) -> B
+    where
+        Self: Sized,
+        F: FnMut(B, Self::Item) -> B,
+    {
+        // Back
+        let mut acc = match self.inner_back {
+            Some(x) => x.rfold(init, |a, o| f(a, Ok(o))),
+            None => init,
+        };
+
+        acc = self.iter.rfold(acc, |acc, x| match x {
+            Ok(it) => it.into_iter().rfold(acc, |a, o| f(a, Ok(o))),
+            Err(e) => f(acc, Err(e)),
+        });
+
+        // Front
+        match self.inner_front {
+            Some(x) => x.rfold(acc, |a, o| f(a, Ok(o))),
+            None => acc,
         }
     }
 }
@@ -138,7 +184,6 @@ where
     T: IntoIterator,
     T::IntoIter: Clone,
 {
-    #[inline]
     clone_fields!(iter, inner_front, inner_back);
 }
 
@@ -148,13 +193,7 @@ where
     T: IntoIterator,
     T::IntoIter: fmt::Debug,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("FlattenOk")
-            .field("iter", &self.iter)
-            .field("inner_front", &self.inner_front)
-            .field("inner_back", &self.inner_back)
-            .finish()
-    }
+    debug_fmt_fields!(FlattenOk, iter, inner_front, inner_back);
 }
 
 /// Only the iterator being flattened needs to implement [`FusedIterator`].

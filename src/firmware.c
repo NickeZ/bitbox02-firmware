@@ -14,13 +14,13 @@
 
 #include "common_main.h"
 #include "da14531/da14531_protocol.h"
-#include "driver_init.h"
+#include <platform/driver_init.h>
 #include "firmware_main_loop.h"
 #include "hardfault.h"
 #include "memory/bitbox02_smarteeprom.h"
 #include "memory/memory_shared.h"
 #include "platform/platform_config.h"
-#include "platform_init.h"
+#include <platform/platform_init.h>
 #include "qtouch.h"
 #include "screen.h"
 #include "ui/screen_stack.h"

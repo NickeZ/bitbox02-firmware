@@ -9,7 +9,6 @@
 
 //! An ed25519 signature.
 
-use core::convert::TryFrom;
 use core::fmt::Debug;
 
 use curve25519_dalek::edwards::CompressedEdwardsY;
@@ -58,7 +57,7 @@ impl Clone for InternalSignature {
 }
 
 impl Debug for InternalSignature {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Signature( R: {:?}, s: {:?} )", &self.R, &self.s)
     }
 }
@@ -74,7 +73,7 @@ fn check_scalar(bytes: [u8; 32]) -> Result<Scalar, SignatureError> {
     // potential non-reduced scalars is performed.
     //
     // This is compatible with ed25519-donna and libsodium when
-    // -DED25519_COMPAT is NOT specified.
+    // `-D ED25519_COMPAT` is NOT specified.
     if bytes[31] & 224 != 0 {
         return Err(InternalError::ScalarFormat.into());
     }

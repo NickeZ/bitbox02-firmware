@@ -2,8 +2,6 @@ use crate::Buf;
 
 /// Iterator over the bytes contained by the buffer.
 ///
-/// This struct is created by the [`iter`] method on [`Buf`].
-///
 /// # Examples
 ///
 /// Basic usage:
@@ -19,9 +17,6 @@ use crate::Buf;
 /// assert_eq!(iter.next(), Some(b'c'));
 /// assert_eq!(iter.next(), None);
 /// ```
-///
-/// [`iter`]: trait.Buf.html#method.iter
-/// [`Buf`]: trait.Buf.html
 #[derive(Debug)]
 pub struct IntoIter<T> {
     inner: T,
@@ -43,7 +38,7 @@ impl<T> IntoIter<T> {
     /// assert_eq!(iter.next(), Some(b'c'));
     /// assert_eq!(iter.next(), None);
     /// ```
-    pub(crate) fn new(inner: T) -> IntoIter<T> {
+    pub fn new(inner: T) -> IntoIter<T> {
         IntoIter { inner }
     }
 

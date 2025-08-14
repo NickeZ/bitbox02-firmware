@@ -1,4 +1,4 @@
-//! 
+//!
 //! Implementation's internal macros
 
 macro_rules! debug_fmt_fields {
@@ -15,6 +15,7 @@ macro_rules! debug_fmt_fields {
 
 macro_rules! clone_fields {
     ($($field:ident),*) => {
+        #[inline] // TODO is this sensible?
         fn clone(&self) -> Self {
             Self {
                 $($field: self.$field.clone(),)*
@@ -25,4 +26,9 @@ macro_rules! clone_fields {
 
 macro_rules! ignore_ident{
     ($id:ident, $($t:tt)*) => {$($t)*};
+}
+
+macro_rules! count_ident {
+    () => {0};
+    ($i0:ident $($i:ident)*) => {1 + count_ident!($($i)*)};
 }

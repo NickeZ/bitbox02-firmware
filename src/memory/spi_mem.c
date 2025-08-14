@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "spi_mem.h"
-#include "bitbox02_pins.h"
+#include <platform/bitbox02_pins.h>
 #include "random.h"
 #include "screen.h"
 #include "util.h"

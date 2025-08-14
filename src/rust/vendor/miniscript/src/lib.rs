@@ -350,10 +350,22 @@ impl<E> TranslateErr<E> {
     ///
     /// This function will panic if the Error is OutError.
     pub fn expect_translator_err(self, msg: &str) -> E {
-        if let Self::TranslatorErr(v) = self {
-            v
-        } else {
-            panic!("{}", msg)
+        match self {
+            Self::TranslatorErr(v) => v,
+            Self::OuterError(ref e) => {
+                panic!("Unexpected Miniscript error when translating: {}\nMessage: {}", e, msg)
+            }
+        }
+    }
+}
+
+impl TranslateErr<Error> {
+    /// If we are doing a translation where our "outer error" is the generic
+    /// Miniscript error, eliminate the `TranslateErr` type which is just noise.
+    pub fn flatten(self) -> Error {
+        match self {
+            Self::TranslatorErr(e) => e,
+            Self::OuterError(e) => e,
         }
     }
 }
@@ -388,16 +400,6 @@ where
     where
         T: Translator<P, Q, E>;
 }
-
-/// Either a key or keyhash, but both contain Pk
-// pub struct ForEach<'a, Pk: MiniscriptKey>(&'a Pk);
-
-// impl<'a, Pk: MiniscriptKey<Hash = Pk>> ForEach<'a, Pk> {
-//     /// Convenience method to avoid distinguishing between keys and hashes when these are the same type
-//     pub fn as_key(&self) -> &'a Pk {
-//         self.0
-//     }
-// }
 
 /// Trait describing the ability to iterate over every key
 pub trait ForEachKey<Pk: MiniscriptKey> {

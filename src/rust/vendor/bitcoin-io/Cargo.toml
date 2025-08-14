@@ -13,7 +13,7 @@
 edition = "2021"
 rust-version = "1.56.1"
 name = "bitcoin-io"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Matt Corallo <birchneutea@mattcorallo.com>"]
 exclude = [
     "tests",
@@ -41,3 +41,7 @@ rustdoc-args = [
 alloc = []
 default = ["std"]
 std = ["alloc"]
+
+[lints.rust.unexpected_cfgs]
+level = "deny"
+priority = 0

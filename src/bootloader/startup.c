@@ -15,10 +15,10 @@
 #include "bootloader.h"
 #include "mpu_regions.h"
 #include <bootloader/bootloader_version.h>
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #include <hardfault.h>
-#include <platform_config.h>
-#include <platform_init.h>
+#include <platform/platform_config.h>
+#include <platform/platform_init.h>
 #include <rust/rust.h>
 #include <screen.h>
 #include <string.h>

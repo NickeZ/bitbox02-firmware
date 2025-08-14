@@ -274,25 +274,11 @@ add_custom_target(rust-cbindgen
     ${CMAKE_CURRENT_BINARY_DIR}/rust/rust.h
 )
 
-if(CMAKE_CROSSCOMPILING)
-  get_property(SAMD51A_INCLUDES TARGET samd51a-ds PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-  get_property(ASF4_MIN_INCLUDES TARGET asf4-drivers-min PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-  get_property(ASF4_INCLUDES TARGET asf4-drivers PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-  get_property(CMSIS_INCLUDES TARGET CMSIS PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-endif()
-get_property(WALLY_INCLUDES TARGET wallycore PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-get_property(SECP256k1_INCLUDES TARGET secp256k1 PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-
-foreach(include ${INCLUDES} ${SAMD51A_INCLUDES} ${ASF4_INCLUDES} ${ASF4_MIN_INCLUDES} ${CMSIS_INCLUDES} ${WALLY_INCLUDES} ${SECP256k1_INCLUDES})
-  list(APPEND RUST_INCLUDES -I${include})
-endforeach()
-if(NOT (CMAKE_CROSSCOMPILING AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-  list(APPEND RUST_INCLUDES -I${CMAKE_SOURCE_DIR}/test/unit-test/framework/includes)
-endif()
-
 
 # Test rust crates that contain business logic. Avoid testing crates that depend on hardware.
 if(NOT CMAKE_CROSSCOMPILING)
+  set(RUSTFLAGS_TESTS -L${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} -lstatic=wallycore -lstatic=secp256k1 -lstatic=fatfs -lstatic=hardware-fakes --cfg=rust_secp_no_symbol_renaming)
+
   # Since we build with all features we need to use a separate build directory.
   # Otherwise we invalidate the result from the normal compilation that uses a
   # different set of features.
@@ -302,14 +288,12 @@ if(NOT CMAKE_CROSSCOMPILING)
         CMAKE_SYSROOT=${CMAKE_SYSROOT}
         CMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
         FIRMWARE_VERSION_SHORT=${FIRMWARE_VERSION}
+        RUSTFLAGS="${RUSTFLAGS_TESTS}"
         # only one test thread because of unsafe concurrent access to `SafeData`, `mock_sd()` and `mock_memory()`. Using mutexes instead leads to mutex poisoning and very messy output in case of a unit test failure.
         ${CARGO} test $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-v> --all-features --target-dir ${RUST_BINARY_DIR}/all-features ${RUST_CARGO_FLAGS} -- --nocapture --test-threads 1
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/rust/
     )
-  add_dependencies(rust-test generate-protobufs)
-  if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    add_dependencies(rust-test bitbox_merged)
-  endif()
+  add_dependencies(rust-test generate-protobufs rust-cbindgen libwally-core fatfs hardware-fakes)
 
   add_custom_target(rust-clippy
     COMMAND
@@ -385,12 +369,11 @@ set(FIRMWARES ${FIRMWARES} PARENT_SCOPE)
 if(CMAKE_CROSSCOMPILING)
   set(RUST_LIBS ${FIRMWARES} ${BOOTLOADERS})
 else()
-  set(RUST_LIBS c-unit-tests simulator-ng)
+  set(RUST_LIBS c-unit-tests)
 endif()
 
 #  Create static libraries from rust code. Either:
 #  *  c-unit-tests_rust_c
-#  *  simulator-ng_rust_c
 #  or
 #  *  firmware_rust_c
 #  *  firmware-btc_rust_c
@@ -410,7 +393,8 @@ foreach(type ${RUST_LIBS})
       $<$<BOOL:${SCCACHE_PROGRAM}>:RUSTC_WRAPPER=${SCCACHE_PROGRAM}>
       RUSTC_BOOTSTRAP=1
       MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
-      ${CARGO} build $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-vv> --offline --features target-${type}$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},DEBUG>,$<STREQUAL:${type},factory-setup>>:,rtt> --target-dir ${RUST_BINARY_DIR}/feature-${type} ${RUST_CARGO_FLAGS} ${RUST_TARGET_ARCH_ARG} --manifest-path ${LIBBITBOX02_RUST_SOURCE_DIR}/Cargo.toml
+      LIB_TYPE=${type}
+      ${CARGO} rustc $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-vv> --offline --features target-${type}$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},DEBUG>,$<STREQUAL:${type},factory-setup>>:,rtt> --target-dir ${RUST_BINARY_DIR}/feature-${type} ${RUST_CARGO_FLAGS} ${RUST_TARGET_ARCH_ARG} --manifest-path ${LIBBITBOX02_RUST_SOURCE_DIR}/Cargo.toml --crate-type=staticlib
     COMMAND
       ${CMAKE_COMMAND} -E copy_if_different ${lib} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib${type}_rust_c.a
     # DEPFILES are only supported with the Ninja build tool

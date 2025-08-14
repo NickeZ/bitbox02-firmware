@@ -22,11 +22,12 @@
 #include "memory/smarteeprom.h"
 #include "system.h"
 #include "uart.h"
+#include <screen.h>
 
 #ifndef TESTING
 #include "securechip/securechip.h"
-#include <driver_init.h>
 #include <hal_delay.h>
+#include <platform/driver_init.h>
 #include <ui/components/status.h>
 #include <ui/ugui/ugui.h>
 #endif

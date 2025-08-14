@@ -60,8 +60,8 @@
 //!
 //! [Specifying Dependencies]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html
 
-#![doc(html_root_url = "https://docs.rs/semver/1.0.20")]
-#![cfg_attr(doc_cfg, feature(doc_cfg))]
+#![doc(html_root_url = "https://docs.rs/semver/1.0.26")]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(all(not(feature = "std"), not(no_alloc_crate)), no_std)]
 #![cfg_attr(not(no_unsafe_op_in_unsafe_fn_lint), deny(unsafe_op_in_unsafe_fn))]
 #![cfg_attr(no_unsafe_op_in_unsafe_fn_lint, allow(unused_unsafe))]
@@ -70,13 +70,13 @@
     clippy::cast_lossless,
     clippy::cast_possible_truncation,
     clippy::doc_markdown,
+    clippy::incompatible_msrv,
     clippy::items_after_statements,
     clippy::manual_map,
     clippy::match_bool,
     clippy::missing_errors_doc,
     clippy::must_use_candidate,
     clippy::needless_doctest_main,
-    clippy::option_if_let_else,
     clippy::ptr_as_ptr,
     clippy::redundant_else,
     clippy::semicolon_if_nothing_returned, // https://github.com/rust-lang/rust-clippy/issues/7324
@@ -100,7 +100,6 @@ mod parse;
 #[cfg(feature = "serde")]
 mod serde;
 
-use crate::alloc::vec::Vec;
 use crate::identifier::Identifier;
 use core::cmp::Ordering;
 use core::str::FromStr;
@@ -136,10 +135,10 @@ pub use crate::parse::Error;
 /// comparison operators.
 ///
 /// - The major, minor, and patch number are compared numerically from left to
-/// right, lexicographically ordered as a 3-tuple of integers. So for example
-/// version `1.5.0` is less than version `1.19.0`, despite the fact that
-/// "1.19.0" &lt; "1.5.0" as ASCIIbetically compared strings and 1.19 &lt; 1.5
-/// as real numbers.
+///   right, lexicographically ordered as a 3-tuple of integers. So for example
+///   version `1.5.0` is less than version `1.19.0`, despite the fact that
+///   "1.19.0" &lt; "1.5.0" as ASCIIbetically compared strings and 1.19 &lt; 1.5
+///   as real numbers.
 ///
 /// - When major, minor, and patch are equal, a pre-release version is
 ///   considered less than the ordinary release:&ensp;version `1.0.0-alpha.1` is

@@ -1,4 +1,5 @@
 #![allow(
+    clippy::elidable_lifetime_names,
     clippy::manual_let_else,
     clippy::needless_lifetimes,
     clippy::too_many_lines,
@@ -6,7 +7,9 @@
 )]
 
 #[macro_use]
-mod macros;
+mod snapshot;
+
+mod debug;
 
 use quote::quote;
 use syn::{DeriveInput, ItemFn, TypeParamBound, WhereClause, WherePredicate};

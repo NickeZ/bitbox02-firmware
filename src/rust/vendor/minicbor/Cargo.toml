@@ -12,17 +12,21 @@
 [package]
 edition = "2021"
 name = "minicbor"
-version = "0.24.0"
+version = "0.24.4"
 authors = ["Toralf Wittner <tw@dtex.org>"]
 build = "build.rs"
+autobins = false
+autoexamples = false
+autotests = false
+autobenches = false
 description = "A small CBOR codec suitable for no_std environments."
 documentation = "https://twittner.gitlab.io/minicbor/minicbor/"
 readme = "README.md"
 keywords = [
     "cbor",
+    "minicbor",
     "serialization",
     "encoding",
-    "binary",
     "no_std",
 ]
 categories = ["encoding"]
@@ -36,8 +40,13 @@ features = [
     "half",
 ]
 
+[lib]
+name = "minicbor"
+path = "src/lib.rs"
+
 [[bin]]
 name = "cbor-display"
+path = "src/bin/cbor-display.rs"
 required-features = [
     "std",
     "half",

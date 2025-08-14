@@ -25,9 +25,7 @@ use std::io::IoSlice;
 /// assert_eq!(full[..], b"hello world"[..]);
 /// ```
 ///
-/// [`Buf::chain`]: trait.Buf.html#method.chain
-/// [`Buf`]: trait.Buf.html
-/// [`BufMut`]: trait.BufMut.html
+/// [`Buf::chain`]: Buf::chain
 #[derive(Debug)]
 pub struct Chain<T, U> {
     a: T,
@@ -135,7 +133,7 @@ where
     U: Buf,
 {
     fn remaining(&self) -> usize {
-        self.a.remaining() + self.b.remaining()
+        self.a.remaining().saturating_add(self.b.remaining())
     }
 
     fn chunk(&self) -> &[u8] {
@@ -170,6 +168,24 @@ where
         n += self.b.chunks_vectored(&mut dst[n..]);
         n
     }
+
+    fn copy_to_bytes(&mut self, len: usize) -> crate::Bytes {
+        let a_rem = self.a.remaining();
+        if a_rem >= len {
+            self.a.copy_to_bytes(len)
+        } else if a_rem == 0 {
+            self.b.copy_to_bytes(len)
+        } else {
+            assert!(
+                len - a_rem <= self.b.remaining(),
+                "`len` greater than remaining"
+            );
+            let mut ret = crate::BytesMut::with_capacity(len);
+            ret.put(&mut self.a);
+            ret.put((&mut self.b).take(len - a_rem));
+            ret.freeze()
+        }
+    }
 }
 
 unsafe impl<T, U> BufMut for Chain<T, U>
@@ -178,7 +194,9 @@ where
     U: BufMut,
 {
     fn remaining_mut(&self) -> usize {
-        self.a.remaining_mut() + self.b.remaining_mut()
+        self.a
+            .remaining_mut()
+            .saturating_add(self.b.remaining_mut())
     }
 
     fn chunk_mut(&mut self) -> &mut UninitSlice {

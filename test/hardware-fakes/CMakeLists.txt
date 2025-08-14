@@ -25,111 +25,38 @@ set(HARDWARE-FAKES-SOURCES
   src/mock_securechip.c
   src/mock_smarteeprom.c
   src/mock_spi_mem.c
+  src/mock_component.c
+  src/mock_delay.c
+  src/mock_gestures.c
+  src/mock_dap.c
+  src/mock_qtouch.c
+  src/mock_screen_stack.c
 )
 
-# We create a CMake "object library" to track all the compiled sources so that
-# they can be reused between a normal library and the manually crafted "merged"
-# library.
-# See https://cmake.org/cmake/help/v3.10/command/add_library.html#object-libraries
-add_library(hardware-fakes-objects
-  OBJECT
+add_library(hardware-fakes
+  STATIC
   ${HARDWARE-FAKES-SOURCES}
 )
+target_compile_definitions(hardware-fakes PUBLIC TESTING _UNIT_TEST_ PRODUCT_BITBOX_MULTI=1 APP_BTC=1 APP_LTC=1 APP_U2F=1 APP_ETH=1)
 
 target_include_directories(
-  hardware-fakes-objects
+  hardware-fakes
   PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   $<TARGET_PROPERTY:fatfs,INTERFACE_INCLUDE_DIRECTORIES>
 )
 target_include_directories(
-  hardware-fakes-objects
+  hardware-fakes
   PRIVATE
   ${CMAKE_SOURCE_DIR}/src
   $<TARGET_PROPERTY:wallycore,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-target_compile_definitions(hardware-fakes-objects PUBLIC "PRODUCT_BITBOX_MULTI=1" "APP_BTC=1" "APP_LTC=1" "APP_U2F=1" "APP_ETH=1")
-target_compile_definitions(hardware-fakes-objects PUBLIC TESTING _UNIT_TEST_)
-
-target_link_libraries(hardware-fakes-objects PRIVATE wallycore)
-
-add_library(hardware-fakes
-  STATIC
-  $<TARGET_OBJECTS:hardware-fakes-objects>
-)
-
-#target_include_directories(
-#  hardware-fakes
-#  SYSTEM PUBLIC
-#  ${CMAKE_SOURCE_DIR}/external
-#  ${CMAKE_SOURCE_DIR}/external/asf4-drivers/hal/utils/include
-#  ${CMAKE_SOURCE_DIR}/external/fatfs/source
-#  $<TARGET_PROPERTY:wallycore,INTERFACE_INCLUDE_DIRECTORIES>
-#  $<TARGET_PROPERTY:secp256k1,INTERFACE_INCLUDE_DIRECTORIES>
-#  $<TARGET_PROPERTY:fatfs,INTERFACE_INCLUDE_DIRECTORIES>
-#)
-#target_include_directories(
-#  bitbox_objects-simulator
-#  PUBLIC
-#  ${INCLUDES}
-#  ${CMAKE_CURRENT_SOURCE_DIR}/../unit-test/framework/includes
-#  ${CMAKE_CURRENT_SOURCE_DIR}
-#  ${CMAKE_BINARY_DIR}/src
-#)
-#
-#target_include_directories(
-#  bitbox-simulator
-#  SYSTEM PUBLIC
-#  ${CMAKE_SOURCE_DIR}/external
-#  ${CMAKE_SOURCE_DIR}/external/asf4-drivers/hal/utils/include
-#  ${CMAKE_SOURCE_DIR}/external/fatfs/source
-#  $<TARGET_PROPERTY:wallycore,INTERFACE_INCLUDE_DIRECTORIES>
-#  $<TARGET_PROPERTY:secp256k1,INTERFACE_INCLUDE_DIRECTORIES>
-#  $<TARGET_PROPERTY:fatfs,INTERFACE_INCLUDE_DIRECTORIES>
-#)
-#
-#target_include_directories(
-#  bitbox-simulator
-#  PUBLIC
-#  ${INCLUDES}
-#  ${CMAKE_CURRENT_SOURCE_DIR}/../unit-test/framework/includes
-#  ${CMAKE_CURRENT_SOURCE_DIR}
-#  ${CMAKE_BINARY_DIR}/src
-#)
-#
-#add_dependencies(bitbox_objects-simulator
-#  rust-cbindgen
-#  wallycore
-#  secp256k1
-#  fatfs
-#  sd-mock-simulator
-#)
-#target_link_libraries(bitbox-simulator PRIVATE ${LIBBITBOX02_RUST} "-lm")
-
-# _UNIT_TEST_ is used by ASF4 to not cross compile
-
-#target_compile_definitions(bitbox_objects-simulator PUBLIC "PRODUCT_BITBOX_MULTI=1" "APP_BTC=1" "APP_LTC=1" "APP_U2F=1" "APP_ETH=1")
-#target_compile_definitions(bitbox_objects-simulator PUBLIC TESTING _UNIT_TEST_)
-#
-## Since wallycore is an external projects we need to specify the dependency
-#add_dependencies(bitbox_objects-simulator libwally-core)
-#
-#target_compile_definitions(bitbox-simulator PUBLIC "PRODUCT_BITBOX_MULTI=1" "APP_BTC=1" "APP_LTC=1" "APP_U2F=1" "APP_ETH=1")
-#target_compile_definitions(bitbox-simulator PUBLIC TESTING _UNIT_TEST_)
-#
-#target_link_libraries(bitbox-simulator
-#  PUBLIC
-#    secp256k1
-#  PRIVATE
-#    wallycore
-#    fatfs
-#    sd-mock-simulator
-#)
+target_link_libraries(hardware-fakes PRIVATE wallycore)
 
 if(SANITIZE_ADDRESS)
-  target_compile_options(hardware-fakes-objects PUBLIC "-fsanitize=address")
+  target_compile_options(hardware-fakes PUBLIC "-fsanitize=address")
 endif()
 if(SANTIZE_UNDEFINED)
-  target_compile_options(hardware-fakes-objects PUBLIC "-fsanitize=undefined")
+  target_compile_options(hardware-fakes PUBLIC "-fsanitize=undefined")
 endif()

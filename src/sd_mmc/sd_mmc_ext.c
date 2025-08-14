@@ -15,7 +15,7 @@
 /* Extensions to the ASF4 lib */
 
 #include "sd_mmc_ext.h"
-#include "driver_init.h"
+#include <platform/driver_init.h>
 
 static void _pause_clock(struct _mci_sync_device* const mci_dev)
 {

@@ -19,11 +19,11 @@ This crate is `#[no_std]` compatible with `default-features = false`.
 | :---                   | :---     | :---        |
 | `alloc`                | ✓        | When `pkcs8` is enabled, implements `EncodePrivateKey`/`EncodePublicKey` for `SigningKey`/`VerifyingKey`, respectively. |
 | `std`                  | ✓        | Implements `std::error::Error` for `SignatureError`. Also enables `alloc`. |
+| `fast`                 | ✓        | Enables the use of precomputed tables for curve arithmetic. Makes key generation, signing, and verifying faster. |
 | `zeroize`              | ✓        | Implements `Zeroize` and `ZeroizeOnDrop` for `SigningKey` |
 | `rand_core`            |          | Enables `SigningKey::generate` |
-| `batch`                |          | Enables `verify_batch` for verifying many signatures quickly. Also enables `rand_core`. |
+| `batch`                |          | Enables `verify_batch` for verifying many signatures quickly. Also enables `alloc` and `rand_core`. |
 | `digest`               |          | Enables `Context`, `SigningKey::{with_context, sign_prehashed}` and `VerifyingKey::{with_context, verify_prehashed, verify_prehashed_strict}` for Ed25519ph prehashed signatures |
-| `asm`                  |          | Enables assembly optimizations in the SHA-512 compression functions |
 | `pkcs8`                |          | Enables [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) serialization/deserialization for `SigningKey` and `VerifyingKey` |
 | `pem`                  |          | Enables PEM serialization support for PKCS#8 private keys and SPKI public keys. Also enables `alloc`. |
 | `legacy_compatibility` |          | **Unsafe:** Disables certain signature checks. See [below](#malleability-and-the-legacy_compatibility-feature) |
@@ -31,7 +31,7 @@ This crate is `#[no_std]` compatible with `default-features = false`.
 
 # Major Changes
 
-See [CHANGELOG.md](CHANGELOG.md) for a list of changes made in past version of this crate.
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes made in past versions of this crate.
 
 ## Breaking Changes in 2.0.0
 
@@ -63,7 +63,7 @@ SemVer exemptions are outlined below for MSRV and public API.
 | 2.x      | 1.60   |
 | 1.x      | 1.41   |
 
-From 2.x and on, MSRV changes will be accompanied by a minor version bump.
+From 2.x onwards, MSRV changes will be accompanied by a minor version bump.
 
 ## Public API SemVer Exemptions
 
@@ -144,7 +144,7 @@ In this section, we mention some specific details about our validation criteria,
 
 ## Malleability and the `legacy_compatibility` Feature
 
-A signature scheme is considered to produce _malleable signatures_ if a passive attacker with knowledge of a public key _A_, message _m_, and valid signature _σ'_ can produce a distinct _σ'_ such that _σ'_ is a valid signature of _m_ with respect to _A_. A scheme is only malleable if the attacker can do this _without_ knowledge of the private key corresponding to _A_.
+A signature scheme is considered to produce _malleable signatures_ if a passive attacker with knowledge of a public key _A_, message _m_, and valid signature _σ_ can produce a distinct _σ'_ such that _σ'_ is a valid signature of _m_ with respect to _A_. A scheme is only malleable if the attacker can do this _without_ knowledge of the private key corresponding to _A_.
 
 `ed25519-dalek` is not a malleable signature scheme.
 

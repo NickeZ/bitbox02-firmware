@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/prost-derive/0.13.1")]
+#![doc(html_root_url = "https://docs.rs/prost-derive/0.13.5")]
 // The `quote!` macro requires deep recursion.
 #![recursion_limit = "4096"]
 
@@ -183,7 +183,7 @@ fn try_message(input: TokenStream) -> Result<TokenStream, Error> {
             fn merge_field(
                 &mut self,
                 tag: u32,
-                wire_type: ::prost::encoding::WireType,
+                wire_type: ::prost::encoding::wire_type::WireType,
                 buf: &mut impl ::prost::bytes::Buf,
                 ctx: ::prost::encoding::DecodeContext,
             ) -> ::core::result::Result<(), ::prost::DecodeError>
@@ -472,7 +472,7 @@ fn try_oneof(input: TokenStream) -> Result<TokenStream, Error> {
             pub fn merge(
                 field: &mut ::core::option::Option<#ident #ty_generics>,
                 tag: u32,
-                wire_type: ::prost::encoding::WireType,
+                wire_type: ::prost::encoding::wire_type::WireType,
                 buf: &mut impl ::prost::bytes::Buf,
                 ctx: ::prost::encoding::DecodeContext,
             ) -> ::core::result::Result<(), ::prost::DecodeError>

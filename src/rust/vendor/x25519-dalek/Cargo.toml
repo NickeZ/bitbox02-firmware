@@ -13,7 +13,7 @@
 edition = "2021"
 rust-version = "1.60"
 name = "x25519-dalek"
-version = "2.0.0"
+version = "2.0.1"
 authors = [
     "Isis Lovecruft <isis@patternsinthevoid.net>",
     "DebugSteven <debugsteven@gmail.com>",
@@ -25,7 +25,7 @@ exclude = [
     "CONTRIBUTING.md",
 ]
 description = "X25519 elliptic curve Diffie-Hellman key exchange in pure-Rust, using curve25519-dalek."
-homepage = "https://dalek.rs/"
+homepage = "https://github.com/dalek-cryptography/curve25519-dalek"
 documentation = "https://docs.rs/x25519-dalek"
 readme = "README.md"
 keywords = [
@@ -40,7 +40,7 @@ categories = [
     "no-std",
 ]
 license = "BSD-3-Clause"
-repository = "https://github.com/dalek-cryptography/x25519-dalek"
+repository = "https://github.com/dalek-cryptography/curve25519-dalek/tree/main/x25519-dalek"
 
 [package.metadata.docs.rs]
 features = [

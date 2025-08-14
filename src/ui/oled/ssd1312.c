@@ -102,7 +102,7 @@ void ssd1312_configure(uint8_t* buf)
     oled_writer_write_cmd(SSD1312_CMD_SET_DISPLAY_ON);
 }
 
-void ssd1312_set_pixel(uint16_t x, uint16_t y, uint8_t c)
+void ssd1312_set_pixel(int16_t x, int16_t y, uint8_t c)
 {
     uint32_t p;
     if (x > 127) return;

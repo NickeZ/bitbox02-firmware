@@ -13,7 +13,7 @@
 edition = "2021"
 rust-version = "1.56.1"
 name = "secp256k1"
-version = "0.29.0"
+version = "0.29.1"
 authors = [
     "Dawid Ciężarkiewicz <dpc@ucore.info>",
     "Andrew Poelstra <apoelstra@wpsoftware.net>",
@@ -55,7 +55,7 @@ name = "generate_keys"
 required-features = ["rand-std"]
 
 [dependencies.hashes]
-version = ">= 0.12, <= 0.14"
+version = ">= 0.12, < 0.15"
 optional = true
 default-features = false
 package = "bitcoin_hashes"
@@ -114,3 +114,7 @@ features = ["js"]
 
 [target.wasm32-unknown-unknown.dev-dependencies.wasm-bindgen-test]
 version = "0.3"
+
+[lints.rust.unexpected_cfgs]
+level = "deny"
+priority = 0

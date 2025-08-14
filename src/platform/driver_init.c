@@ -14,8 +14,8 @@
 
 // THIS IS A GENERATED FILE, MODIFY AS LITTLE AS POSSIBLE
 
-#include "driver_init.h"
-#include "bitbox02_pins.h"
+#include <platform/driver_init.h>
+#include <platform/bitbox02_pins.h>
 #include "memory/memory_shared.h"
 #include "util.h"
 #include <compiler.h>

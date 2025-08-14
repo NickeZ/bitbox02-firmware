@@ -13,7 +13,7 @@
 edition = "2021"
 rust-version = "1.56.1"
 name = "secp256k1-sys"
-version = "0.10.0"
+version = "0.10.1"
 authors = [
     "Dawid Ciężarkiewicz <dpc@ucore.info>",
     "Andrew Poelstra <apoelstra@wpsoftware.net>",
@@ -52,3 +52,7 @@ default = ["std"]
 lowmemory = []
 recovery = []
 std = ["alloc"]
+
+[lints.rust.unexpected_cfgs]
+level = "deny"
+priority = 0

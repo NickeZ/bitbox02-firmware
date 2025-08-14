@@ -108,3 +108,5 @@ testing = [
 ]
 
 c-unit-testing = []
+
+firmware = []

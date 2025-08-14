@@ -13,7 +13,7 @@
 edition = "2021"
 rust-version = "1.56.1"
 name = "bitcoin-units"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 exclude = [
     "tests",
@@ -38,7 +38,6 @@ rustdoc-args = [
 
 [dependencies.internals]
 version = "0.3.0"
-features = ["alloc"]
 package = "bitcoin-internals"
 
 [dependencies.serde]

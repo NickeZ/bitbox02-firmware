@@ -14,6 +14,9 @@ use std::sync::{
 use std::thread;
 use std::time::{Duration, Instant};
 
+// "use" this dependency to link in functions
+extern crate bitbox02_rust_c;
+
 #[derive(Debug)]
 struct NewConnectionEvent {
     /// Sending half of channel for sending to connected client

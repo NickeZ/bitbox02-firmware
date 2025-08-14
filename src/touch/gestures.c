@@ -20,7 +20,7 @@
 
 #ifndef TESTING
 #include "qtouch.h"
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #else
 #include "mock_qtouch.h"
 #endif

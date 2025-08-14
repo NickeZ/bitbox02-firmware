@@ -21,3 +21,8 @@ RUSTC_BOOTSTRAP=1 cargo vendor \
     --manifest-path Cargo.toml \
     --sync "$RUST_SYSROOT/lib/rustlib/src/rust/library/test/Cargo.toml" \
     vendor
+
+RUSTC_BOOTSTRAP=1 cargo vendor \
+    --manifest-path ../../test/simulator-ng/Cargo.toml \
+    --no-delete \
+    vendor

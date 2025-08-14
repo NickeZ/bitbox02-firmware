@@ -129,7 +129,7 @@ impl<Pk: MiniscriptKey> TapTree<Pk> {
 
     /// Iterates over all miniscripts in DFS walk order compatible with the
     /// PSBT requirements (BIP 371).
-    pub fn iter(&self) -> TapTreeIter<Pk> { TapTreeIter { stack: vec![(0, self)] } }
+    pub fn iter(&self) -> TapTreeIter<'_, Pk> { TapTreeIter { stack: vec![(0, self)] } }
 
     // Helper function to translate keys
     fn translate_helper<T, Q, E>(&self, t: &mut T) -> Result<TapTree<Q>, TranslateErr<E>>
@@ -196,7 +196,7 @@ impl<Pk: MiniscriptKey> Tr<Pk> {
 
     /// Iterate over all scripts in merkle tree. If there is no script path, the iterator
     /// yields [`None`]
-    pub fn iter_scripts(&self) -> TapTreeIter<Pk> {
+    pub fn iter_scripts(&self) -> TapTreeIter<'_, Pk> {
         match self.tree {
             Some(ref t) => t.iter(),
             None => TapTreeIter { stack: vec![] },
@@ -565,7 +565,7 @@ impl<Pk: MiniscriptKey> fmt::Display for Tr<Pk> {
 }
 
 // Helper function to parse string into miniscript tree form
-fn parse_tr_tree(s: &str) -> Result<expression::Tree, Error> {
+fn parse_tr_tree(s: &str) -> Result<expression::Tree<'_>, Error> {
     expression::check_valid_chars(s)?;
 
     if s.len() > 3 && &s[..3] == "tr(" && s.as_bytes()[s.len() - 1] == b')' {
@@ -587,9 +587,6 @@ fn parse_tr_tree(s: &str) -> Result<expression::Tree, Error> {
             return Err(Error::Unexpected("invalid taproot internal key".to_string()));
         }
         let internal_key = expression::Tree { name: key.name, args: vec![] };
-        if script.is_empty() {
-            return Ok(expression::Tree { name: "tr", args: vec![internal_key] });
-        }
         let (tree, rest) = expression::Tree::from_slice_delim(script, 1, '{')?;
         if rest.is_empty() {
             Ok(expression::Tree { name: "tr", args: vec![internal_key, tree] })
@@ -768,6 +765,14 @@ mod tests {
             }
          })";
         desc.replace(&[' ', '\n'][..], "")
+    }
+
+    #[test]
+    fn regression_736() {
+        crate::Descriptor::<crate::DescriptorPublicKey>::from_str(
+            "tr(0000000000000000000000000000000000000000000000000000000000000002,)",
+        )
+        .unwrap_err();
     }
 
     #[test]

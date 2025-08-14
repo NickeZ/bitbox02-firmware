@@ -266,7 +266,7 @@ impl From<IanaTag> for Tag {
 
 impl From<&IanaTag> for Tag {
     fn from(t: &IanaTag) -> Tag {
-        t.into()
+        Tag::from(*t)
     }
 }
 
@@ -332,6 +332,10 @@ impl<const N: u64, T> Tagged<N, T> {
 
     pub const fn value(&self) -> &T {
         &self.0
+    }
+
+    pub fn value_mut(&mut self) -> &mut T {
+        &mut self.0
     }
 
     pub fn into_value(self) -> T {

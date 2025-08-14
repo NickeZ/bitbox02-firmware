@@ -115,6 +115,8 @@ rust-docs: | build
 	$(MAKE) -C build rust-docs
 simulator: | build-build
 	$(MAKE) -C build-build simulator
+simulator-ng: | build-build
+	$(MAKE) -C build-build simulator-ng
 run-simulator: | simulator
 	./build-build/bin/simulator
 unit-test: | build-build

@@ -97,7 +97,7 @@ void sh1107_configure(uint8_t* buf)
 }
 
 /* pixels can be accessed via buf[y*16+x/8] >> x%8 */
-void sh1107_set_pixel(uint16_t x, uint16_t y, uint8_t c)
+void sh1107_set_pixel(int16_t x, int16_t y, uint8_t c)
 {
     uint32_t p;
     if (x > 127) return;

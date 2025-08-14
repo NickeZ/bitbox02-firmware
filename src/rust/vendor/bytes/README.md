@@ -27,6 +27,21 @@ Next, add this to your crate:
 use bytes::{Bytes, BytesMut, Buf, BufMut};
 ```
 
+## no_std support
+
+To use `bytes` with no_std environment, disable the (enabled by default) `std` feature.
+
+```toml
+[dependencies]
+bytes = { version = "1", default-features = false }
+```
+
+To use `bytes` with no_std environment without atomic CAS, such as thumbv6m, you also need to enable
+the `extra-platforms` feature. See the [documentation for the `portable-atomic`
+crate](https://docs.rs/portable-atomic) for more information.
+
+The MSRV when `extra-platforms` feature is enabled depends on the MSRV of `portable-atomic`.
+
 ## Serde support
 
 Serde support is optional and disabled by default. To enable use the feature `serde`.
@@ -34,6 +49,17 @@ Serde support is optional and disabled by default. To enable use the feature `se
 ```toml
 [dependencies]
 bytes = { version = "1", features = ["serde"] }
+```
+
+The MSRV when `serde` feature is enabled depends on the MSRV of `serde`.
+
+## Building documentation
+
+When building the `bytes` documentation the `docsrs` option should be used, otherwise
+feature gates will not be shown. This requires a nightly toolchain:
+
+```
+RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc
 ```
 
 ## License

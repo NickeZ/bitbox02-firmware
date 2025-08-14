@@ -8,7 +8,7 @@ use std::error;
 
 use bitcoin::bip32::{self, XKeyIdentifier};
 use bitcoin::hashes::{hash160, ripemd160, sha256, Hash, HashEngine};
-use bitcoin::key::XOnlyPublicKey;
+use bitcoin::key::{PublicKey, XOnlyPublicKey};
 use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
 
 use crate::prelude::*;
@@ -473,6 +473,18 @@ impl FromStr for DescriptorPublicKey {
     }
 }
 
+impl From<XOnlyPublicKey> for DescriptorPublicKey {
+    fn from(key: XOnlyPublicKey) -> Self {
+        DescriptorPublicKey::Single(SinglePub { origin: None, key: SinglePubKey::XOnly(key) })
+    }
+}
+
+impl From<PublicKey> for DescriptorPublicKey {
+    fn from(key: PublicKey) -> Self {
+        DescriptorPublicKey::Single(SinglePub { origin: None, key: SinglePubKey::FullKey(key) })
+    }
+}
+
 /// Descriptor key conversion error
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub enum ConversionError {
@@ -607,6 +619,23 @@ impl DescriptorPublicKey {
             DescriptorPublicKey::XPub(ref xpub) => xpub.wildcard != Wildcard::None,
             DescriptorPublicKey::MultiXPub(ref xpub) => xpub.wildcard != Wildcard::None,
         }
+    }
+
+    /// Whether or not the key has a wildcard
+    pub fn has_hardened_step(&self) -> bool {
+        let paths = match self {
+            DescriptorPublicKey::Single(..) => &[],
+            DescriptorPublicKey::XPub(xpub) => core::slice::from_ref(&xpub.derivation_path),
+            DescriptorPublicKey::MultiXPub(xpub) => &xpub.derivation_paths.paths()[..],
+        };
+        for p in paths {
+            for step in p.into_iter() {
+                if step.is_hardened() {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     #[deprecated(note = "use at_derivation_index instead")]
@@ -1036,8 +1065,8 @@ impl DefiniteDescriptorKey {
     /// Construct an instance from a descriptor key and a derivation index
     ///
     /// Returns `None` if the key contains a wildcard
-    fn new(key: DescriptorPublicKey) -> Option<Self> {
-        if key.has_wildcard() {
+    pub fn new(key: DescriptorPublicKey) -> Option<Self> {
+        if key.has_wildcard() || key.is_multipath() || key.has_hardened_step() {
             None
         } else {
             Some(Self(key))
@@ -1071,7 +1100,7 @@ impl FromStr for DefiniteDescriptorKey {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let inner = DescriptorPublicKey::from_str(s)?;
         DefiniteDescriptorKey::new(inner).ok_or(DescriptorKeyParseError(
-            "cannot parse key with a wilcard as a DerivedDescriptorKey",
+            "cannot parse multi-path keys, keys with a wildcard or keys with hardened derivation steps as a DerivedDescriptorKey",
         ))
     }
 }
@@ -1150,6 +1179,7 @@ mod test {
         MiniscriptKey, Wildcard,
     };
     use crate::prelude::*;
+    use crate::DefiniteDescriptorKey;
 
     #[test]
     fn parse_descriptor_key_errors() {
@@ -1496,5 +1526,29 @@ mod test {
         let desc = "[abcdef00/0'/1']tpubDBrgjcxBxnXyL575sHdkpKohWu5qHKoQ7TJXKNrYznh5fVEGBv89hA8ENW7A8MFVpFUSvgLqc4Nj1WZcpePX6rrxviVtPowvMuGF5rdT2Vi/2";
         let public_key = DescriptorPublicKey::from_str(desc).unwrap();
         assert_tokens(&public_key, &[Token::String(desc)]);
+    }
+
+    #[test]
+    fn definite_keys() {
+        // basic xpub
+        let desc = "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8"
+            .parse::<DescriptorPublicKey>()
+            .unwrap();
+        assert!(DefiniteDescriptorKey::new(desc).is_some());
+        // xpub with wildcard
+        let desc = "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8/*"
+            .parse::<DescriptorPublicKey>()
+            .unwrap();
+        assert!(DefiniteDescriptorKey::new(desc).is_none());
+        // multipath xpub
+        let desc = "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8/<0;1>"
+            .parse::<DescriptorPublicKey>()
+            .unwrap();
+        assert!(DefiniteDescriptorKey::new(desc).is_none());
+        // xpub with hardened path
+        let desc = "xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8/1'/2"
+            .parse::<DescriptorPublicKey>()
+            .unwrap();
+        assert!(DefiniteDescriptorKey::new(desc).is_none());
     }
 }
