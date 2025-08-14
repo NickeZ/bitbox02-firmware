@@ -16,6 +16,7 @@ use std::time::{Duration, Instant};
 
 // "use" this dependency to link in functions
 extern crate bitbox02_rust_c;
+extern crate bitbox_aes;
 
 #[derive(Debug)]
 struct NewConnectionEvent {
@@ -33,7 +34,7 @@ struct HWWDataEvent {
 #[derive(Debug)]
 struct DisconnectEvent {}
 
-static BG: &[u8; 325362] = include_bytes!("../../simulator/bg.png");
+static BG: &[u8; 325362] = include_bytes!("../bg.png");
 
 use bitbox02::bindings::{SCREEN_HEIGHT, SCREEN_WIDTH, UG_COLOR};
 

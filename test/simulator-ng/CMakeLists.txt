@@ -18,17 +18,17 @@
 
 set(RUST_BINARY_DIR ${CMAKE_BINARY_DIR}/src/rust)
 
-set(RUSTFLAGS "-L${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} -lstatic=wallycore -lstatic=hardware-fakes -lstatic=fatfs --cfg=rust_secp_no_symbol_renaming")
+set(RUSTFLAGS -L${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} -lstatic=wallycore -lstatic=fatfs --cfg=rust_secp_no_symbol_renaming ${CMOCKA_LDFLAGS})
 
 add_custom_command(
     OUTPUT target/release/simulator-ng
     COMMAND
       ${CMAKE_COMMAND} -E env
       MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
-      RUSTFLAGS=${RUSTFLAGS}
+      RUSTFLAGS="${RUSTFLAGS}"
       cargo build --offline --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml --target-dir ${RUST_BINARY_DIR}/fw --release
     COMMAND ${CMAKE_COMMAND} -E copy ${RUST_BINARY_DIR}/fw/release/simulator-ng ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/simulator-ng
-    DEPENDS rust-cbindgen libwally-core hardware-fakes fatfs
+    DEPENDS rust-cbindgen libwally-core fatfs
     WORKING_DIRECTORY ${RUST_BINARY_DIR}
 )
 
