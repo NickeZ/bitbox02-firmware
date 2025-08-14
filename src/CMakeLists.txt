@@ -379,6 +379,11 @@ endif()
 #  *  firmware-btc_rust_c
 #  *  factory-setup_rust_c
 foreach(type ${RUST_LIBS})
+    # We build the rust standard libs so that everything from the rust runtime
+    # is included (like eh_personality).
+  if(type STREQUAL "c-unit-tests")
+      set(RUST_CARGO_FLAGS ${RUST_CARGO_FLAGS} -Zbuild-std)
+  endif()
   set(lib ${RUST_BINARY_DIR}/feature-${type}/${RUST_TARGET_ARCH_DIR}/${RUST_PROFILE}/libbitbox02_rust_c.a)
   # The dummy output is to always trigger rebuild (cargo is clever enough to
   # only rebuild if something changed)

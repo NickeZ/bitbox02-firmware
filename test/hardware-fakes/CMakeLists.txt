@@ -37,7 +37,15 @@ add_library(hardware-fakes
   STATIC
   ${HARDWARE-FAKES-SOURCES}
 )
-target_compile_definitions(hardware-fakes PUBLIC TESTING _UNIT_TEST_ PRODUCT_BITBOX_MULTI=1 APP_BTC=1 APP_LTC=1 APP_U2F=1 APP_ETH=1)
+target_compile_definitions(hardware-fakes PUBLIC
+    TESTING
+    _UNIT_TEST_
+    PRODUCT_BITBOX_MULTI=1
+    APP_BTC=1
+    APP_LTC=1
+    APP_U2F=1
+    APP_ETH=1
+)
 
 target_include_directories(
   hardware-fakes
