@@ -26,7 +26,8 @@ add_custom_command(
       ${CMAKE_COMMAND} -E env
       MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
       RUSTFLAGS="${RUSTFLAGS}"
-      cargo build --offline --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml --target-dir ${RUST_BINARY_DIR}/fw --release
+      CMOCKA_INCLUDE_DIRS=${CMOCKA_INCLUDE_DIRS}
+      cargo build --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml --target-dir ${RUST_BINARY_DIR}/fw --release
     COMMAND ${CMAKE_COMMAND} -E copy ${RUST_BINARY_DIR}/fw/release/simulator-ng ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/simulator-ng
     DEPENDS rust-cbindgen libwally-core fatfs
     WORKING_DIRECTORY ${RUST_BINARY_DIR}

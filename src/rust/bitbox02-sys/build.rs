@@ -341,6 +341,11 @@ pub fn main() -> Result<(), &'static str> {
         "../../../external/fatfs/source",
     ];
 
+    let cmocka_includes = env::var("CMOCKA_INCLUDE_DIRS").unwrap_or_default();
+    if !cmocka_includes.is_empty() {
+        includes.push(&cmocka_includes)
+    }
+
     // rust.h is created by cbindgen in the cmake build directory
     let out_dir = env::var("OUT_DIR").unwrap();
     let rust_h_dir = [&out_dir, "../../../../../../..", "src"].join("/");
