@@ -242,7 +242,7 @@ pub fn menu_create(params: MenuParams<'_>) -> Component<'_> {
     //
     // Step 1: create the C strings. This var has to be alive until after menu_create() finishes,
     // otherwise the pointers we send to menu_create() will be invalid.
-    let words: Vec<Vec<u8>> = params
+    let words: Vec<Vec<::core::ffi::c_char>> = params
         .words
         .iter()
         .map(|word| crate::util::str_to_cstr_vec(word).unwrap())
@@ -287,7 +287,7 @@ pub fn menu_create(params: MenuParams<'_>) -> Component<'_> {
             // copied in C
             title
                 .as_ref()
-                .map_or_else(|| core::ptr::null(), |title| title.as_ptr()),
+                .map_or_else(core::ptr::null, |title| title.as_ptr()),
             continue_on_last_cb,
             continue_on_last_cb_param,
             cancel_cb,

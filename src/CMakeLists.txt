@@ -252,16 +252,22 @@ else()
   set(RUST_TARGET_ARCH_DIR .)
 endif()
 
-set(RUST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/rust/target)
+set(RUST_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/rust)
 set(LIBBITBOX02_RUST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/rust/bitbox02-rust-c)
 set(LIBBITBOX02_RUST ${LIBBITBOX02_RUST} PARENT_SCOPE)
 
 # Generate c-headers for the rust library
+# Working dir must be set to the rust workspace so that cargo finds the
+# configuration for vendoring sources
 add_custom_target(rust-cbindgen
   # cbindgen can automatically create the metadata, but it does so without the `--offline` flag.
   # The workaround is to manually create and pass the metadata.
   COMMAND
-    ${CARGO} metadata --offline >  ${CMAKE_CURRENT_BINARY_DIR}/rust-metadata
+    ${CARGO}
+      metadata
+      --frozen
+      --manifest-path ${LIBBITBOX02_RUST_SOURCE_DIR}/Cargo.toml
+      > ${CMAKE_CURRENT_BINARY_DIR}/rust-metadata
   COMMAND
     ${CBINDGEN}
       --quiet
@@ -270,14 +276,15 @@ add_custom_target(rust-cbindgen
       --profile release
       --metadata ${CMAKE_CURRENT_BINARY_DIR}/rust-metadata
       ${LIBBITBOX02_RUST_SOURCE_DIR}
-  WORKING_DIRECTORY ${LIBBITBOX02_RUST_SOURCE_DIR}
+  WORKING_DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/rust
   BYPRODUCTS
     ${CMAKE_CURRENT_BINARY_DIR}/rust/rust.h
 )
 
 # Test rust crates that contain business logic. Avoid testing crates that depend on hardware.
 if(NOT CMAKE_CROSSCOMPILING)
-  set(RUSTFLAGS_TESTS ${RUSTFLAGS} -L${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${CMOCKA_LDFLAGS} -lbitbox_merged -lwallycore -lsecp256k1 -lfatfs -lhardware-mocks)
+  set(RUSTFLAGS_TESTS ${RUSTFLAGS} -L${CMAKE_ARCHIVE_OUTPUT_DIRECTORY} ${CMOCKA_LDFLAGS} -lwallycore -lsecp256k1 -lstatic=fatfs)
 
   # Since we build with all features we need to use a separate build directory.
   # Otherwise we invalidate the result from the normal compilation that uses a
@@ -288,17 +295,28 @@ if(NOT CMAKE_CROSSCOMPILING)
         CMAKE_SYSROOT=${CMAKE_SYSROOT}
         CMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
         FIRMWARE_VERSION_SHORT=${FIRMWARE_VERSION}
+        CMOCKA_INCLUDE_DIRS=${CMOCKA_INCLUDE_DIRS}
         RUSTFLAGS="${RUSTFLAGS_TESTS}"
         # only one test thread because of unsafe concurrent access to `SafeData`, `mock_sd()` and `mock_memory()`. Using mutexes instead leads to mutex poisoning and very messy output in case of a unit test failure.
-        ${CARGO} test $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-v> --all-features --target-dir ${RUST_BINARY_DIR}/all-features ${RUST_CARGO_FLAGS} -- --nocapture --test-threads 1
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/rust/
+        ${CARGO}
+          test
+          $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-v>
+          --all-features
+          --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/rust/Cargo.toml
+          --target-dir ${RUST_BINARY_DIR}/all-features
+          ${RUST_CARGO_FLAGS}
+          --
+          --nocapture
+          --test-threads 1
+    WORKING_DIRECTORY
+      ${CMAKE_CURRENT_SOURCE_DIR}/rust
     )
-  add_dependencies(rust-test generate-protobufs bitbox_merged libwally-core fatfs)
+  add_dependencies(rust-test generate-protobufs rust-cbindgen libwally-core fatfs)
 
   add_custom_target(rust-clippy
     COMMAND
       # Force clippy to fully re-run. It is bad at figuring out when to run again and when to use caches.
-      ${CARGO} clean --target-dir ${RUST_BINARY_DIR}
+      ${CARGO} clean --target-dir ${RUST_BINARY_DIR}/clippy
     COMMAND
       ${CMAKE_COMMAND} -E env
         CMAKE_SYSROOT=${CMAKE_SYSROOT}
@@ -307,7 +325,8 @@ if(NOT CMAKE_CROSSCOMPILING)
         ${CARGO} clippy
           $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-v>
           --all-features
-          --target-dir ${RUST_BINARY_DIR}/all-features
+          --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/rust/Cargo.toml
+          --target-dir ${RUST_BINARY_DIR}/clippy
           --release
           --tests
           -- # disabled linters:
@@ -322,9 +341,10 @@ if(NOT CMAKE_CROSSCOMPILING)
             -A clippy::enum_variant_names
             -A clippy::derive_partial_eq_without_eq
             -A clippy::forget_non_drop
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/rust/
+    WORKING_DIRECTORY
+      ${CMAKE_CURRENT_SOURCE_DIR}/rust
     )
-  add_dependencies(rust-clippy generate-protobufs)
+  add_dependencies(rust-clippy rust-cbindgen generate-protobufs)
 endif()
 
 # If a bootloader that locks the bootloader is flashed the bootloader area is permanently read-only.
@@ -390,6 +410,8 @@ foreach(type ${RUST_LIBS})
   add_custom_command(
     OUTPUT ${lib} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib${type}_rust_c.a dummy
     COMMAND
+      ${CMAKE_COMMAND} -E make_directory ${RUST_BINARY_DIR}
+    COMMAND
       ${CMAKE_COMMAND} -E env
       CMAKE_SYSROOT=${CMAKE_SYSROOT}
       CMAKE_CURRENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}
@@ -397,12 +419,24 @@ foreach(type ${RUST_LIBS})
       FIRMWARE_VERSION_SHORT=${FIRMWARE_VERSION}
       $<$<BOOL:${SCCACHE_PROGRAM}>:RUSTC_WRAPPER=${SCCACHE_PROGRAM}>
       RUSTC_BOOTSTRAP=1
-      ${CARGO} build $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-vv> --offline --features target-${type}$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},DEBUG>,$<STREQUAL:${type},factory-setup>>:,rtt> --target-dir ${RUST_BINARY_DIR}/feature-${type} ${RUST_CARGO_FLAGS} ${RUST_TARGET_ARCH_ARG}
+      MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
+      LIB_TYPE=${type}
+      ${CARGO}
+        rustc
+        $<$<BOOL:${CMAKE_VERBOSE_MAKEFILE}>:-vv>
+        --offline
+        --features target-${type}$<$<OR:$<STREQUAL:${CMAKE_BUILD_TYPE},DEBUG>,$<STREQUAL:${type},factory-setup>>:,rtt>
+        --manifest-path ${LIBBITBOX02_RUST_SOURCE_DIR}/Cargo.toml
+        --target-dir ${RUST_BINARY_DIR}/feature-${type}
+        ${RUST_CARGO_FLAGS}
+        ${RUST_TARGET_ARCH_ARG}
+        --crate-type=staticlib
     COMMAND
       ${CMAKE_COMMAND} -E copy_if_different ${lib} ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib${type}_rust_c.a
     # DEPFILES are only supported with the Ninja build tool
     #DEPFILE ${RUST_BINARY_DIR}/feature-${type}/${RUST_TARGET_ARCH_DIR}/${RUST_PROFILE}/libbitbox02_rust_c.d
-    WORKING_DIRECTORY ${LIBBITBOX02_RUST_SOURCE_DIR}
+    WORKING_DIRECTORY
+      ${CMAKE_CURRENT_SOURCE_DIR}/rust
     COMMENT "Building Rust library lib${type}_rust_c.a"
   )
   add_custom_target(${type}-rust-target DEPENDS ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib${type}_rust_c.a)
