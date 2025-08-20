@@ -35,7 +35,7 @@
 #include <string.h>
 
 #ifndef TESTING
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #endif
 
 #define EMPTY_CHAR '_'

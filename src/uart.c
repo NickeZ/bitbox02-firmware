@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "uart.h"
-#include "driver_init.h"
+#include <platform/driver_init.h>
 #include "util.h"
 #include "utils_assert.h"
 

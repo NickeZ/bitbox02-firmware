@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "platform_init.h"
+#include <platform/platform_init.h>
 #include "memory/memory_shared.h"
 #include "memory/spi_mem.h"
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #include <ui/oled/oled.h>
 #if !defined(BOOTLOADER)
 #include "sd_mmc/sd_mmc_start.h"

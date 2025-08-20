@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "usb_processing.h"
-#include "platform_config.h"
+#include "platform/platform_config.h"
 #include "u2f/u2f_packet.h"
 #include "usb_frame.h"
 #include "usb_packet.h"

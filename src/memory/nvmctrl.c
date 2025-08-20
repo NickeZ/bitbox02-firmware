@@ -14,7 +14,7 @@
 
 #include "nvmctrl.h"
 
-#include <driver_init.h>
+#include <platform/driver_init.h>
 
 void nvmctrl_exec_cmd(uint16_t cmd)
 {

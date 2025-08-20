@@ -20,7 +20,7 @@
 
 #ifndef TESTING
 #include "qtouch.h"
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #else
 #include "mock_qtouch.h"
 #endif
@@ -29,7 +29,7 @@
 #include "ui/event.h"
 #include "ui/event_handler.h"
 #include "util.h"
-#include <platform_config.h>
+#include <platform/platform_config.h>
 #include <ui/component.h>
 
 #define MAX_REGISTRATIONS 7

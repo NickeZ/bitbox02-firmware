@@ -35,7 +35,7 @@
  * @{
  */
 
-#include "driver_init.h"
+#include <platform/driver_init.h>
 #include "ifx_i2c_config.h"
 #include "pal_gpio.h"
 #include "pal_i2c.h"

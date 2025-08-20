@@ -16,14 +16,14 @@
 #include "da14531/da14531.h"
 #include "da14531/da14531_binary.h"
 #include "da14531/da14531_protocol.h"
-#include "driver_init.h"
+#include <platform/driver_init.h>
 #include "flags.h"
 #include "hardfault.h"
 #include "memory/memory.h"
 #include "memory/memory_shared.h"
 #include "memory/memory_spi.h"
 #include "memory/spi_mem.h"
-#include "platform_init.h"
+#include <platform/platform_init.h>
 #include "rust/rust.h"
 #include "screen.h"
 #include "securechip/securechip.h"

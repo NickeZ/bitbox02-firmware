@@ -15,7 +15,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
-#include <platform_config.h>
+#include <platform/platform_config.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

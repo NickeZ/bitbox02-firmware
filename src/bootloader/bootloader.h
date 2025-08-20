@@ -15,7 +15,7 @@
 #ifndef _BOOTLOADER_H_
 #define _BOOTLOADER_H_
 
-#include <platform_config.h>
+#include <platform/platform_config.h>
 #include <stdbool.h>
 
 void bootloader_jump(void);
