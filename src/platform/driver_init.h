@@ -19,7 +19,7 @@
 
 #ifndef TESTING
 #include "CryptoLib_Headers_pb.h"
-#include <bitbox02_pins.h>
+#include "bitbox02_pins.h"
 #include <hal_atomic.h>
 #include <hal_delay.h>
 #include <hal_flash.h>

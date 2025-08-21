@@ -29,8 +29,8 @@ Copyright (c) 2017 Microchip. All rights reserved.
 #include "license.h"
 #include "touch_api_ptc.h"
 #include "util.h"
-#include <driver_init.h>
-#include <platform_config.h>
+#include <platform/driver_init.h>
+#include <platform/platform_config.h>
 
 /*----------------------------------------------------------------------------
  *   prototypes

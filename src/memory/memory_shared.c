@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <driver_init.h>
 #include <flags.h>
+#include <platform/driver_init.h>
 #include <util.h>
 #include <utils_assert.h>
 

@@ -20,7 +20,7 @@
 #include <screen.h>
 #ifndef TESTING
 #include "uart.h"
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #endif
 
 static void _ble_clear_product(void)

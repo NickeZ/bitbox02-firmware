@@ -14,7 +14,7 @@
 
 #include "smarteeprom.h"
 
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #include <hardfault.h>
 #include <inttypes.h>
 #include <memory/memory.h>

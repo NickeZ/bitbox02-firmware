@@ -17,7 +17,7 @@
 #include "mpu_regions.h"
 #include "pac_ext.h"
 
-#include <driver_init.h>
+#include <platform/driver_init.h>
 #include <flags.h>
 #include <memory/memory.h>
 #include <memory/memory_shared.h>

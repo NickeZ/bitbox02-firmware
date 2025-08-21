@@ -15,7 +15,7 @@
 #ifndef TESTING
 
 #include "i2c_ecc.h"
-#include "driver_init.h"
+#include <platform/driver_init.h>
 #include "util.h"
 #include <string.h>
 

@@ -66,9 +66,9 @@
 #include "oled.h"
 
 #include "oled_writer.h"
-#include <driver_init.h>
 #include <hardfault.h>
 #include <memory/memory_shared.h>
+#include <platform/driver_init.h>
 #include <screen.h>
 #include <stdbool.h>
 #include <stdint.h>

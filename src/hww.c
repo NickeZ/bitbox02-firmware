@@ -20,7 +20,7 @@
 #include <version.h>
 
 #include <memory/memory_shared.h>
-#include <platform_config.h>
+#include <platform/platform_config.h>
 #include <rust/rust.h>
 #include <usb/usb_packet.h>
 #include <usb/usb_processing.h>

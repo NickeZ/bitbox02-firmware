@@ -193,13 +193,8 @@ set(FIRMWARE-U2F-SOURCES ${FIRMWARE-U2F-SOURCES} PARENT_SCOPE)
 
 set(INCLUDES
   ${CMAKE_SOURCE_DIR}/src
+  # Needed because ugui fonts are generated with `#include <ugui.h>`
   ${CMAKE_SOURCE_DIR}/src/ui/ugui
-  ${CMAKE_SOURCE_DIR}/src/platform
-  ${CMAKE_SOURCE_DIR}/src/qtouch
-  ${CMAKE_SOURCE_DIR}/src/usb/class
-  ${CMAKE_SOURCE_DIR}/src/usb/class/hid
-  ${CMAKE_SOURCE_DIR}/src/usb/class/hid/hww
-  ${CMAKE_SOURCE_DIR}/src/usb/class/hid/u2f
 )
 set(INCLUDES ${INCLUDES} PARENT_SCOPE)
 

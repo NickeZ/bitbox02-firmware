@@ -17,11 +17,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "driver_init.h"
 #include "flags.h"
 #include "hardfault.h"
 #include "memory.h"
 #include "memory_shared.h"
+#include "platform/driver_init.h"
 #include "random.h"
 #include "util.h"
 #include <rust/rust.h>

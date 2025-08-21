@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "oled_writer.h"
-#include "driver_init.h"
+#include <platform/driver_init.h>
 
 enum _interface_t {
     INTERFACE_COMMAND,

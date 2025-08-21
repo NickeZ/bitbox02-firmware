@@ -15,9 +15,9 @@
 #include "hardfault.h"
 #include "util.h"
 #include "utils_assert.h"
-#include <driver_init.h>
 #include <memory/memory.h>
-#include <platform_config.h>
+#include <platform/driver_init.h>
+#include <platform/platform_config.h>
 #include <screen.h>
 #include <usb/usb.h>
 #ifndef TESTING
