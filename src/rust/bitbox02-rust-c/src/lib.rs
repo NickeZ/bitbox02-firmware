@@ -25,8 +25,6 @@ mod alloc;
 mod async_usb;
 #[cfg(feature = "firmware")]
 mod der;
-#[cfg(feature = "app-u2f")]
-mod u2f;
 #[cfg(feature = "firmware")]
 mod workflow;
 

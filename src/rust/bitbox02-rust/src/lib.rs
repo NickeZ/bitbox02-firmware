@@ -36,6 +36,8 @@ pub mod hal;
 mod hash;
 pub mod hww;
 pub mod keystore;
+#[cfg(feature = "app-u2f")]
+mod u2f;
 mod version;
 mod waker_fn;
 pub mod workflow;

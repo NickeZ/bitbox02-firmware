@@ -263,6 +263,10 @@ const BITBOX02_SOURCES: &[&str] = &[
 ];
 
 pub fn main() -> Result<(), &'static str> {
+    println!(
+        "pwd: {:?}",
+        std::env::current_dir().map_err(|_| "couldn't read pwd")?
+    );
     // We could theoretically list every header file that we end up depending on, but that is hard
     // to maintain. So instead we just listen to changes on "wrapper.h" which is good enough.
     println!("cargo::rerun-if-changed=wrapper.h");
@@ -329,8 +333,9 @@ pub fn main() -> Result<(), &'static str> {
 
     // rust.h is created by cbindgen in the cmake build directory
     let out_dir = env::var("OUT_DIR").unwrap();
-    let rust_h_dir = [&out_dir, "../../../../../.."].join("/");
-    includes.push(&rust_h_dir);
+    let rust_h_dir = PathBuf::from([&out_dir, "../../../../../.."].join("/"));
+    println!("rust_h_dir: {:?}", rust_h_dir.canonicalize());
+    includes.push(rust_h_dir.as_os_str().to_str().unwrap());
 
     if cross_compiling {
         includes.extend([

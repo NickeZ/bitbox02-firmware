@@ -14,7 +14,6 @@
 
 extern crate alloc;
 
-use ::core::ffi::{c_uchar, c_void};
 use alloc::boxed::Box;
 use core::ffi::{c_uchar, c_void};
 use sha2::Digest;

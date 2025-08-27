@@ -103,7 +103,6 @@ else()
       ${TEST_LINK_ARGS}
       -Wl,--start-group
       fatfs
-      hardware-mocks
       c-unit-tests_rust_c
       -Wl,--end-group
       wallycore
@@ -134,7 +133,6 @@ foreach(TEST_NAME ${U2F_TESTS})
     $<$<BOOL:${SANITIZE_UNDEFINED}>:-fsanitize=undefined>
     $<$<NOT:$<PLATFORM_ID:Darwin>>:-Wl,--start-group>
     c-unit-tests_rust_c
-    hardware-mocks
     fatfs
     $<$<NOT:$<PLATFORM_ID:Darwin>>:-Wl,--end-group>
     u2f-util
