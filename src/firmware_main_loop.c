@@ -42,6 +42,10 @@
 #include "usb/class/hid/u2f/hid_u2f.h"
 #endif
 
+#if defined(WATCHDOG)
+#include <watchdog.h>
+#endif
+
 // Must be power of 2
 #define UART_OUT_BUF_LEN 2048
 
@@ -56,8 +60,8 @@ void firmware_main_loop(void)
     uint8_t uart_write_buf[UART_OUT_BUF_LEN];
     ringbuffer_init(&uart_write_queue, &uart_write_buf, UART_OUT_BUF_LEN);
 
-    /// If the bootloader has booted the BLE chip, the BLE chip isn't aware of the name according to
-    /// the fw. Send it over.
+    // If the bootloader has booted the BLE chip, the BLE chip isn't aware of the name according to
+    // the fw. Send it over.
     char buf[MEMORY_DEVICE_NAME_MAX_LEN] = {0};
     memory_get_device_name(buf);
     da14531_set_name(buf, strlen(buf), &uart_write_queue);
@@ -77,7 +81,10 @@ void firmware_main_loop(void)
     if (!memory_ble_enabled()) {
         communication_mode_ble_disable();
     }
-
+#if defined(WATCHDOG)
+    watchdog_init();
+    watchdog_enable();
+#endif
     while (1) {
         // Do UART I/O
         if (communication_mode_ble_enabled()) {
@@ -103,8 +110,7 @@ void firmware_main_loop(void)
         }
         if (!u2f_data) {
             u2f_data = queue_pull(queue_u2f_queue());
-            // If USB stack was locked and there is no more messages to send out, time to
-            // unlock it.
+            // If USB stack was locked and there is no more messages to send out, time to unlock it.
             if (!u2f_data && usb_processing_locked(usb_processing_u2f())) {
                 usb_processing_unlock();
             }
@@ -183,5 +189,8 @@ void firmware_main_loop(void)
 
         rust_workflow_spin();
         rust_async_usb_spin();
+#if defined(WATCHDOG)
+        watchdog_feed();
+#endif
     }
 }

@@ -21,6 +21,10 @@
 #include <screen.h>
 #include <usb/usb.h>
 
+#if defined(WATCHDOG)
+#include <watchdog.h>
+#endif
+
 #if defined(TESTING)
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +59,9 @@ void Abort(const char* msg)
     // Break the program if we are debugging
     ASSERT(false);
     while (1) {
+#if defined(WATCHDOG)
+        watchdog_feed();
+#endif
     }
 #endif
 }

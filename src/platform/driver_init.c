@@ -355,6 +355,17 @@ static void _uart_init(void)
     gpio_set_pin_function(PIN_UART_RTS, PINMUX_PA06D_SERCOM0_PAD2);
     gpio_set_pin_function(PIN_UART_CTS, PINMUX_PA07D_SERCOM0_PAD3);
 }
+#if defined(WATCHDOG)
+static void WDT_0_CLOCK_init(void)
+{
+    hri_mclk_set_APBAMASK_WDT_bit(MCLK);
+}
+
+static void WDT_0_init(void)
+{
+    WDT_0_CLOCK_init();
+}
+#endif
 
 void system_init(void)
 {
@@ -386,6 +397,10 @@ void system_init(void)
         // DA14531
         _uart_init();
     }
+
+#if defined(WATCHDOG)
+    WDT_0_init();
+#endif
 
     _is_initialized = true;
 }

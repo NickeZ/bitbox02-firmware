@@ -240,7 +240,7 @@ endif()
 set(CMAKE_C_FLAGS_RELEASE "-Os -DNDEBUG")
 # (-ggdb) Allow gdb extensions if available
 # Optimize debug build for size, optimizing for debug takes to much space.
-set(CMAKE_C_FLAGS_DEBUG "-Os -ggdb")
+set(CMAKE_C_FLAGS_DEBUG "-Os -ggdb -DWATCHDOG")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Os -ggdb -DNDEBUG")
 
 #-----------------------------------------------------------------------------
