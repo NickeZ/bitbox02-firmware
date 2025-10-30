@@ -23,7 +23,7 @@ members = [
     "bitbox02-sys",
     "erc20_params",
     "streaming-silent-payments",
-    "bitbox-aes",
+    "bitbox-aes", "bitbox02-executor",
 ]
 
 resolver = "2"

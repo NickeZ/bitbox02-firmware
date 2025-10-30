@@ -52,6 +52,16 @@ extern crate alloc;
 #[cfg(test)]
 extern crate bitbox_aes;
 
+use bitbox02_executor::StaticExecutor;
+
+pub fn main() {
+    static EXECUTOR: StaticExecutor = StaticExecutor::new();
+    let task = EXECUTOR.spawn(async {
+        info!("hello world");
+    });
+    EXECUTOR.run(task);
+}
+
 //
 // C interface
 //
@@ -63,4 +73,9 @@ pub extern "C" fn rust_noise_generate_static_private_key(
 ) {
     let key = bitbox02_noise::generate_static_private_key::<hww::noise::BB02Random32>();
     private_key_out.as_mut().copy_from_slice(&key[..]);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn rust_main() {
+    main();
 }

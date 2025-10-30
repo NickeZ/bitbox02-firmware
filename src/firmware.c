@@ -55,6 +55,7 @@ int main(void)
 #if APP_U2F == 1
     u2f_device_setup();
 #endif
-    firmware_main_loop();
+    rust_main();
+    // firmware_main_loop();
     return 0;
 }
