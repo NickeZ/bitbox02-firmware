@@ -58,20 +58,23 @@ static volatile bool _send_busy = false;
 static volatile bool _has_data = false;
 static volatile bool _request_in_flight = false;
 
+typedef void (*CB)(void*);
+
+static volatile CB _read_callback = NULL;
+static volatile void* _read_callback_user_data = NULL;
+
 // First time this function is called it initiates a transfer. Call it multiple times to poll for
 // completion. Once it returns true, there is data in the buffer.
-bool hid_hww_read(uint8_t* data)
+//
+// SAFETY: Will only call callback once
+bool hid_hww_read(uint8_t* data, CB callback, const void* user_data)
 {
-    if (_request_in_flight && _has_data) {
-        _request_in_flight = false;
-        return true;
-    }
-    if (_request_in_flight) {
-        return false;
-    }
     if (hid_read(&_func_data, data, USB_HID_REPORT_OUT_SIZE) == ERR_NONE) {
+        _read_callback = callback;
+        _read_callback_user_data = user_data;
         _has_data = false;
         _request_in_flight = true;
+        return true;
     }
     return false;
 }
@@ -101,6 +104,11 @@ static uint8_t _rx_cb(const uint8_t ep, const enum usb_xfer_code rc, const uint3
     (void)rc;
     (void)count;
     _has_data = true;
+    if (_read_callback) {
+        _read_callback(_read_callback_user_data);
+        _read_callback = NULL;
+        _read_callback_user_data = NULL;
+    }
     return ERR_NONE;
 }
 
