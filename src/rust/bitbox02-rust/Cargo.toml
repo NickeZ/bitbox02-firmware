@@ -111,3 +111,5 @@ testing = [
 c-unit-testing = []
 
 firmware = []
+
+rtt = []

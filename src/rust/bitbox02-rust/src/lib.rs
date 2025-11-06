@@ -57,9 +57,9 @@ use bitbox02_executor::StaticExecutor;
 pub fn main() {
     static EXECUTOR: StaticExecutor = StaticExecutor::new();
     let task = EXECUTOR.spawn(async {
-        info!("hello world");
+        util::log::log!("hello world");
     });
-    EXECUTOR.run(task);
+    util::bb02_async::block_on(EXECUTOR.run(task));
 }
 
 //

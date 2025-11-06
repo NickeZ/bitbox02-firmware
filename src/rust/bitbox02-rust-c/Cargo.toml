@@ -117,4 +117,4 @@ app-cardano = [
   "bitbox02-rust/app-cardano",
 ]
 
-rtt = [ "util/rtt" ]
+rtt = [ "util/rtt", "bitbox02-rust/rtt" ]

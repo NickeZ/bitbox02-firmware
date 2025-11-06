@@ -1134,6 +1134,7 @@ version = "0.1.0"
 dependencies = [
  "bitcoin",
  "cortex-m",
+ "futures-lite",
  "hex",
  "num-bigint",
  "p256",
