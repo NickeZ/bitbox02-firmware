@@ -17,6 +17,8 @@
 
 #include "hid.h"
 
+typedef void (*read_callback_t)(void*);
+
 /**
  * Initializes a HWW HID interface.
  * @param[in] callback The callback that is called upon status update (enabling/disabling or the
@@ -74,6 +76,6 @@ bool hid_hww_write_poll(const uint8_t* data);
  * Returns false if USB subsystem was not ready to receive or there is a request in flight and data
  * is not.
  */
-bool hid_hww_read(uint8_t* data);
+bool hid_hww_read(uint8_t* data, read_callback_t callback, const void* user_data);
 
 #endif

@@ -58,8 +58,6 @@ static volatile bool _send_busy = false;
 static volatile bool _has_data = false;
 static volatile bool _request_in_flight = false;
 
-typedef void (*CB)(void*);
-
 static volatile CB _read_callback = NULL;
 static volatile void* _read_callback_user_data = NULL;
 
@@ -67,7 +65,7 @@ static volatile void* _read_callback_user_data = NULL;
 // completion. Once it returns true, there is data in the buffer.
 //
 // SAFETY: Will only call callback once
-bool hid_hww_read(uint8_t* data, CB callback, const void* user_data)
+bool hid_hww_read(uint8_t* data, read_callback_t callback, const void* user_data)
 {
     if (hid_read(&_func_data, data, USB_HID_REPORT_OUT_SIZE) == ERR_NONE) {
         _read_callback = callback;

@@ -3,6 +3,7 @@
 extern crate alloc;
 
 use alloc::boxed::Box;
+//use alloc::{sync::Arc, task::Wake};
 use core::ffi::c_void;
 use core::pin::Pin;
 use core::task::{Context, Poll};
@@ -70,7 +71,10 @@ where
     CB: FnOnce() -> (),
 {
     // This callback is executed in interrupt context so be careful
-    unsafe extern "C" fn c_read_cb<CB>(user_data: *const c_void) {
+    unsafe extern "C" fn c_read_cb<CB>(user_data: *const c_void)
+    where
+        CB: FnOnce() -> (),
+    {
         let callback = unsafe { Box::from_raw(user_data as *mut CB) };
         (*callback)();
     }
@@ -78,8 +82,24 @@ where
     unsafe {
         hid_hww_read(
             buf.as_ptr() as _,
-            c_read_cb,
+            c_read_cb::<CB>,
             Box::into_raw(Box::new(read_cb)) as *mut c_void,
         );
     }
 }
+//
+//struct Inner {}
+//
+//struct Waker {
+//    inner: Arc<Inner>,
+//}
+//
+//impl From<Waker> for core::task::Waker {
+//    fn from(waker: Waker) -> Self {
+//        core::task::Waker::from(waker.inner)
+//    }
+//}
+//
+//impl Wake for Inner {
+//    fn wake(self: Arc<Self>) {}
+//}

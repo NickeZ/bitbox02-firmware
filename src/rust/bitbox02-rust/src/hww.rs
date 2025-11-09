@@ -33,7 +33,8 @@ pub async fn next_request(
 ) -> Result<crate::pb::request::Request, api::error::Error> {
     let mut out = [OP_STATUS_SUCCESS].to_vec();
     noise::encrypt(&api::encode(response), &mut out).or(Err(api::error::Error::NoiseEncrypt))?;
-    let request = crate::async_usb::next_request(out).await;
+    //let request = crate::async_usb::next_request(out).await;
+    let request: Vec<u8> = todo!();
     match request.split_first() {
         Some((&noise::OP_NOISE_MSG, encrypted_request)) => {
             let decrypted_request =

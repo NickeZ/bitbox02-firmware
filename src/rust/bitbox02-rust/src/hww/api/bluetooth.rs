@@ -172,7 +172,7 @@ async fn process_upgrade(
             // Since the Bluetooth host will not be there anymore to read this response, this task
             // will not be cleared by the executor. We do it manually to make space for the next
             // task upon reconnection.
-            crate::async_usb::cancel();
+            //crate::async_usb::cancel();
         }
     } else {
         hal.ui().status("Upgrade failed", false).await;

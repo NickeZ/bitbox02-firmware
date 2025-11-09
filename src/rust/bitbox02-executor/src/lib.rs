@@ -519,3 +519,19 @@ impl<Fut: Future, Cleanup: FnMut()> Future for AsyncCallOnDrop<Fut, Cleanup> {
         self.project().future.poll(cx)
     }
 }
+
+// /// Polls a future until the result is available.
+// pub fn block_on<O>(task: impl core::future::Future<Output = O>) -> O {
+//     futures_lite::pin!(task);
+//
+//     //let runnable = Runnable{};
+//     //let waker = runnable.waker()
+//     ////let waker = Waker::from(bitbox02_reactor::Waker);
+//     //let cx = &mut Context::from_waker(waker)
+//     //loop {
+//     //    match task.as_mut().poll(cx) {
+//     //        Poll::Ready(output) => return output,
+//     //        Poll::Pending => (), // TODO: Should "wait for events" and not busy loop
+//     //    }
+//     //}
+// }

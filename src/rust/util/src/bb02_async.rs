@@ -49,18 +49,3 @@ impl<O> core::future::Future for AsyncOption<'_, O> {
 pub fn option<O>(option: &RefCell<Option<O>>) -> AsyncOption<'_, O> {
     AsyncOption(option)
 }
-
-/// Polls a future until the result is available.
-pub fn block_on<O>(task: impl core::future::Future<Output = O>) -> O {
-    futures_lite::pin!(task);
-    //let mut task: crate::bb02_async::Task<O> = alloc::boxed::Box::pin(task);
-    loop {
-        match task.as_mut().poll(cx) {
-            Poll::Ready(output) => output,
-            Poll::Pending => parker.park(),
-        }
-        //if let Poll::Ready(result) = spin(&mut task) {
-        //    return result;
-        //}
-    }
-}

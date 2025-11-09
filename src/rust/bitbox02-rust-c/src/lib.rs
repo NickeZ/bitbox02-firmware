@@ -25,8 +25,8 @@ mod alloc;
 mod async_usb;
 #[cfg(feature = "firmware")]
 mod der;
-#[cfg(feature = "firmware")]
-mod workflow;
+//#[cfg(feature = "firmware")]
+//mod workflow;
 
 // Expose C interface defined in bitbox_aes
 #[cfg(feature = "firmware")]

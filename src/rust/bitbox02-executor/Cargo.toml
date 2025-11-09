@@ -12,3 +12,4 @@ fastrand = { version = "2.3.0", default-features = false, features=["alloc"] }
 futures-lite = {workspace = true}
 pin-project-lite = "0.2.16"
 slab = { version = "0.4.11", default-features = false }
+bitbox02-reactor = {path = "../bitbox02-reactor"}

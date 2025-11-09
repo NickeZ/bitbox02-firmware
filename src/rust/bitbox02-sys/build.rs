@@ -161,6 +161,7 @@ const ALLOWLIST_FNS: &[&str] = &[
     "ui_screen_stack_push",
     "util_format_datetime",
     "communication_mode_ble_enabled",
+    "hid_hww_read",
 ];
 
 const RUSTIFIED_ENUMS: &[&str] = &[

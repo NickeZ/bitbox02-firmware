@@ -26,7 +26,7 @@ mod pb_backup {
 
 #[macro_use]
 pub mod general;
-pub mod async_usb;
+//pub mod async_usb;
 pub mod attestation;
 pub mod backup;
 pub mod bb02_async;
@@ -52,14 +52,22 @@ extern crate alloc;
 #[cfg(test)]
 extern crate bitbox_aes;
 
+use core::sync::atomic::{AtomicBool, Ordering};
+
 use bitbox02_executor::StaticExecutor;
 
+static EXECUTOR: StaticExecutor = StaticExecutor::new();
+
 pub fn main() {
-    static EXECUTOR: StaticExecutor = StaticExecutor::new();
-    let task = EXECUTOR.spawn(async {
-        util::log::log!("hello world");
-    });
-    util::bb02_async::block_on(EXECUTOR.run(task));
+    static FIRST: AtomicBool = AtomicBool::new(true);
+    if FIRST.load(Ordering::Relaxed) {
+        FIRST.store(false, Ordering::Relaxed);
+        let task = EXECUTOR.spawn(async {
+            util::log::log!("hello world");
+        });
+    }
+    EXECUTOR.try_tick();
+    //util::bb02_async::block_on(EXECUTOR.run(task));
 }
 
 //
