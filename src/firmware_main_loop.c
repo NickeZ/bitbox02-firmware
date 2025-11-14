@@ -181,7 +181,8 @@ void firmware_main_loop(void)
         screen_process();
         /* And finally, run the high-level event processing. */
 
-        rust_workflow_spin();
+        // rust_workflow_spin();
         rust_async_usb_spin();
+        rust_async_executor_tick();
     }
 }

@@ -52,6 +52,35 @@ extern crate alloc;
 #[cfg(test)]
 extern crate bitbox_aes;
 
+use core::sync::atomic::{AtomicBool, Ordering};
+
+use async_channel::Receiver;
+use bitbox02_executor::StaticExecutor;
+
+static EXECUTOR: StaticExecutor = StaticExecutor::new();
+
+pub fn tick() {
+    static FIRST: AtomicBool = AtomicBool::new(true);
+    if FIRST.load(Ordering::Relaxed) {
+        FIRST.store(false, Ordering::Relaxed);
+        let task = EXECUTOR.spawn(async {
+            util::log::log!("hello world");
+        });
+    }
+    EXECUTOR.try_tick();
+    //util::bb02_async::block_on(EXECUTOR.run(task));
+}
+
+// Spawns a task and returns the receiving end of a one shot channel
+pub fn spawn<T>(fut: impl Future<Output = T> + 'static) -> Receiver<T>
+where
+    T: 'static,
+{
+    let (sender, receiver) = async_channel::bounded(1);
+    EXECUTOR.spawn(async move { sender.send(fut.await).await });
+    receiver
+}
+
 //
 // C interface
 //
@@ -63,4 +92,9 @@ pub extern "C" fn rust_noise_generate_static_private_key(
 ) {
     let key = bitbox02_noise::generate_static_private_key::<hww::noise::BB02Random32>();
     private_key_out.as_mut().copy_from_slice(&key[..]);
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn rust_async_executor_tick() {
+    tick();
 }
