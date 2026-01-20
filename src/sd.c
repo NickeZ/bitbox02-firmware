@@ -74,7 +74,9 @@ static bool _get_absolute_path(
     bool create_dir)
 {
     char full_dir[514] = {0};
-    _get_full_dir(dir, full_dir, sizeof(full_dir), create_dir);
+    if (!_get_full_dir(dir, full_dir, sizeof(full_dir), create_dir)) {
+        return false;
+    }
     int snprintf_result = snprintf(absolute_path, max_length, "%s/%s", full_dir, fn);
     if (snprintf_result < 0 || snprintf_result >= (int)max_length) {
         return false;
@@ -223,12 +225,14 @@ bool sd_list_subdir(sd_list_t* list_out, const char* subdir)
     FILINFO fno;
     DIR dir;
     if (!_mount()) {
+        sd_free_list(list_out);
         return false;
     }
 
     char full_dir[514] = {0};
     if (!_get_full_dir(subdir, full_dir, sizeof(full_dir), false)) {
         _unmount();
+        sd_free_list(list_out);
         return false;
     }
 
@@ -240,11 +244,17 @@ bool sd_list_subdir(sd_list_t* list_out, const char* subdir)
     }
     if (result != FR_OK) {
         _unmount();
+        sd_free_list(list_out);
         return false;
     }
+    bool success = true;
     for (;;) {
         result = f_readdir(&dir, &fno);
-        if (result != FR_OK || fno.fname[0] == 0) {
+        if (result != FR_OK) {
+            success = false;
+            break;
+        }
+        if (fno.fname[0] == 0) {
             break;
         }
         const char* pc_fn = fno.fname;
@@ -255,6 +265,7 @@ bool sd_list_subdir(sd_list_t* list_out, const char* subdir)
         if (fn_copy == NULL) {
             f_closedir(&dir);
             _unmount();
+            sd_free_list(list_out);
             return false;
         }
         list_out->files[list_out->num_files] = fn_copy;
@@ -276,6 +287,10 @@ bool sd_list_subdir(sd_list_t* list_out, const char* subdir)
     }
     f_closedir(&dir);
     _unmount();
+    if (!success) {
+        sd_free_list(list_out);
+        return false;
+    }
     return true;
 }
 
@@ -295,6 +310,7 @@ void sd_free_list(sd_list_t* list)
     }
     free((void*)list->files);
     list->files = NULL;
+    list->num_files = 0;
 }
 
 bool sd_card_inserted(void)
