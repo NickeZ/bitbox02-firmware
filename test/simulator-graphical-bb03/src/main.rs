@@ -40,6 +40,8 @@ use tracing_subscriber::{EnvFilter, filter::LevelFilter, fmt, prelude::*};
 use bitbox02::ui::ugui::UG_COLOR;
 use bitbox02_rust::hal::{Hal, Memory};
 
+use lvgl::{self, Display, DrawBuffer};
+
 static BG: &[u8] = include_bytes!("../bg.png");
 
 const MARGIN: usize = 20;
@@ -95,22 +97,26 @@ pub fn handle_stream_writer(
 
 // Simulator frame buffer
 struct FrameBuffer {
-    buffer: DynamicImage::ImageRgba8,
-    path: Path,
-    canvas: &Canvas,
+    buffer: DynamicImage,
+    screen_id: ImageId,
 }
 impl FrameBuffer {
-    pub fn new(x: i32, y: i32, canvas: &Canvas) -> FrameBuffer {
+    pub fn new(canvas: &mut Canvas<OpenGl>) -> FrameBuffer {
+        let buffer =
+            DynamicImage::ImageRgba8(RgbaImage::new(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32));
+        let screen_id = canvas
+            .create_image(ImageSource::try_from(&buffer).unwrap(), ImageFlags::NEAREST)
+            .unwrap();
+        FrameBuffer { buffer, screen_id }
+    }
+
+    pub fn present(&self, canvas: &mut Canvas<OpenGl>, x: f32, y: f32, width: f32, height: f32) {
         let mut path = Path::new();
-        path.rect(x, y, 480, 800);
-        FrameBuffer {
-            buffer: DynamicImage::ImageRgba8(RgbaImage::new(
-                SCREEN_WIDTH as u32,
-                SCREEN_HEIGHT as u32,
-            )),
-            path,
-            canvas
-        }
+        path.rect(x, y, width, height);
+        canvas.fill_path(
+            &path,
+            &Paint::image(self.screen_id, x, y, width, height, 0f32, 1f32),
+        );
     }
 }
 
@@ -121,69 +127,47 @@ impl bitbox03::display::Display for FrameBuffer {
         (480, 800)
     }
 
-    fn clear(&mut self, c: Rgb565) -> Result<(), Self::Error> {
+    fn clear(&mut self, c: bitbox03::display::Rgb565) -> Result<(), Self::Error> {
         todo!()
     }
-    fn fill_rect(&mut self, r: Rect) -> Result<(), Self::Error> {
+    fn fill_rect(&mut self, r: bitbox03::display::Rect) -> Result<(), Self::Error> {
         todo!()
     }
     fn blit(&mut self) -> Result<(), Self::Error> {
         todo!()
     }
-
-    fn present(&mut self) -> Result<(), Self::Error> {
-        let paint = Paint::image(
-                screen_id.clone(),
-                screen_x,
-                screen_y,
-                screen_width,
-                screen_height,
-                0f32,
-                1f32,
-            );
-        canvas.fill_path(&self.path, &paint);
-    }
 }
 
-/// Screen frame buffer
-static SCREEN_FB: LazyLock<Mutex<DynamicImage>> = LazyLock::new(|| {});
-
-static MIRROR: AtomicBool = AtomicBool::new(false);
-
-fn pixel_fn(x: i16, y: i16, c: UG_COLOR) {
-    if x < 0 || x >= SCREEN_WIDTH as i16 {
-        return;
-    }
-    if y < 0 || y >= SCREEN_HEIGHT as i16 {
-        return;
-    }
-    let x = x as u32;
-    let y = y as u32;
-    let mut screen = SCREEN_FB.lock().unwrap();
-
-    if c != 0 {
-        screen.put_pixel(x, y, Rgba([0xff, 0xff, 0xff, 0xff]));
-    }
-}
-
-fn clear_fn() {
-    let mut screen = SCREEN_FB.lock().unwrap();
-    if let DynamicImage::ImageRgba8(rgba) = &mut *screen {
-        for pixel in rgba.pixels_mut() {
-            *pixel = Rgba([0, 0, 0, 0]);
-        }
-    }
-}
-
-fn mirror_fn(_: bool) {
-    MIRROR.fetch_xor(true, Ordering::Relaxed);
-}
+//fn pixel_fn(x: i16, y: i16, c: UG_COLOR) {
+//    if x < 0 || x >= SCREEN_WIDTH as i16 {
+//        return;
+//    }
+//    if y < 0 || y >= SCREEN_HEIGHT as i16 {
+//        return;
+//    }
+//    let x = x as u32;
+//    let y = y as u32;
+//    let mut screen = SCREEN_FB.lock().unwrap();
+//
+//    if c != 0 {
+//        screen.put_pixel(x, y, Rgba([0xff, 0xff, 0xff, 0xff]));
+//    }
+//}
+//
+//fn clear_fn() {
+//    let mut screen = SCREEN_FB.lock().unwrap();
+//    if let DynamicImage::ImageRgba8(rgba) = &mut *screen {
+//        for pixel in rgba.pixels_mut() {
+//            *pixel = Rgba([0, 0, 0, 0]);
+//        }
+//    }
+//}
 
 static ACCEPTING_CONNECTIONS: AtomicBool = AtomicBool::new(false);
 
 fn init_hww(preseed: bool) -> bool {
-    bitbox02::screen::init(pixel_fn, mirror_fn, clear_fn);
-    bitbox02::screen::splash();
+    //bitbox02::screen::init(pixel_fn, mirror_fn, clear_fn);
+    //bitbox02::screen::splash();
 
     // BitBox02 simulation initialization
     bitbox02::usb_processing::init();
@@ -218,12 +202,12 @@ fn init_hww(preseed: bool) -> bool {
 }
 
 struct App {
+    framebuffer: Option<FrameBuffer>,
     window: Option<Rc<Window>>,
     surface: Option<Surface<WindowSurface>>,
     gl_context: Option<PossiblyCurrentContext>,
     canvas: Option<Canvas<OpenGl>>,
     bg: Option<ImageId>,
-    screen: Option<ImageId>,
     touch_active: bool,
     cursor_pos: (i32, i32),
     outbound_in: Option<mpsc::Sender<[u8; 64]>>,
@@ -234,12 +218,12 @@ struct App {
 impl Default for App {
     fn default() -> App {
         App {
+            framebuffer: Default::default(),
             window: Default::default(),
             surface: Default::default(),
             gl_context: Default::default(),
             canvas: Default::default(),
             bg: Default::default(),
-            screen: Default::default(),
             touch_active: false,
             cursor_pos: (0, 0),
             outbound_in: Default::default(),
@@ -336,19 +320,15 @@ impl App {
                 ImageFlags::NEAREST,
             )
             .unwrap();
-        let screen_id = canvas
-            .create_image(
-                ImageSource::try_from(&*SCREEN_FB.lock().unwrap()).unwrap(),
-                ImageFlags::NEAREST,
-            )
-            .unwrap();
 
+        let framebuffer = FrameBuffer::new(&mut canvas);
+
+        self.framebuffer.replace(framebuffer);
         self.window.replace(window);
         self.surface.replace(surface);
         self.gl_context.replace(gl_context);
         self.canvas.replace(canvas);
         self.bg.replace(bg_id);
-        self.screen.replace(screen_id);
         Ok(window_id)
     }
 }
@@ -385,8 +365,8 @@ impl ApplicationHandler<UserEvent> for App {
                     && let Some(canvas) = &mut self.canvas
                     && let Some(gl_context) = &mut self.gl_context
                     && let Some(bg_id) = &mut self.bg
-                    && let Some(screen_id) = &mut self.screen
                     && let Some(window) = &mut self.window
+                    && let Some(framebuffer) = &mut self.framebuffer
                 {
                     let dpi_factor = window.scale_factor() as f32;
                     let window_size = window.inner_size();
@@ -420,7 +400,7 @@ impl ApplicationHandler<UserEvent> for App {
                     canvas.fill_path(
                         &device_path,
                         &Paint::image(
-                            bg_id.clone(),
+                            *bg_id,
                             device_x,
                             device_y,
                             device_width,
@@ -442,32 +422,7 @@ impl ApplicationHandler<UserEvent> for App {
                         &Paint::color(femtovg::Color::rgba(0x12, 0x14, 0x18, 0xff)),
                     );
 
-                    //let mut screen_path = Path::new();
-                    //screen_path.rect(screen_x, screen_y, screen_width, screen_height);
-                    //let paint = if MIRROR.load(Ordering::Relaxed) {
-                    //    Paint::image(
-                    //        screen_id.clone(),
-                    //        screen_x + screen_width,
-                    //        screen_y + screen_height,
-                    //        screen_width,
-                    //        screen_height,
-                    //        std::f32::consts::PI,
-                    //        1f32,
-                    //    )
-                    //} else {
-                    //    Paint::image(
-                    //        screen_id.clone(),
-                    //        screen_x,
-                    //        screen_y,
-                    //        screen_width,
-                    //        screen_height,
-                    //        0f32,
-                    //        1f32,
-                    //    )
-                    //};
-                    //canvas.fill_path(&screen_path, &paint);
-
-                    fb.present()
+                    framebuffer.present(canvas, screen_x, screen_y, screen_width, screen_height);
 
                     canvas.flush_to_surface(&());
                     surface.swap_buffers(gl_context).unwrap();
@@ -573,7 +528,7 @@ impl ApplicationHandler<UserEvent> for App {
                 unsafe { bitbox02_rust_c::workflow::rust_workflow_spin() }
                 bitbox02_rust::async_usb::spin();
                 bitbox02::usb_processing::process_hww();
-                bitbox02::screen::process();
+                //bitbox02::screen::process();
 
                 if let Some(ref mut task) = self.orientation_task {
                     if let Ready(_orientation) = util::bb02_async::spin(task) {
@@ -584,13 +539,17 @@ impl ApplicationHandler<UserEvent> for App {
 
                 if let Some(window) = &self.window
                     && let Some(canvas) = &mut self.canvas
-                    && let Some(screen_id) = self.screen.clone()
+                    && let Some(framebuffer) = &mut self.framebuffer
                 {
                     // TODO: We should only update texture and redraw in case screen actually changed.
                     // Update opengl texture from "screen_process"
-                    let screen_fb = &*SCREEN_FB.lock().unwrap();
                     canvas
-                        .update_image(screen_id, ImageSource::try_from(screen_fb).unwrap(), 0, 0)
+                        .update_image(
+                            framebuffer.screen_id,
+                            ImageSource::try_from(&framebuffer.buffer).unwrap(),
+                            0,
+                            0,
+                        )
                         .unwrap();
 
                     window.request_redraw();
