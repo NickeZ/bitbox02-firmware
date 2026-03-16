@@ -5,9 +5,7 @@ use alloc::boxed::Box;
 use bitbox_bytequeue::ByteQueue;
 use bitbox_executor::Executor;
 use bitbox02::uart::USART_0_BUFFER_SIZE;
-use bitbox02::usb_packet::USB_FRAME;
 use core::future::Future;
-use core::mem::MaybeUninit;
 use core::pin::Pin;
 use core::sync::atomic::{AtomicBool, Ordering};
 
@@ -40,14 +38,14 @@ pub fn main_loop<H: crate::hal::Hal>(hal: &mut H) -> ! {
     }));
 
     let mut hww_data = None;
-    let mut hww_frame: USB_FRAME = unsafe { MaybeUninit::zeroed().assume_init() };
+    let mut hww_packet = bitbox02::u2fhid::Packet::default();
 
     #[cfg(feature = "app-u2f")]
     bitbox02::u2f_packet::init();
     #[cfg(feature = "app-u2f")]
     let mut u2f_data = None;
     #[cfg(feature = "app-u2f")]
-    let mut u2f_frame: USB_FRAME = unsafe { MaybeUninit::zeroed().assume_init() };
+    let mut u2f_hid_packet = bitbox02::u2fhid::Packet::default();
 
     if !hal.memory().ble_enabled() {
         crate::communication_mode::ble_disable();
@@ -89,8 +87,8 @@ pub fn main_loop<H: crate::hal::Hal>(hal: &mut H) -> ! {
         }
 
         // Do USB Input
-        if hww_data.is_none() && bitbox02::hid_hww::read(&mut hww_frame) {
-            if bitbox02::usb_packet::process(&hww_frame) {
+        if hww_data.is_none() && bitbox02::hid_hww::read(&mut hww_packet) {
+            if bitbox02::usb_packet::process(&hww_packet) {
                 if crate::communication_mode::ble_enabled(hal) {
                     // Enqueue a power down command to the da14531
                     bitbox02::da14531::power_down(&mut uart_write_queue);
@@ -106,8 +104,8 @@ pub fn main_loop<H: crate::hal::Hal>(hal: &mut H) -> ! {
             }
         }
         #[cfg(feature = "app-u2f")]
-        if u2f_data.is_none() && bitbox02::hid_u2f::read(&mut u2f_frame) {
-            bitbox02::u2f_packet::process(&u2f_frame);
+        if u2f_data.is_none() && bitbox02::hid_u2f::read(&mut u2f_hid_packet) {
+            bitbox02::u2f_packet::process(&u2f_hid_packet);
         }
 
         // Do UART Output

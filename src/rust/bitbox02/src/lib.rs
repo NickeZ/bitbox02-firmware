@@ -48,6 +48,7 @@ pub mod spi_mem;
 pub mod u2f;
 #[cfg(feature = "app-u2f")]
 pub mod u2f_packet;
+pub mod u2fhid;
 pub mod uart;
 pub mod ui;
 pub mod usb;
