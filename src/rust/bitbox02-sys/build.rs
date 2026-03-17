@@ -41,10 +41,12 @@ const ALLOWLIST_TYPES: &[&str] = &[
     "da14531_protocol_frame",
     "delay_t",
     "event_slider_data_t",
+    "RustUsbReportQueue",
     "event_types",
     "securechip_error_t",
     "trinary_input_string_params_t",
     "UG_COLOR",
+    "UsbReportQueueError",
     "upside_down_t",
 ];
 
@@ -124,9 +126,6 @@ const ALLOWLIST_FNS: &[&str] = &[
     "printf",
     "progress_create",
     "progress_set",
-    "queue_hww_queue",
-    "queue_pull",
-    "queue_u2f_queue",
     "random_32_bytes_mcu",
     "random_32_bytes",
     "random_fake_reset",
@@ -172,6 +171,7 @@ const ALLOWLIST_FNS: &[&str] = &[
     "u2f_packet_process",
     "u2f_packet_timeout_get",
     "u2f_packet_timeout",
+    "u2f_device_setup",
     "u2f_process",
     "uart_poll",
     "UG_ClearBuffer",
@@ -192,6 +192,10 @@ const ALLOWLIST_FNS: &[&str] = &[
     "usb_processing_unlock",
     "usb_start",
     "util_format_datetime",
+    "rust_usb_report_queue_clear",
+    "rust_usb_report_queue_peek",
+    "rust_usb_report_queue_pull",
+    "rust_usb_report_queue_push",
 ];
 
 const RUSTIFIED_ENUMS: &[&str] = &[
@@ -222,7 +226,6 @@ const BITBOX02_SOURCES: &[&str] = &[
     "src/memory/memory_spi.c",
     "src/memory/memory.c",
     "src/platform/platform_init.c",
-    "src/queue.c",
     "src/random.c",
     "src/reset.c",
     "src/screen.c",
@@ -389,6 +392,19 @@ pub fn main() -> BuildResult<()> {
     };
     includes.push(generated_headers_dir.display().to_string());
 
+    // rust.h is created by cbindgen in the cmake build directory
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let rust_h_dir = out_dir
+        .join("../../../../../..")
+        .canonicalize()
+        .expect("generated rust.h directory must exist");
+    println!("rust_h_dir: {:?}", rust_h_dir);
+    let rust_include_dir = rust_h_dir
+        .parent()
+        .expect("generated rust.h directory must have a parent");
+    includes.push(rust_include_dir.as_os_str().to_str().unwrap().to_owned());
+    includes.push(rust_h_dir.as_os_str().to_str().unwrap().to_owned());
+
     if cross_compiling {
         includes.extend([
             // SAMD51A
@@ -442,6 +458,7 @@ pub fn main() -> BuildResult<()> {
         Command::new("bindgen")
             .args(["--output", &out_path])
             .arg("--use-core")
+            .arg("--wrap-unsafe-ops")
             .arg("--with-derive-default")
             .args(
                 ALLOWLIST_FNS
