@@ -21,7 +21,10 @@ pub trait ImageExt: ObjExt {
     }
 
     /// # Safety
-    /// `src` must point to a `'static` value of a type accepted by LVGL as an image source.
+    /// `src` must be null or point to a value that LVGL accepts as an image source, and that
+    /// value must remain valid for as long as LVGL can use it. This includes matching LVGL's
+    /// byte-level source tagging rules: string sources must point to a suitable static C string,
+    /// while variable sources must point to a valid static image descriptor or draw buffer.
     unsafe fn set_src_raw<T: ?Sized>(&self, src: Option<&'static T>) {
         unsafe {
             ffi::lv_image_set_src(

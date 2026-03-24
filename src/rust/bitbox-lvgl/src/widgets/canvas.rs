@@ -19,7 +19,9 @@ pub enum LvCanvasCreateError {
 
 pub trait CanvasExt: ImageExt {
     /// # Safety
-    /// `buf` must remain valid for the lifetime required by LVGL.
+    /// `buf` must point to writable storage large enough for the declared canvas dimensions and
+    /// color format, and that storage must remain valid for as long as LVGL can render from the
+    /// canvas. While registered, the backing memory must not be freed or repurposed.
     unsafe fn set_buffer_raw<T: ?Sized>(
         &self,
         buf: &'static mut T,
@@ -39,7 +41,9 @@ pub trait CanvasExt: ImageExt {
     }
 
     /// # Safety
-    /// `draw_buf` must remain valid for the lifetime required by LVGL.
+    /// `draw_buf` must be a fully initialized LVGL draw buffer whose handlers and backing storage
+    /// remain valid for as long as the canvas uses it. Neither the draw buffer nor the underlying
+    /// pixel storage may be freed or repurposed while registered on the canvas.
     unsafe fn set_draw_buf_raw(&self, draw_buf: &'static mut ffi::lv_draw_buf_t) {
         unsafe { ffi::lv_canvas_set_draw_buf(self.as_ptr(), draw_buf) }
     }

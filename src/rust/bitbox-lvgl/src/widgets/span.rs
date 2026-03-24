@@ -50,7 +50,10 @@ macro_rules! impl_span_style_optional_void_ptr_setter_methods {
     ($($name:ident => $ffi_name:ident),+ $(,)?) => {
         $(
             /// # Safety
-            /// The pointed value type must match what LVGL expects for this field.
+            /// The pointed value type must exactly match what LVGL expects for this style field.
+            /// LVGL stores the raw pointer in the span style, so the value must remain valid and
+            /// must not be repurposed for as long as the style can be used. Image-source style
+            /// fields must also satisfy LVGL's image source tagging rules.
             pub unsafe fn $name<T>(&self, value: Option<&'static T>) {
                 unsafe {
                     ffi::$ffi_name(
