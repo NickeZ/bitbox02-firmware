@@ -73,7 +73,7 @@ pub use widgets::buttonmatrix::{ButtonmatrixExt, LvButtonmatrix, LvButtonmatrixM
 pub use widgets::canvas::CanvasExt;
 pub use widgets::canvas::{LvCanvas, LvCanvasCreateError};
 pub use widgets::class;
-pub use widgets::image::{ImageExt, LvImage, LvImageSourceError};
+pub use widgets::image::{ImageExt, LvImage};
 pub use widgets::keyboard::{KeyboardExt, LvKeyboard, LvKeyboardMapEntry, keyboard_def_event_cb};
 pub use widgets::label::{LabelExt, LvLabel, LvLabelTextError};
 pub use widgets::obj;

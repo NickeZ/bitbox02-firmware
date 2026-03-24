@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use alloc::ffi::CString;
 use core::ffi::c_void;
 use core::ptr::NonNull;
 
 use crate::{LvBlendMode, LvHandle, LvImageAlign, LvImageDsc, LvObj, LvPoint, ObjExt, class, ffi};
 
-pub type LvImageSourceError = super::LvTextError;
 pub type LvImage = LvHandle<class::ImageTag>;
 
 pub trait ImageExt: ObjExt {
-    fn set_src(&self, src: &str) -> Result<(), LvImageSourceError> {
-        let src = CString::new(src).map_err(|_| LvImageSourceError::ContainsNul)?;
-        unsafe { ffi::lv_image_set_src(self.as_ptr(), src.as_ptr() as *const c_void) }
-        Ok(())
-    }
-
-    fn set_src_image(&self, src: &'static LvImageDsc) {
+    /// # Safety
+    /// LVGL stores `src` and later dereferences both the descriptor and the memory reachable
+    /// through it, including `src.data`. The descriptor contents must describe a valid LVGL image,
+    /// and all referenced data must remain valid and unchanged for as long as LVGL can use the
+    /// image source.
+    unsafe fn set_src_image(&self, src: &'static LvImageDsc) {
         unsafe { ffi::lv_image_set_src(self.as_ptr(), src as *const LvImageDsc as *const c_void) }
     }
 
