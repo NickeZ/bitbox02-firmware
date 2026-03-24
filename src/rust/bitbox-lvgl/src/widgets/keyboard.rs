@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use alloc::borrow::ToOwned;
+use alloc::ffi::CString;
 use alloc::vec::Vec;
-use core::ffi::CStr;
 use core::ptr::NonNull;
 
 use super::buttonmatrix::{ButtonmatrixExt, LvButtonmatrix, LvButtonmatrixMapEntry, validate_map};
@@ -61,11 +62,12 @@ pub trait KeyboardExt: ButtonmatrixExt {
         unsafe { ffi::lv_keyboard_get_popovers(self.as_ptr()) }
     }
 
-    fn get_map_array(&self) -> Vec<&CStr> {
+    fn get_map_array(&self) -> Vec<CString> {
         unsafe {
-            // LVGL returns either null or a valid keyboard map array terminated by a null pointer
-            // or empty string sentinel, with entries alive for the duration of this borrow.
             cstr_array_from_ptr(ffi::lv_keyboard_get_map_array(self.as_ptr()))
+                .into_iter()
+                .map(|entry| entry.to_owned())
+                .collect()
         }
     }
 }
@@ -79,11 +81,10 @@ impl LvHandle<class::KeyboardTag> {
         unsafe { ffi::lv_keyboard_get_selected_button(self.as_ptr()) }
     }
 
-    pub fn get_button_text(&self, button_id: u32) -> Option<&CStr> {
+    pub fn get_button_text(&self, button_id: u32) -> Option<CString> {
         unsafe {
-            // LVGL returns either null or a valid NUL-terminated keyboard button text pointer
-            // owned by the object and alive for the duration of this borrow.
             optional_cstr_from_ptr(ffi::lv_keyboard_get_button_text(self.as_ptr(), button_id))
+                .map(|text| text.to_owned())
         }
     }
 

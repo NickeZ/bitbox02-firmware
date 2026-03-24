@@ -4,6 +4,7 @@ use core::ffi::CStr;
 use core::ptr::NonNull;
 
 use ::util::strings::optional_cstr_from_ptr;
+use alloc::borrow::ToOwned;
 use alloc::ffi::CString;
 
 use crate::{
@@ -101,8 +102,10 @@ impl LvSpan {
         self.get_style().as_ptr()
     }
 
-    pub fn get_text(&self) -> Option<&CStr> {
-        unsafe { optional_cstr_from_ptr(ffi::lv_span_get_text(self.as_ptr())) }
+    pub fn get_text(&self) -> Option<CString> {
+        unsafe {
+            optional_cstr_from_ptr(ffi::lv_span_get_text(self.as_ptr())).map(|text| text.to_owned())
+        }
     }
 
     impl_span_style_setter_methods!(
