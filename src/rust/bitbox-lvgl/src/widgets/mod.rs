@@ -49,6 +49,7 @@ mod tests {
         let canvas = dummy_handle::<class::CanvasTag>();
         let canvas_ptr = canvas.as_ptr();
         assert_eq!(canvas.to_image().as_ptr(), canvas_ptr);
+
         let canvas = dummy_handle::<class::CanvasTag>();
         let canvas_ptr = canvas.as_ptr();
         assert_eq!(canvas.to_obj().as_ptr(), canvas_ptr);
@@ -56,6 +57,7 @@ mod tests {
         let spinner = dummy_handle::<class::SpinnerTag>();
         let spinner_ptr = spinner.as_ptr();
         assert_eq!(spinner.to_arc().as_ptr(), spinner_ptr);
+
         let spinner = dummy_handle::<class::SpinnerTag>();
         let spinner_ptr = spinner.as_ptr();
         assert_eq!(spinner.to_obj().as_ptr(), spinner_ptr);
@@ -63,6 +65,7 @@ mod tests {
         let slider = dummy_handle::<class::SliderTag>();
         let slider_ptr = slider.as_ptr();
         assert_eq!(slider.to_bar().as_ptr(), slider_ptr);
+
         let slider = dummy_handle::<class::SliderTag>();
         let slider_ptr = slider.as_ptr();
         assert_eq!(slider.to_obj().as_ptr(), slider_ptr);
@@ -70,6 +73,7 @@ mod tests {
         let keyboard = dummy_handle::<class::KeyboardTag>();
         let keyboard_ptr = keyboard.as_ptr();
         assert_eq!(keyboard.to_buttonmatrix().as_ptr(), keyboard_ptr);
+
         let keyboard = dummy_handle::<class::KeyboardTag>();
         let keyboard_ptr = keyboard.as_ptr();
         assert_eq!(keyboard.to_obj().as_ptr(), keyboard_ptr);

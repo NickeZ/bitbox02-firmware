@@ -275,7 +275,9 @@ pub trait SpangroupExt: ObjExt {
     }
 
     /// # Safety
-    /// After deletion, any other handles to this span become invalid.
+    ///
+    /// LVGL frees the span immediately. Callers must ensure that no Rust handles derived from the
+    /// deleted span are used again.
     unsafe fn delete_span(&self, span: LvSpan) {
         unsafe { ffi::lv_spangroup_delete_span(self.as_ptr(), span.as_ptr()) }
     }

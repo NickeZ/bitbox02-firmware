@@ -129,7 +129,9 @@ pub trait ObjExt {
     }
 
     /// # Safety
-    /// After deletion, any other handles to this object or its descendants become invalid.
+    ///
+    /// After deletion, LVGL frees the object and may recursively free its children. Callers must
+    /// ensure that no other Rust handles to the same object tree are used again.
     unsafe fn delete(self)
     where
         Self: Sized,
