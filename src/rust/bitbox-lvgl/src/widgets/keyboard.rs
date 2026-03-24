@@ -14,7 +14,12 @@ pub type LvKeyboard = LvHandle<class::KeyboardTag>;
 pub type LvKeyboardMapEntry = LvButtonmatrixMapEntry;
 
 pub trait KeyboardExt: ButtonmatrixExt {
-    fn set_textarea(&self, textarea: Option<&LvTextarea>) {
+    /// # Safety
+    ///
+    /// LVGL stores the textarea pointer and dereferences it later during keyboard event handling.
+    /// Callers must ensure the textarea outlives the keyboard attachment or is detached before the
+    /// textarea is deleted.
+    unsafe fn set_textarea(&self, textarea: Option<&LvTextarea>) {
         unsafe {
             ffi::lv_keyboard_set_textarea(
                 self.as_ptr(),
