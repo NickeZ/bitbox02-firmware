@@ -8,6 +8,7 @@ use alloc::boxed::Box;
 use alloc::collections::VecDeque;
 
 const USB_REPORT_SIZE: usize = 64;
+// Keep this in sync with USB_DATA_MAX_LEN in src/usb/usb_frame.h.
 const USB_DATA_MAX_LEN: usize = 7609;
 const USB_REPORT_QUEUE_NUM_REPORTS: usize = USB_DATA_MAX_LEN / USB_REPORT_SIZE;
 // Preserve the previous effective capacity of the manual ring buffer, which

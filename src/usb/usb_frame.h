@@ -47,6 +47,7 @@
 //
 // With a packet size of 64 bytes (max for full-speed devices), this means that
 // the maximum message payload length is 64 - 7 + 128 * (64 - 5) = 7609 bytes.
+// Keep this in sync with USB_DATA_MAX_LEN in src/rust/bitbox-usb-report-queue/src/lib.rs.
 #define USB_DATA_MAX_LEN 7609U
 
 #define HID_VENDOR_FIRST (FRAME_TYPE_INIT | 0x40) // First vendor defined command
