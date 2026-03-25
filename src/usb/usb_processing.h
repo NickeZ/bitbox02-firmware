@@ -49,7 +49,11 @@ struct usb_processing* usb_processing_u2f(void);
 struct usb_processing* usb_processing_hww(void);
 RustUsbReportQueue* usb_processing_out_queue(struct usb_processing* ctx);
 
-void usb_processing_init(RustUsbReportQueue* hww_queue, RustUsbReportQueue* u2f_queue);
+void usb_processing_init(RustUsbReportQueue* hww_queue);
+
+#if APP_U2F == 1
+void usb_processing_init_u2f(RustUsbReportQueue* u2f_queue);
+#endif
 
 #if !defined(BOOTLOADER)
 void usb_processing_lock(struct usb_processing* ctx);

@@ -385,20 +385,8 @@ static void _register_timer(void)
 }
 #endif
 
-void usb_processing_init(RustUsbReportQueue* hww_queue, RustUsbReportQueue* u2f_queue)
+void usb_processing_init(RustUsbReportQueue* hww_queue)
 {
-#if APP_U2F == 1
-    usb_processing_u2f()->out_queue = u2f_queue;
-    rust_usb_report_queue_clear(u2f_queue);
-    usb_processing_u2f()->format_frame = usb_frame_reply;
-    usb_processing_u2f()->has_packet = false;
-    usb_processing_u2f()->manage_invalid_endpoint = u2f_invalid_endpoint;
-    usb_processing_u2f()->can_request_unblock = u2f_blocking_request_can_go_through;
-    usb_processing_u2f()->create_blocked_req_error = u2f_blocked_req_error;
-    usb_processing_u2f()->abort_outstanding_op = u2f_abort_outstanding_op;
-#else
-    (void)u2f_queue;
-#endif
     usb_processing_hww()->out_queue = hww_queue;
 #if !defined(BOOTLOADER)
     usb_processing_hww()->can_request_unblock = hww_blocking_request_can_go_through;
@@ -413,6 +401,20 @@ void usb_processing_init(RustUsbReportQueue* hww_queue, RustUsbReportQueue* u2f_
     _register_timer();
 #endif
 }
+
+#if APP_U2F == 1
+void usb_processing_init_u2f(RustUsbReportQueue* u2f_queue)
+{
+    usb_processing_u2f()->out_queue = u2f_queue;
+    rust_usb_report_queue_clear(u2f_queue);
+    usb_processing_u2f()->format_frame = usb_frame_reply;
+    usb_processing_u2f()->has_packet = false;
+    usb_processing_u2f()->manage_invalid_endpoint = u2f_invalid_endpoint;
+    usb_processing_u2f()->can_request_unblock = u2f_blocking_request_can_go_through;
+    usb_processing_u2f()->create_blocked_req_error = u2f_blocked_req_error;
+    usb_processing_u2f()->abort_outstanding_op = u2f_abort_outstanding_op;
+}
+#endif
 
 #if !defined(BOOTLOADER)
 void usb_processing_lock(struct usb_processing* ctx)

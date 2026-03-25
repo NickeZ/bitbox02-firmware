@@ -9,28 +9,23 @@ pub fn timeout_reset(value: i16) {
     }
 }
 
-#[cfg(feature = "app-u2f")]
-pub fn init(hww_queue: &mut UsbReportQueue, u2f_queue: &mut UsbReportQueue) {
-    unsafe {
-        bitbox02_sys::usb_processing_init(
-            hww_queue
-                .as_mut_ptr()
-                .cast::<bitbox02_sys::RustUsbReportQueue>(),
-            u2f_queue
-                .as_mut_ptr()
-                .cast::<bitbox02_sys::RustUsbReportQueue>(),
-        )
-    }
-}
-
-#[cfg(not(feature = "app-u2f"))]
 pub fn init(hww_queue: &mut UsbReportQueue) {
     unsafe {
         bitbox02_sys::usb_processing_init(
             hww_queue
                 .as_mut_ptr()
                 .cast::<bitbox02_sys::RustUsbReportQueue>(),
-            core::ptr::null_mut(),
+        )
+    }
+}
+
+#[cfg(feature = "app-u2f")]
+pub fn init_u2f(u2f_queue: &mut UsbReportQueue) {
+    unsafe {
+        bitbox02_sys::usb_processing_init_u2f(
+            u2f_queue
+                .as_mut_ptr()
+                .cast::<bitbox02_sys::RustUsbReportQueue>(),
         )
     }
 }

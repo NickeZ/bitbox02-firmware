@@ -113,7 +113,7 @@ int main(void)
     if (hww_queue == NULL) {
         Abort("Error: malloc hww queue");
     }
-    usb_processing_init(hww_queue, NULL);
+    usb_processing_init(hww_queue);
 
     while (1) {
         // Do UART I/O

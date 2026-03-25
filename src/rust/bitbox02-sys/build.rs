@@ -189,6 +189,7 @@ const ALLOWLIST_FNS: &[&str] = &[
     "usb_packet_process",
     "usb_processing_hww",
     "usb_processing_init",
+    "usb_processing_init_u2f",
     "usb_processing_locked",
     "usb_processing_process",
     "usb_processing_timeout_reset",

@@ -104,7 +104,7 @@ hid_device* hid_open_path(const char* path)
         free(mock_dev);
         return NULL;
     }
-    usb_processing_init(NULL, mock_dev->u2f_queue);
+    usb_processing_init_u2f(mock_dev->u2f_queue);
     u2f_device_setup();
     timer_thread_stop = false;
     int res = pthread_create(&thread, NULL, &timer_task, NULL);

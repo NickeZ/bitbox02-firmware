@@ -32,10 +32,9 @@ pub fn main_loop<H: crate::hal::Hal>(hal: &mut H) -> ! {
     #[cfg(feature = "app-u2f")]
     let mut u2f_queue = UsbReportQueue::new();
 
-    #[cfg(feature = "app-u2f")]
-    bitbox02::usb_processing::init(&mut hww_queue, &mut u2f_queue);
-    #[cfg(not(feature = "app-u2f"))]
     bitbox02::usb_processing::init(&mut hww_queue);
+    #[cfg(feature = "app-u2f")]
+    bitbox02::usb_processing::init_u2f(&mut u2f_queue);
     bitbox02::hww::setup();
     #[cfg(feature = "app-u2f")]
     bitbox02::u2f::setup();

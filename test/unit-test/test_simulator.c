@@ -78,7 +78,7 @@ int main(void)
         perror("ERROR, could not allocate HWW queue");
         return 1;
     }
-    usb_processing_init(hww_queue, NULL);
+    usb_processing_init(hww_queue);
     printf("USB setup success\n");
 
     hww_setup();
