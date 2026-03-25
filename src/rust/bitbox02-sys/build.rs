@@ -392,19 +392,6 @@ pub fn main() -> BuildResult<()> {
     };
     includes.push(generated_headers_dir.display().to_string());
 
-    // rust.h is created by cbindgen in the cmake build directory
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let rust_h_dir = out_dir
-        .join("../../../../../..")
-        .canonicalize()
-        .expect("generated rust.h directory must exist");
-    println!("rust_h_dir: {:?}", rust_h_dir);
-    let rust_include_dir = rust_h_dir
-        .parent()
-        .expect("generated rust.h directory must have a parent");
-    includes.push(rust_include_dir.as_os_str().to_str().unwrap().to_owned());
-    includes.push(rust_h_dir.as_os_str().to_str().unwrap().to_owned());
-
     if cross_compiling {
         includes.extend([
             // SAMD51A
