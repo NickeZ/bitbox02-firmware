@@ -41,16 +41,20 @@ const ALLOWLIST_TYPES: &[&str] = &[
     "da14531_protocol_frame",
     "delay_t",
     "event_slider_data_t",
-    "RustUsbReportQueue",
     "event_types",
+    "RustByteQueue",
+    "RustUsbReportQueue",
     "securechip_error_t",
     "trinary_input_string_params_t",
     "UG_COLOR",
-    "UsbReportQueueError",
     "upside_down_t",
 ];
 
-const OPAQUE_TYPES: &[&str] = &["da14531_protocol_frame"];
+const OPAQUE_TYPES: &[&str] = &[
+    "da14531_protocol_frame",
+    "RustByteQueue",
+    "RustUsbReportQueue",
+];
 
 const ALLOWLIST_FNS: &[&str] = &[
     "bip32_derive_xpub",
@@ -192,10 +196,6 @@ const ALLOWLIST_FNS: &[&str] = &[
     "usb_processing_unlock",
     "usb_start",
     "util_format_datetime",
-    "rust_usb_report_queue_clear",
-    "rust_usb_report_queue_peek",
-    "rust_usb_report_queue_pull",
-    "rust_usb_report_queue_push",
 ];
 
 const RUSTIFIED_ENUMS: &[&str] = &[
@@ -445,7 +445,6 @@ pub fn main() -> BuildResult<()> {
         Command::new("bindgen")
             .args(["--output", &out_path])
             .arg("--use-core")
-            .arg("--wrap-unsafe-ops")
             .arg("--with-derive-default")
             .args(
                 ALLOWLIST_FNS
