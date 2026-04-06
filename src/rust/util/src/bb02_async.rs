@@ -18,13 +18,5 @@ pub fn spin<O>(task: &mut Task<O>) -> Poll<O> {
     task.as_mut().poll(context)
 }
 
-/// Polls a future until the result is available.
 #[cfg(feature = "testing")]
-pub fn block_on<O>(task: impl core::future::Future<Output = O>) -> O {
-    let mut task: crate::bb02_async::Task<O> = alloc::boxed::Box::pin(task);
-    loop {
-        if let Poll::Ready(result) = spin(&mut task) {
-            return result;
-        }
-    }
-}
+pub use futures_lite::future::block_on;
