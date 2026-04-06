@@ -18,13 +18,12 @@ bitcoin = {workspace = true}
 critical-section = { version = "1.2.0", default-features = false, features = [] }
 zeroize = { workspace = true }
 time = { version = "0.3.44", default-features = false }
-futures-lite = { workspace = true, features = ["std"], optional = true }
 
 [dev-dependencies]
 hex_lit = { workspace = true }
 
 [features]
 rtt = ["dep:rtt-target"]
-testing = ["critical-section/std", "dep:futures-lite"]
+testing = ["critical-section/std"]
 c-unit-testing = ["critical-section/std"]
 firmware = []

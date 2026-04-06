@@ -40,6 +40,14 @@ checksum = "8b75356056920673b02621b35afd0f7dda9306d03c79a30f5c56c44cf256e3de"
 name = "async_test"
 version = "0.1.0"
 dependencies = [
+ "async_test_macros",
+ "futures-lite",
+]
+
+[[package]]
+name = "async_test_macros"
+version = "0.1.0"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn",
@@ -1404,7 +1412,6 @@ dependencies = [
  "bitcoin",
  "cortex-m",
  "critical-section",
- "futures-lite",
  "hex",
  "hex_lit",
  "num-bigint",

@@ -2,7 +2,6 @@
 
 #![cfg_attr(not(test), no_std)]
 pub mod ascii;
-pub mod bb02_async;
 pub mod bip32;
 pub mod bytes;
 pub mod cell;

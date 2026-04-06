@@ -4,6 +4,7 @@
 
 members = [
     "async_test",
+    "async_test_macros",
     "bitbox-u2fhid",
     "bitbox02-rust-c",
     "bitbox02-rust",

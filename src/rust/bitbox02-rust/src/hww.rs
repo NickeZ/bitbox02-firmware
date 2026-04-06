@@ -131,8 +131,8 @@ mod tests {
 
     use crate::hal::testing::TestingHal;
     use crate::hal::testing::ui::Screen;
+    use async_test::block_on;
     use bitbox02::testing::mock_memory;
-    use util::bb02_async::block_on;
 
     use prost::Message;
 

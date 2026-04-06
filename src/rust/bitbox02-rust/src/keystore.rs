@@ -829,12 +829,14 @@ pub fn get_u2f_seed(hal: &mut impl crate::hal::Hal) -> Result<zeroize::Zeroizing
 
 #[cfg(feature = "testing")]
 pub mod testing {
+    use async_test::block_on;
+
     /// This mocks an unlocked keystore with the given bip39 recovery words and bip39 passphrase.
     pub fn mock_unlocked_using_mnemonic(mnemonic: &str, passphrase: &str) {
         let mut mock_hal = crate::hal::testing::TestingHal::new();
         let seed = crate::bip39::mnemonic_to_seed(mnemonic).unwrap();
         super::retain_seed(&mut super::KeystoreHalImpl::from_hal(&mut mock_hal), &seed).unwrap();
-        util::bb02_async::block_on(super::unlock_bip39(
+        block_on(super::unlock_bip39(
             &mut super::KeystoreHalImpl::from_hal(&mut mock_hal),
             &seed,
             passphrase,
