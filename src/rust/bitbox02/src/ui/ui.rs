@@ -757,6 +757,13 @@ pub fn empty_create() -> Component {
     }
 }
 
+pub fn unlock_animation_first_frame_create() -> Component {
+    Component {
+        component: unsafe { bitbox02_sys::unlock_animation_first_frame_create() },
+        is_pushed: false,
+    }
+}
+
 pub async fn unlock_animation() {
     let _no_screensaver = crate::screen_saver::ScreensaverInhibitor::new();
 

@@ -107,6 +107,14 @@ impl<Timer: bitbox_hal::timer::Timer> Ui for BitBox02Ui<Timer> {
         }
     }
 
+    fn unlock_animation_first_frame_create(&mut self) -> Self::Empty {
+        let mut component = crate::ui::unlock_animation_first_frame_create();
+        component.screen_stack_push();
+        BitBox02Empty {
+            _component: component,
+        }
+    }
+
     #[inline(always)]
     async fn confirm(&mut self, params: &ConfirmParams<'_>) -> Result<(), UserAbort> {
         let params = to_bitbox02_confirm_params(params);

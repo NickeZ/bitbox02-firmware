@@ -122,6 +122,10 @@ impl<Timer: bitbox_hal::timer::Timer> hal::ui::Ui for BitBox03Ui<Timer> {
         todo!()
     }
 
+    fn unlock_animation_first_frame_create(&mut self) -> Self::Empty {
+        todo!()
+    }
+
     async fn enter_string(
         &mut self,
         params: &bitbox_hal::ui::EnterStringParams<'_>,

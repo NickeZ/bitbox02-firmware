@@ -173,9 +173,27 @@ static void _render(component_t* component)
     data->frame++;
 }
 
+static void _render_first_frame(component_t* component)
+{
+    (void)component;
+
+    position_t pos = {
+        .left = (SCREEN_WIDTH - LOCK_ANIMATION_FRAME_WIDTH) / 2,
+        .top = (SCREEN_HEIGHT - LOCK_ANIMATION_FRAME_HEIGHT) / 2};
+    dimension_t dim = {.width = LOCK_ANIMATION_FRAME_WIDTH, .height = LOCK_ANIMATION_FRAME_HEIGHT};
+    in_buffer_t image = {.data = _get_frame(0), .len = LOCK_ANIMATION_FRAME_SIZE};
+    graphics_draw_image(&pos, &dim, &image);
+}
+
 static const component_functions_t _component_functions = {
     .cleanup = ui_util_component_cleanup,
     .render = _render,
+    .on_event = NULL,
+};
+
+static const component_functions_t _first_frame_component_functions = {
+    .cleanup = ui_util_component_cleanup,
+    .render = _render_first_frame,
     .on_event = NULL,
 };
 
@@ -197,6 +215,20 @@ component_t* unlock_animation_create(void (*on_done)(void*), void* on_done_param
 
     component->f = &_component_functions;
     component->data = data;
+    component->dimension.width = SCREEN_WIDTH;
+    component->dimension.height = SCREEN_HEIGHT;
+    return component;
+}
+
+component_t* unlock_animation_first_frame_create(void)
+{
+    component_t* component = malloc(sizeof(component_t));
+    if (!component) {
+        Abort("Error: malloc unlock_animation first frame");
+    }
+    memset(component, 0, sizeof(component_t));
+
+    component->f = &_first_frame_component_functions;
     component->dimension.width = SCREEN_WIDTH;
     component->dimension.height = SCREEN_HEIGHT;
     return component;

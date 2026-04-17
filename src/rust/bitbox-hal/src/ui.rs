@@ -113,6 +113,8 @@ pub trait Ui {
 
     fn empty_create(&mut self) -> Self::Empty;
 
+    fn unlock_animation_first_frame_create(&mut self) -> Self::Empty;
+
     /// If `can_cancel` is `Yes`, the workflow can be cancelled.
     /// If it is `No`, the result is always `Ok(())`.
     /// If `preset` is not empty, it must be part of `params.wordlist` and will be pre-entered.
