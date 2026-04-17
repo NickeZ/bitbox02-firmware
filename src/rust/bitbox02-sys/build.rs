@@ -180,6 +180,7 @@ const ALLOWLIST_FNS: &[&str] = &[
     "ui_screen_stack_pop",
     "ui_screen_stack_push",
     "unlock_animation_create",
+    "unlock_animation_first_frame_create",
     "usb_packet_process",
     "usb_processing_hww",
     "usb_processing_init",

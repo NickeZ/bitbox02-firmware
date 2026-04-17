@@ -48,6 +48,8 @@ pub enum Screen {
         choices: Vec<String>,
         selected: u8,
     },
+    UnlockAnimationFirstFrame,
+    UnlockAnimation,
     More,
 }
 
@@ -87,6 +89,11 @@ impl Ui for TestingUi<'_> {
     }
 
     fn empty_create(&mut self) -> Self::Empty {
+        NoopEmpty
+    }
+
+    fn unlock_animation_first_frame_create(&mut self) -> Self::Empty {
+        self.screens.push(Screen::UnlockAnimationFirstFrame);
         NoopEmpty
     }
 
@@ -159,7 +166,9 @@ impl Ui for TestingUi<'_> {
         Ok(())
     }
 
-    async fn unlock_animation(&mut self) {}
+    async fn unlock_animation(&mut self) {
+        self.screens.push(Screen::UnlockAnimation);
+    }
 
     async fn status(&mut self, title: &str, status_success: bool) {
         self.screens.push(Screen::Status {
@@ -512,5 +521,12 @@ mod tests {
             ui.confirm_swap("Swap", "1 BTC", "2 ETH").await,
             Err(UserAbort)
         ));
+    }
+
+    #[async_test::test]
+    async fn test_unlock_animation_records_screen() {
+        let mut ui = TestingUi::new();
+        ui.unlock_animation().await;
+        assert_eq!(ui.screens, vec![Screen::UnlockAnimation]);
     }
 }

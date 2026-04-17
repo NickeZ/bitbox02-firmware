@@ -99,6 +99,10 @@ pub fn empty_create() -> Component {
     Component { is_pushed: false }
 }
 
+pub fn unlock_animation_first_frame_create() -> Component {
+    Component { is_pushed: false }
+}
+
 pub async fn unlock_animation() {}
 
 pub async fn choose_orientation() -> bool {

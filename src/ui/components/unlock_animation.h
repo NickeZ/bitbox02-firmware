@@ -6,5 +6,6 @@
 #include <ui/component.h>
 
 component_t* unlock_animation_create(void (*on_done)(void*), void* on_done_param);
+component_t* unlock_animation_first_frame_create(void);
 
 #endif
