@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use core::time::Duration;
+
 use alloc::collections::VecDeque;
 use alloc::{boxed::Box, vec::Vec};
 
+use bitbox_hal::Timer;
 use bitcoin::hashes::Hash;
 use hex_lit::hex;
 
@@ -128,6 +131,7 @@ impl bitbox_hal::SecureChip for FakeSecureChip {
         ));
         engine.input(msg);
         let hmac_result: Hmac<sha256::Hash> = Hmac::from_engine(engine);
+        crate::timer::HostTimer::delay_for(Duration::from_millis(1000)).await;
         Ok(Box::new(zeroize::Zeroizing::new(
             hmac_result.to_byte_array(),
         )))
