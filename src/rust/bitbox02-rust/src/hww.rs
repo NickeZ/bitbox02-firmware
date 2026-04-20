@@ -314,8 +314,8 @@ mod tests {
                     title: "Success".into(),
                     success: true,
                 },
-                Screen::UnlockAnimationFirstFrame,
-                Screen::UnlockAnimation,
+                Screen::UnlockAnimationPaused,
+                Screen::UnlockAnimationPlayed,
             ]
         );
 
@@ -509,8 +509,8 @@ mod tests {
                         title: "Success".into(),
                         success: true,
                     },
-                    Screen::UnlockAnimationFirstFrame,
-                    Screen::UnlockAnimation,
+                    Screen::UnlockAnimationPaused,
+                    Screen::UnlockAnimationPlayed,
                 ]
             );
 
@@ -712,8 +712,8 @@ mod tests {
                         title: "Success".into(),
                         success: true,
                     },
-                    Screen::UnlockAnimationFirstFrame,
-                    Screen::UnlockAnimation,
+                    Screen::UnlockAnimationPaused,
+                    Screen::UnlockAnimationPlayed,
                 ]
             );
 

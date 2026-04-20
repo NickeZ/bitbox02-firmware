@@ -72,6 +72,7 @@ pub trait Empty {}
 pub trait Ui {
     type Progress: Progress;
     type Empty: Empty;
+    type UnlockAnimation;
 
     /// Returns `Ok(())` if the user accepts, `Err(UserAbort)` if the user rejects.
     async fn confirm(&mut self, params: &ConfirmParams<'_>) -> Result<(), UserAbort>;
@@ -88,7 +89,9 @@ pub trait Ui {
         longtouch: bool,
     ) -> Result<(), UserAbort>;
 
-    async fn unlock_animation(&mut self);
+    fn unlock_animation_create(&mut self) -> Self::UnlockAnimation;
+
+    async fn unlock_animation_play(&mut self, animation: Self::UnlockAnimation);
 
     async fn status(&mut self, title: &str, status_success: bool);
 
@@ -112,8 +115,6 @@ pub trait Ui {
     fn progress_create(&mut self, title: &str) -> Self::Progress;
 
     fn empty_create(&mut self) -> Self::Empty;
-
-    fn unlock_animation_first_frame_create(&mut self) -> Self::Empty;
 
     /// If `can_cancel` is `Yes`, the workflow can be cancelled.
     /// If it is `No`, the result is always `Ok(())`.
