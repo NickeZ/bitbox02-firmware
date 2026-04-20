@@ -162,12 +162,11 @@ fn main() -> Result<(), &'static str> {
     let dst = cmake_build.build();
     println!("cargo::rustc-link-search=native={}/lib", dst.display());
     println!("cargo::rustc-link-lib=static=lvgl");
-    if !target.starts_with("thumb") {
-        match (target_os.as_str(), target_env.as_str()) {
-            ("macos", _) | ("ios", _) => println!("cargo::rustc-link-lib=dylib=c++"),
-            ("windows", "msvc") => {}
-            _ => println!("cargo::rustc-link-lib=dylib=stdc++"),
-        }
+    println!("cargo::rustc-link-lib=static=lvgl_thorvg");
+    match (target_os.as_str(), target_env.as_str()) {
+        ("macos", _) | ("ios", _) => println!("cargo::rustc-link-lib=dylib=c++"),
+        ("windows", "msvc") => {}
+        _ => println!("cargo::rustc-link-lib=dylib=stdc++"),
     }
 
     let mut fonts = cc::Build::new();

@@ -184,6 +184,7 @@ SECTIONS
 
   /* Place the heap right after `.uninit` in RAM */
   PROVIDE(__sheap = __euninit);
+  PROVIDE(end = __euninit);
 
   /* Place stack end at the end of allocated RAM */
   PROVIDE(_stack_end = __euninit);
