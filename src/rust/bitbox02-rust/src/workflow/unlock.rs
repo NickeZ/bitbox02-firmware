@@ -133,17 +133,14 @@ pub async fn unlock_keystore(
 /// Performs the BIP39 keystore unlock, including unlock animation. If the optional passphrase
 /// feature is enabled, the user will be asked for the passphrase.
 ///
-/// `unlock_animation_first_frame` must already be on the screen stack. It keeps the first frame of
-/// the unlock animation visible while the workflow transitions from password entry to the BIP39
-/// unlock. The frame is dropped here immediately before the full unlock animation starts, so the
-/// UI does not briefly fall back to the waiting screen in between.
+/// `unlock_animation` must already be on the screen stack. It stays paused on the first frame
+/// while the workflow transitions from password entry to the BIP39 unlock, then starts playing
+/// immediately before the BIP39 unlock work begins.
 pub async fn unlock_bip39<H: crate::hal::Hal>(
     hal: &mut H,
     seed: &[u8],
-    unlock_animation_first_frame: <H::Ui as crate::hal::ui::Ui>::Empty,
+    unlock_animation: <H::Ui as crate::hal::ui::Ui>::UnlockAnimation,
 ) {
-    drop(unlock_animation_first_frame);
-
     // Empty passphrase by default.
     let mut mnemonic_passphrase = zeroize::Zeroizing::new("".into());
 
@@ -181,7 +178,7 @@ pub async fn unlock_bip39<H: crate::hal::Hal>(
             crate::keystore::KeystoreHalImpl::new(eeprom, memory, random, securechip);
 
         let ((), result) = futures_lite::future::zip(
-            ui.unlock_animation(),
+            ui.unlock_animation_play(unlock_animation),
             crate::keystore::unlock_bip39(
                 &mut keystore_hal,
                 seed,
@@ -219,12 +216,12 @@ pub async fn unlock(hal: &mut impl crate::hal::Hal) -> Result<(), ()> {
         return Ok(());
     }
 
-    let unlock_animation_first_frame = hal.ui().unlock_animation_first_frame_create();
+    let unlock_animation = hal.ui().unlock_animation_create();
 
     // Loop unlock until the password is correct or the device resets.
     loop {
         if let Ok(seed) = unlock_keystore(hal, "Enter password", CanCancel::No).await {
-            unlock_bip39(hal, &seed, unlock_animation_first_frame).await;
+            unlock_bip39(hal, &seed, unlock_animation).await;
             return Ok(());
         }
     }
@@ -272,7 +269,7 @@ mod tests {
         assert!(!crate::keystore::is_locked());
         assert_eq!(
             mock_hal.ui.screens,
-            vec![Screen::UnlockAnimationFirstFrame, Screen::UnlockAnimation,]
+            vec![Screen::UnlockAnimationPaused, Screen::UnlockAnimationPlayed,]
         );
 
         assert_eq!(
@@ -290,7 +287,7 @@ mod tests {
     }
 
     #[async_test::test]
-    async fn test_unlock_retry_uses_same_unlock_animation_first_frame() {
+    async fn test_unlock_retry_uses_same_unlock_animation_handle() {
         let mut password_entries = 0;
         let mut mock_hal = TestingHal::new();
 
@@ -318,7 +315,7 @@ mod tests {
         assert_eq!(
             mock_hal.ui.screens,
             vec![
-                Screen::UnlockAnimationFirstFrame,
+                Screen::UnlockAnimationPaused,
                 Screen::Status {
                     title: "Wrong password".into(),
                     success: false,
@@ -331,7 +328,7 @@ mod tests {
                     ),
                     longtouch: false,
                 },
-                Screen::UnlockAnimation,
+                Screen::UnlockAnimationPlayed,
             ],
         );
 

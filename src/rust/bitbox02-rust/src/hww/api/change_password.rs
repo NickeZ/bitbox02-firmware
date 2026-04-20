@@ -57,8 +57,8 @@ mod tests {
         keystore::encrypt_and_store_seed(&mut hal, &seed, old_password)
             .await
             .unwrap();
-        let unlock_animation_first_frame = hal.ui.unlock_animation_first_frame_create();
-        unlock::unlock_bip39(&mut hal, &seed, unlock_animation_first_frame).await;
+        let unlock_animation = hal.ui.unlock_animation_create();
+        unlock::unlock_bip39(&mut hal, &seed, unlock_animation).await;
         hal.memory.set_initialized().unwrap();
         hal.ui.screens.clear();
 
@@ -139,8 +139,8 @@ mod tests {
         keystore::encrypt_and_store_seed(&mut hal, &seed, correct_password)
             .await
             .unwrap();
-        let unlock_animation_first_frame = hal.ui.unlock_animation_first_frame_create();
-        unlock::unlock_bip39(&mut hal, &seed, unlock_animation_first_frame).await;
+        let unlock_animation = hal.ui.unlock_animation_create();
+        unlock::unlock_bip39(&mut hal, &seed, unlock_animation).await;
         hal.memory.set_initialized().unwrap();
         keystore::lock();
         hal.ui.screens.clear();
@@ -198,8 +198,8 @@ mod tests {
         keystore::encrypt_and_store_seed(&mut hal, &seed, old_password)
             .await
             .unwrap();
-        let unlock_animation_first_frame = hal.ui.unlock_animation_first_frame_create();
-        unlock::unlock_bip39(&mut hal, &seed, unlock_animation_first_frame).await;
+        let unlock_animation = hal.ui.unlock_animation_create();
+        unlock::unlock_bip39(&mut hal, &seed, unlock_animation).await;
         hal.memory.set_initialized().unwrap();
         keystore::lock();
         hal.ui.screens.clear();

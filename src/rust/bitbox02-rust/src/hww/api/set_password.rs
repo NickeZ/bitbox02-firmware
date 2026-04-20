@@ -24,14 +24,14 @@ pub async fn process(
         return Err(Error::InvalidInput);
     }
     let password = password::enter_twice(hal).await?;
-    let unlock_animation_first_frame = hal.ui().unlock_animation_first_frame_create();
+    let unlock_animation = hal.ui().unlock_animation_create();
     if let Err(err) = keystore::create_and_store_seed(hal, &password, entropy).await {
-        drop(unlock_animation_first_frame);
+        drop(unlock_animation);
         hal.ui().status(&format!("Error\n{:?}", err), false).await;
         return Err(Error::Generic);
     }
     let seed = keystore::copy_seed(hal).await?;
-    unlock::unlock_bip39(hal, &seed, unlock_animation_first_frame).await;
+    unlock::unlock_bip39(hal, &seed, unlock_animation).await;
     Ok(Response::Success(pb::Success {}))
 }
 
