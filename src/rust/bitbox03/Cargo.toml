@@ -11,5 +11,8 @@ tracing = { version = "0.1.41", features = ["log"], default-features = false }
 png-decoder = { version="0.2"}
 zeroize = {workspace=true}
 
+[target.'cfg(target_arch = "arm")'.dependencies]
+bitbox-platform-stm32u5 = { path = "../bitbox-platform-stm32u5" }
+
 [features]
 app-u2f = ["bitbox-hal/app-u2f"]

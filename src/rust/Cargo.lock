@@ -386,6 +386,7 @@ version = "0.1.0"
 dependencies = [
  "bitbox-hal",
  "bitbox-lvgl",
+ "bitbox-platform-stm32u5",
  "png-decoder",
  "tracing",
  "util",
