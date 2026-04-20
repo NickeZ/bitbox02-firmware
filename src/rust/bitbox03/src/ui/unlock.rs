@@ -4,7 +4,7 @@ use alloc::boxed::Box;
 use core::cell::RefCell;
 use core::task::{Poll, Waker};
 
-use bitbox_lvgl::{self as lvgl, LottieExt, LvAlign, LvLottie, LvObj, ObjExt};
+use bitbox_lvgl::{self as lvgl, LottieExt, LvAlign, LvLottie, LvObj, LvOpacityLevel, ObjExt};
 
 use super::BitBox03Ui;
 
@@ -59,9 +59,18 @@ pub(super) fn build_unlock_animation() -> UnlockAnimationScreen {
 
     let screen = LvObj::new().unwrap();
     screen.set_style_bg_color(lvgl::color::black(), 0);
+    screen.set_style_bg_opa(LvOpacityLevel::LV_OPA_COVER as u8, 0);
     screen.set_style_text_color(lvgl::color::white(), 0);
 
-    let lottie = LvLottie::new(&screen, UNLOCK_ANIMATION_SIZE, UNLOCK_ANIMATION_SIZE).unwrap();
+    let badge = LvObj::with_parent(&screen).unwrap();
+    badge.set_size(192, 192);
+    badge.set_style_radius(96, 0);
+    badge.set_style_bg_color(lvgl::color::hex(0xf3f4f6), 0);
+    badge.set_style_bg_opa(LvOpacityLevel::LV_OPA_COVER as u8, 0);
+    badge.set_style_border_width(0, 0);
+    badge.align(LvAlign::LV_ALIGN_CENTER, 0, 0);
+
+    let lottie = LvLottie::new(&badge, UNLOCK_ANIMATION_SIZE, UNLOCK_ANIMATION_SIZE).unwrap();
     lottie.set_src_data(UNLOCK_ANIMATION);
     lottie.set_repeat_count(0);
     lottie.set_completed_cb(move || {
