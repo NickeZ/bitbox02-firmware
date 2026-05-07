@@ -439,6 +439,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitbox03-boot0"
+version = "0.1.0"
+dependencies = [
+ "bitbox-board-stm32u5-dk",
+ "bitbox-board-stm32u5-dk-build",
+ "bitbox-boot-utils",
+ "bitbox-debug",
+ "bitbox-mcu-stm32u5",
+ "bitbox-platform-stm32u5",
+ "bitbox03-memory",
+ "cortex-m",
+ "cortex-m-rt",
+ "log",
+ "rtt-target",
+]
+
+[[package]]
 name = "bitbox03-memory"
 version = "0.1.0"
 
