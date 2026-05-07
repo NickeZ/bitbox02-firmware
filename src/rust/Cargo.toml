@@ -14,6 +14,7 @@ members = [
     "bitbox-bytequeue",
     "bitbox-da14531",
     "bitbox-board-stm32u5-dk",
+    "bitbox-board-stm32u5-dk-build",
     "bitbox-boot-utils",
     "bitbox-platform-host",
     "bitbox-platform-stm32u5-sys",

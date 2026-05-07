@@ -127,6 +127,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitbox-board-stm32u5-dk-build"
+version = "0.1.0"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "bitbox-boot-utils"
 version = "0.1.0"
 dependencies = [
