@@ -1,0 +1,10 @@
+[package]
+name = "bitbox03-memory"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+board-stm32u5-dk = ["dep:bitbox-board-stm32u5-dk"]
+
+[dependencies]
+bitbox-board-stm32u5-dk = { path = "../bitbox-board-stm32u5-dk", optional = true }
