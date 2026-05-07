@@ -127,6 +127,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitbox-boot-utils"
+version = "0.1.0"
+dependencies = [
+ "bitbox03-memory",
+ "cortex-m",
+ "p256",
+ "sha2",
+]
+
+[[package]]
 name = "bitbox-bytequeue"
 version = "0.1.0"
 dependencies = [
