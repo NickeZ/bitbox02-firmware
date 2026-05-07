@@ -483,6 +483,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitbox03-firmware"
+version = "0.1.0"
+dependencies = [
+ "bitbox-board-stm32u5-dk-build",
+ "bitbox-debug",
+ "bitbox-mcu-stm32u5",
+ "cortex-m",
+ "cortex-m-rt",
+ "log",
+ "rtt-target",
+]
+
+[[package]]
 name = "bitbox03-memory"
 version = "0.1.0"
 
