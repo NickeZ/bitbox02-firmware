@@ -162,6 +162,7 @@ int board_init(void)
   //MX_USBX_Device_Init();
   MX_FLASH_Init();
   MX_HASH_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   // ^- The call to MX_DSIHOST_DSI_Init() must be done before MX_LTDC_Init().
   
