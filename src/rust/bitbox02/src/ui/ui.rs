@@ -284,12 +284,8 @@ pub fn screen_process() {
 }
 
 pub fn status_create(text: &str, status_success: bool) -> Component {
-    let component = unsafe {
-        bitbox02_sys::status_create(
-            util::strings::str_to_cstr_vec(text).unwrap().as_ptr(), // copied in C
-            status_success,
-        )
-    };
+    let text = util::strings::str_to_cstr_vec(text).unwrap();
+    let component = unsafe { super::status::status_create(text.as_ptr().cast(), status_success) };
     Component {
         component,
         is_pushed: false,

@@ -143,6 +143,17 @@ static void test_ui_components_status(void** state)
     component_t* status = status_create("Password created", true);
     assert_non_null(status);
     assert_ui_component_functions(status);
+    assert_int_equal(status->dimension.width, SCREEN_WIDTH);
+    assert_int_equal(status->dimension.height, SCREEN_HEIGHT);
+    assert_int_equal(status->sub_components.amount, 1);
+    status->f->cleanup(status);
+
+    status = status_create("Password failed", false);
+    assert_non_null(status);
+    assert_ui_component_functions(status);
+    assert_int_equal(status->dimension.width, SCREEN_WIDTH);
+    assert_int_equal(status->dimension.height, SCREEN_HEIGHT);
+    assert_int_equal(status->sub_components.amount, 1);
     status->f->cleanup(status);
 }
 

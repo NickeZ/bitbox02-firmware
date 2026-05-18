@@ -70,7 +70,6 @@ set(DBB-FIRMWARE-UI-SOURCES
     ${CMAKE_SOURCE_DIR}/src/ui/components/lockscreen.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/unlock_animation.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/menu.c
-    ${CMAKE_SOURCE_DIR}/src/ui/components/status.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/image.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/button.c
     ${CMAKE_SOURCE_DIR}/src/ui/components/empty.c
