@@ -143,10 +143,7 @@ pub async fn user_verify(
             Memo {
                 memo: Some(memo::Memo::TextMemo(text_memo)),
             } => {
-                if !util::ascii::is_printable_ascii(
-                    &text_memo.note,
-                    util::ascii::Charset::AllNewline,
-                ) {
+                if !util::display::is_safe_text(&text_memo.note, true) {
                     return Err(Error::InvalidInput);
                 }
                 hal.ui()
@@ -1533,7 +1530,7 @@ mod tests {
             &mut mock_hal,
             &pb::BtcPaymentRequestRequest {
                 recipient_name: "POCKET".into(),
-                memos: vec![make_text_memo("Pocket memo")],
+                memos: vec![make_text_memo("Pöcket memo")],
                 nonce: vec![],
                 total_amount: 1234567890,
                 signature: vec![],
@@ -1557,7 +1554,7 @@ mod tests {
                 },
                 Screen::Confirm {
                     title: "Memo".into(),
-                    body: "Pocket memo".into(),
+                    body: "Pöcket memo".into(),
                     longtouch: false,
                 },
             ]
