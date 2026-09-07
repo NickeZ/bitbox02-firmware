@@ -12,12 +12,21 @@ pub enum Charset {
     AllNewline,
 }
 
+impl Charset {
+    /// Returns true if `character` is in this charset.
+    pub fn contains(&self, character: char) -> bool {
+        character.is_ascii_graphic()
+            || character == ' '
+            || (self == &Self::AllNewline && character == '\n')
+    }
+}
+
 /// Returns true if all bytes are in the given `charset`.
 pub fn is_printable_ascii<T: AsRef<[u8]>>(bytes: T, charset: Charset) -> bool {
     bytes
         .as_ref()
         .iter()
-        .all(|&b| (32..=126).contains(&b) || (charset == Charset::AllNewline && b == b'\n'))
+        .all(|&byte| charset.contains(char::from(byte)))
 }
 
 #[cfg(test)]
@@ -26,6 +35,15 @@ mod tests {
     use super::*;
 
     static ALL_ASCII: &[u8] = "! \"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~".as_bytes();
+
+    #[test]
+    fn test_contains() {
+        assert!(Charset::All.contains(' '));
+        assert!(Charset::All.contains('~'));
+        assert!(!Charset::All.contains('\n'));
+        assert!(!Charset::All.contains('ï'));
+        assert!(Charset::AllNewline.contains('\n'));
+    }
 
     #[test]
     fn test_is_printable_ascii() {
