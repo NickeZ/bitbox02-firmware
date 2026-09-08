@@ -17,7 +17,11 @@ atomic](https://en.wikipedia.org/wiki/Atomic_commit#Atomic_commit_convention) an
 easy to read.  For this reason do not mix any formatting fixes or code moves with actual code
 changes in the same commit.
 
-Commit messages should be verbose by default consisting of a short subject line (50 chars max), a
+Use `<context>: <summary>` for commit subjects. Inspect recent commits touching the affected
+code and reuse the established context prefix and style. Keep the entire subject, including
+the prefix, within 50 characters.
+
+Commit messages should be verbose by default consisting of a short subject line, a
 blank line and detailed explanatory text as separate paragraph(s), unless the title alone is
 self-explanatory (like "Corrected typo in Makefile") in which case a single title line is
 sufficient.  Commit messages should be helpful to people reading your code in the future, so
@@ -25,7 +29,7 @@ explain the reasoning for your decisions.  Further explanation
 [here](http://chris.beams.io/posts/git-commit/).
 
 If a particular commit references another issue, please add the reference. For example: `refs
-#1234` or `fixes #4321`. 
+#1234` or `fixes #4321`.
 
 Please refer to the [Git manual](https://git-scm.com/doc) for more information about Git.
 

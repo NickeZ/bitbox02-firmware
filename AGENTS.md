@@ -107,11 +107,14 @@ and refresh `make coverage` for cryptography or security-sensitive areas.
 - Focus on memory issues
 
 ## Commit & Pull Request Guidelines
-Write commits with a ≤50 character subject, blank line, and explanatory body per `CONTRIBUTING.md`;
-reference issues via `refs #1234` or `fixes #1234`. Keep patches atomic—avoid mixing formatting and
-logic. Pull requests should outline the change, list verification commands or screenshots, and flag
-hardware requirements; mark drafts with `[WIP]` until they are ready. Wait to squash until reviews
-conclude.
+
+Use `<context>: <summary>` for commit subjects. Inspect recent commits touching the affected
+code and reuse the established context prefix and style.
+
+Write commits with a ≤50 character subject (including the prefix), blank line, and explanatory body;
+reference issues via `refs #1234` or `fixes #1234`. Keep patches atomic—avoid
+mixing formatting and logic. Pull requests should outline the change, list verification commands or
+screenshots, and flag hardware requirements. Wait to squash until reviews conclude.
 
 
 ## Various
