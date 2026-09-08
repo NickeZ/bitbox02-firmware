@@ -48,7 +48,6 @@
 #define OLED_HEIGHT (64)
 #define NVMCTRL_STAGE0_ERROR_FLAGS \
     (NVMCTRL_INTFLAG_ADDRE | NVMCTRL_INTFLAG_PROGE | NVMCTRL_INTFLAG_LOCKE | NVMCTRL_INTFLAG_NVME)
-static bool _oled_initialized = false;
 
 __attribute__((aligned(128))) static struct sha_context _sha_context;
 
@@ -166,13 +165,6 @@ static void _oled_progress(uint8_t done, uint8_t total)
     oled_send_buffer();
 }
 
-static void _oled_init(void)
-{
-    oled_init();
-    oled_mirror(_oled_upside_down());
-    _oled_initialized = true;
-}
-
 static void _oled_draw_error_pixel(int16_t x, int16_t y)
 {
     const int16_t scale = 2;
@@ -204,9 +196,6 @@ static void _oled_render_error(void)
     const int16_t x0 = (int16_t)((OLED_WIDTH - text_width) / 2);
     const int16_t y0 = (int16_t)((OLED_HEIGHT - text_height) / 2);
 
-    if (!_oled_initialized) {
-        _oled_init();
-    }
     oled_clear_buffer();
     for (int16_t row = 0; row < bitmap_height; row++) {
         const uint32_t bits = error_bitmap[row];
@@ -606,8 +595,8 @@ static void _boot_stage1(const bb02_stage1_header_t* stage1, const volatile secb
 
 static void __attribute__((noreturn, noinline)) _stage0_main(void)
 {
+    oled_mirror(_oled_upside_down());
 #ifdef BB02_STAGE0_DEVELOPMENT
-    _oled_init();
     _oled_development_cross();
 #else
     _lock_debug_access();
@@ -635,9 +624,6 @@ static void __attribute__((noreturn, noinline)) _stage0_main(void)
                 _boot_stage1(installed, &boot_auth);
             }
         }
-#ifndef BB02_STAGE0_DEVELOPMENT
-        _oled_init();
-#endif
         _oled_progress(0, 6);
         _install_stage1(update, installed_header_ok, &install_auth);
         installed = bb02_stage1_installed_header();

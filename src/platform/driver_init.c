@@ -5,6 +5,7 @@
 #include "driver_init.h"
 #include "bitbox02_pins.h"
 #include "memory/memory_shared.h"
+#include "ui/oled/oled.h"
 #include "util.h"
 #include <compiler.h>
 #include <hal_sleep.h>
@@ -416,6 +417,8 @@ void stage0_init(void)
     _delay_driver_init();
     _oled_set_pins();
     _spi_init();
+    // Reset and clear the display on every boot, including after a quick power cycle.
+    oled_init();
     _flash_memory_init();
     _sha_init();
     _rand_init();
