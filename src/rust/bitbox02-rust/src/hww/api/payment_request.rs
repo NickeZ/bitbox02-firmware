@@ -132,7 +132,12 @@ pub async fn user_verify(
     payment_request: &pb::BtcPaymentRequestRequest,
     displayed_source_amount: &str,
 ) -> Result<(), Error> {
-    if find_identity(&payment_request.recipient_name).is_none() {
+    if find_identity(&payment_request.recipient_name).is_none()
+        || !util::ascii::is_printable_ascii(
+            &payment_request.recipient_name,
+            util::ascii::Charset::All,
+        )
+    {
         return Err(Error::InvalidInput);
     }
     hal.ui()
@@ -1524,6 +1529,40 @@ mod tests {
             .await,
             Err(ValidationError::InvalidSignature)
         ));
+    }
+
+    #[async_test::test]
+    async fn test_user_verify_recipient_name() {
+        for (recipient_name, valid) in [
+            ("SWAPKIT (Provider)", true),
+            ("swapkit (Provider)", true),
+            ("SWAPKIT\nProvider", false),
+            ("SWAPKIT (Prövider)", false),
+            ("SWAPKIT\tProvider", false),
+            ("SWAPKIT\rProvider", false),
+            ("SWAPKIT\0Provider", false),
+            ("SWAPKIT\x7fProvider", false),
+        ] {
+            let mut mock_hal = TestingHal::new();
+            let payment_request = pb::BtcPaymentRequestRequest {
+                recipient_name: recipient_name.into(),
+                ..Default::default()
+            };
+            let result = user_verify(&mut mock_hal, &payment_request, "0.25 BTC").await;
+            if valid {
+                result.unwrap();
+                assert_eq!(
+                    mock_hal.ui.screens,
+                    vec![Screen::Recipient {
+                        recipient: recipient_name.into(),
+                        amount: "0.25 BTC".into(),
+                    }]
+                );
+            } else {
+                assert_eq!(result, Err(Error::InvalidInput));
+                assert!(mock_hal.ui.screens.is_empty());
+            }
+        }
     }
 
     #[async_test::test]
