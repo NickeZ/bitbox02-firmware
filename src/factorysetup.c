@@ -746,7 +746,7 @@ static void _api_msg(const uint8_t* input, size_t in_len, uint8_t* output, size_
         const uint8_t* root_pubkey = NULL;
         for (size_t pubkey_idx = 0; pubkey_idx < sizeof(_root_pubkey_bytes) / ROOT_PUBKEY_SIZE;
              pubkey_idx++) {
-            uint8_t candidate_identifier[32];
+            uint8_t candidate_identifier[32] = {0};
             // Identifiers remain SHA-256 of the uncompressed key, as used by the host.
             if (!rust_secp256k1_pubkey_identifier(
                     rust_util_bytes(_root_pubkey_bytes[pubkey_idx], ROOT_PUBKEY_SIZE),
