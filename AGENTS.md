@@ -122,6 +122,8 @@ screenshots, and flag hardware requirements. Wait to squash until reviews conclu
 - when converting C code to Rust code, make the Rust code idiomatic, not a 1:1 rewrite.
 - when exposing Rust functions to C using extern "C", use util::bytes::Bytes and
   util::Bytes::BytesMut ot pass in buffers and write to out buffers.
+  Always initialize C buffers passed to `rust_util_bytes_mut` to zeroes, e.g.
+  `uint8_t buf[32] = {0}`.
 - when using Zeroizing<...> for buffers, use Zeroizing<Vec<u8>>. For other sensitive data, use
   Zeroizing<Box<...>>.
 - when wrapping C functions, always use a '-sys' crate for the bindings, make it safe idiomatic
