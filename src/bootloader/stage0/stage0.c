@@ -258,8 +258,11 @@ static void _lock_debug_access(void)
             }
         } while (NVMCTRL->INTFLAG.bit.PROGE); // Program Error flag
         // Software reset the NVMCTRL peripheral to have correct NVM state output
+        const uint16_t cache_settings =
+            NVMCTRL->CTRLA.reg & (NVMCTRL_CTRLA_CACHEDIS0 | NVMCTRL_CTRLA_CACHEDIS1);
         NVMCTRL->CTRLB.reg = NVMCTRL_CTRLB_CMD_SWRST | NVMCTRL_CTRLB_CMDEX_KEY;
         _nvm_wait();
+        NVMCTRL->CTRLA.reg |= cache_settings;
     }
 }
 #endif
