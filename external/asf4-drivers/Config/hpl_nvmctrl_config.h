@@ -15,19 +15,19 @@
 #define CONF_NVM_SLEEPPRM 0
 #endif
 
-// SAM D5x/E5x errata 2.14.1: disable both caches when programming from flash.
+// ICM flash reads require the AHB1 cache; disable caches only during programming.
 // <q> AHB0 Cache Disable
 // <i> Indicate whether AHB0 cache is disable or not
 // <id> nvm_arch_cache0
 #ifndef CONF_NVM_CACHE0
-#define CONF_NVM_CACHE0 1
+#define CONF_NVM_CACHE0 0
 #endif
 
 // <q> AHB1 Cache Disable
 // <i> Indicate whether AHB1 cache is disable or not
 // <id> nvm_arch_cache1
 #ifndef CONF_NVM_CACHE1
-#define CONF_NVM_CACHE1 1
+#define CONF_NVM_CACHE1 0
 #endif
 
 // </h>

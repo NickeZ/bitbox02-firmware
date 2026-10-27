@@ -656,7 +656,6 @@ if(CMAKE_CROSSCOMPILING)
       ${CMAKE_SOURCE_DIR}/src/bootloader/stage0/stage0_descriptor.c
       ${CMAKE_SOURCE_DIR}/src/bootloader/stage0/stage0_runtime.c
       ${CMAKE_SOURCE_DIR}/src/bootloader/stage0/stage0_startup.c
-      ${CMAKE_SOURCE_DIR}/src/memory/nvmctrl.c
       ${CMAKE_SOURCE_DIR}/src/platform/driver_init.c
       ${CMAKE_SOURCE_DIR}/src/ui/oled/oled.c
       ${CMAKE_SOURCE_DIR}/src/ui/oled/oled_writer.c

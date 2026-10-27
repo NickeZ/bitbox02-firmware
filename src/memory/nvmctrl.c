@@ -12,9 +12,3 @@ void nvmctrl_exec_cmd(uint16_t cmd)
     NVMCTRL->CTRLB.reg = NVMCTRL_CTRLB_CMDEX_KEY | cmd;
     while (NVMCTRL->STATUS.bit.READY == 0);
 }
-
-void nvmctrl_reset(void)
-{
-    nvmctrl_exec_cmd(NVMCTRL_CTRLB_CMD_SWRST);
-    flash_init(&FLASH_0, NVMCTRL);
-}

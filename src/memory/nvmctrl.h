@@ -13,6 +13,4 @@
  */
 void nvmctrl_exec_cmd(uint16_t cmd);
 
-void nvmctrl_reset(void);
-
 #endif // __NVMCTRL_H

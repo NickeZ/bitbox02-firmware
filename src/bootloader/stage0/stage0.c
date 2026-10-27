@@ -8,7 +8,6 @@
 #endif
 #include "driver_init.h"
 #include "memory/memory_shared.h"
-#include "memory/nvmctrl.h"
 #include "pac_ext.h"
 #include "stage0_flash.h"
 #include "ui/oled/oled.h"
@@ -259,7 +258,8 @@ static void _lock_debug_access(void)
             }
         } while (NVMCTRL->INTFLAG.bit.PROGE); // Program Error flag
         // Software reset the NVMCTRL peripheral to have correct NVM state output
-        nvmctrl_reset();
+        NVMCTRL->CTRLB.reg = NVMCTRL_CTRLB_CMD_SWRST | NVMCTRL_CTRLB_CMDEX_KEY;
+        _nvm_wait();
     }
 }
 #endif
